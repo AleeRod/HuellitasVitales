@@ -2,13 +2,14 @@
 using Google.Apis.Auth;
 using HuellasVitalesAPI.Backend.Models.Entidades;
 using HuellitasVitalesAPI.Data;
-using Microsoft.Extensions.Configuration;
 using HuellitasVitalesAPI.Models.DTOs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace HuellitasVitalesAPI.Services
 {
@@ -57,11 +58,10 @@ namespace HuellitasVitalesAPI.Services
             {
                 var settings = new GoogleJsonWebSignature.ValidationSettings()
                 {
-                    // Verificado: Es el mismo Client ID que en el HTML
+                    // Verificar ID CLIENTE de la aplicación en Google Cloud Console
                     Audience = new List<string> { "345969836543-cmegbuqmfc6dv7l0abo6cjj4u2fpdlqi.apps.googleusercontent.com" }
                 };
 
-                // Ahora ValidateAsync recibirá un ID Token válido y dejará de dar error
                 var payload = await GoogleJsonWebSignature.ValidateAsync(googleToken, settings);
 
                 if (payload == null) return null;
@@ -87,22 +87,19 @@ namespace HuellitasVitalesAPI.Services
                 }
                 else
                 {
-                    // Aquí está el truco: verificamos si realmente hay algo que cambiar
                     if (usuario.Proveedor_Auth != "Google")
                     {
                         usuario.Proveedor_Auth = "Google";
                         usuario.Proveedor_Id = payload.Subject;
 
-                        // ¡ESTO ES LO QUE SEGURAMENTE ESTABA FALLANDO O NO LLEGABA A EJECUTARSE!
-                        _context.Usuarios.Update(usuario); // Aseguramos que EF sepa que cambió
-                        await _context.SaveChangesAsync(); // ¡Guardamos en BD!
+                        _context.Usuarios.Update(usuario);
+                        await _context.SaveChangesAsync();
                     }
                 }
                 return usuario;
             }
             catch (Exception ex)
             {
-                // Esto aparecerá en la ventana de "Salida" de Visual Studio si falla
                 System.Diagnostics.Debug.WriteLine($"Error de Google en C#: {ex.Message}");
                 return null;
             }
@@ -111,19 +108,15 @@ namespace HuellitasVitalesAPI.Services
         // ─── MÉTODO PARA AUTENTICACIÓN LOCAL (CORREO Y CONTRASEÑA) ───
         public async Task<Usuario?> AutenticarLocalAsync(LoginRequest request)
         {
-            // 1. Buscar el usuario por su correo
             var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Correo == request.Correo);
 
-            // 2. Si no existe, devolvemos null
             if (usuario == null) return null;
 
-            // 3. Validar si el usuario se registró con Google y no tiene contraseña local
             if (usuario.Proveedor_Auth == "Google" && string.IsNullOrEmpty(usuario.PasswordHash))
             {
                 throw new Exception("Este correo está vinculado a una cuenta de Google. Inicia sesión con el botón de Google.");
             }
 
-            // 4. Verificar que la contraseña coincida con el hash guardado usando BCrypt
             bool passwordValida = BCrypt.Net.BCrypt.Verify(request.Password, usuario.PasswordHash);
 
             if (!passwordValida) return null;
@@ -134,26 +127,81 @@ namespace HuellitasVitalesAPI.Services
         // ─── MÉTODO PARA GENERAR EL TOKEN JWT ───
         public string GenerarTokenJWT(Usuario usuario)
         {
-            // 1. Leemos la clave desde appsettings.json
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-            // 2. Definimos qué datos viajarán dentro del token (Claims)
             var claims = new[]
             {
             new Claim(JwtRegisteredClaimNames.Sub, usuario.IdUsuario.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, usuario.Correo),
-            new Claim("rol", usuario.IdRol.ToString()) // Súper importante para controlar accesos luego
+            new Claim("rol", usuario.IdRol.ToString())
         };
 
-            // 3. Construimos el token con un tiempo de vida (ej. 2 horas)
             var token = new JwtSecurityToken(
                 claims: claims,
                 expires: DateTime.Now.AddHours(2),
                 signingCredentials: credentials);
 
-            // 4. Retornamos el string del token
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        public async Task<Usuario?> AutenticarFacebookAsync(string fbToken)
+        {
+            try
+            {
+                using var httpClient = new HttpClient();
+
+                var verifyTokenUrl = $"https://graph.facebook.com/me?fields=first_name,last_name,email,id&access_token={fbToken}";
+
+                var response = await httpClient.GetAsync(verifyTokenUrl);
+
+                if (!response.IsSuccessStatusCode) return null;
+
+                var jsonResult = await response.Content.ReadAsStringAsync();
+                var fbUser = System.Text.Json.JsonSerializer.Deserialize<FacebookTokenResponse>(jsonResult);
+
+                if (fbUser == null || string.IsNullOrEmpty(fbUser.Email)) return null;
+
+                var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Correo == fbUser.Email);
+
+                if (usuario == null)
+                {
+                    usuario = new Usuario
+                    {
+                        Nombre = fbUser.FirstName ?? "Usuario",
+                        Apellidos = fbUser.LastName ?? "Facebook",
+                        Correo = fbUser.Email,
+                        Proveedor_Auth = "Facebook",
+                        Proveedor_Id = fbUser.Id,
+                        IdRol = 3, // Rol de cliente por defecto
+                        Activo = true,
+                        FechaRegistro = DateTime.Now
+                    };
+
+                    _context.Usuarios.Add(usuario);
+                    await _context.SaveChangesAsync();
+                }
+
+                return usuario;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+    }
+    public class FacebookTokenResponse
+    {
+        [JsonPropertyName("id")]
+        public string? Id { get; set; }
+
+        [JsonPropertyName("first_name")]
+        public string? FirstName { get; set; }
+
+        [JsonPropertyName("last_name")]
+        public string? LastName { get; set; }
+
+        [JsonPropertyName("email")]
+        public string? Email { get; set; }
     }
 }

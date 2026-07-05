@@ -13,7 +13,7 @@ namespace HuellitasVitalesAPI.Controllers
     {
         private readonly UsuarioService _usuarioService;
 
-        // Inyecta SERVICIO, no la base de datos
+        // Inyecta a SERVICIO, no la base de datos
         public LoginController(UsuarioService usuarioService)
         {
             _usuarioService = usuarioService;
@@ -75,7 +75,6 @@ namespace HuellitasVitalesAPI.Controllers
                 if (usuario == null)
                     return Unauthorized(new { success = false, mensaje = "Correo o contraseña incorrectos." });
 
-                // Si todo sale bien, generamos el Token JWT
                 var tokenJwt = _usuarioService.GenerarTokenJWT(usuario);
 
                 return Ok(new
@@ -88,10 +87,28 @@ namespace HuellitasVitalesAPI.Controllers
             }
             catch (Exception ex)
             {
-                // Este catch atrapa el error si un usuario intenta loguearse normal 
-                // pero su cuenta es exclusivamente de Google.
                 return BadRequest(new { success = false, mensaje = ex.Message });
             }
+        }
+
+        [HttpPost("facebook")]
+        public async Task<IActionResult> LoginFacebook([FromBody] LoginSocialRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Token))
+            {
+                return BadRequest("El token de Facebook es obligatorio.");
+            }
+
+            var usuario = await _usuarioService.AutenticarFacebookAsync(request.Token);
+
+            if (usuario == null)
+            {
+                return Unauthorized("Autenticación con Facebook fallida.");
+            }
+
+            var jwtToken = _usuarioService.GenerarTokenJWT(usuario);
+
+            return Ok(new { token = jwtToken, nombre = usuario.Nombre });
         }
     }
 }
