@@ -833,11 +833,21 @@
 
                 if (response.ok && data.success) {
                     localStorage.setItem('token_huellitas', data.token);
-                    localStorage.setItem('usuario_nombre', data.usuario.nombre);
-                    window.location.href = 'index.html';
+
+                    // --- REDIRECCIÓN POR ROL ---
+                    const rol = data.usuario.idRol;
+
+                    if (rol === 1) {
+                        window.location.href = 'dashboard-admin.html';
+                    } else if (rol === 2) {
+                        window.location.href = 'dashboard-veterinario.html';
+                    } else {
+                        window.location.href = 'dashboard-cliente.html';
+                    }
                 } else {
                     alert(data.mensaje || "Error al iniciar sesión.");
-                    textoBtn.innerText = textoOriginal;
+                    textoBtn.innerText = textoOriginal
+
                     btnIngresar.disabled = false;
                     btnIngresar.style.opacity = '1';
                 }
@@ -874,9 +884,22 @@
                 });
 
                 const data = await response.json();
+
                 if (response.ok && data.success) {
+
                     localStorage.setItem('token_huellitas', data.token);
-                    window.location.href = 'index.html';
+
+                    // --- REDIRECCIÓN POR ROL ---
+                    const rol = data.usuario.idRol;
+
+                    if (rol === 1) {
+                        window.location.href = 'dashboard-admin.html';
+                    } else if (rol === 2) {
+                        window.location.href = 'dashboard-veterinario.html';
+                    } else {
+                        window.location.href = 'dashboard-cliente.html';
+                    }
+
                 } else {
                     alert("Error al autenticar: " + (data.mensaje || "Desconocido"));
                 }
@@ -909,9 +932,20 @@
                 const data = await res.json();
                 if (res.ok && data.success) {
                     localStorage.setItem('token_huellitas', data.token);
-                    window.location.href = 'index.html';
+
+                    // --- REDIRECCIÓN POR ROL ---
+                    const rol = data.usuario.idRol;
+
+                    if (rol === 1) {
+                        window.location.href = 'dashboard-admin.html';
+                    } else if (rol === 2) {
+                        window.location.href = 'dashboard-veterinario.html';
+                    } else {
+                        window.location.href = 'dashboard-cliente.html';
+                    }
+
                 } else {
-                    alert("Error al iniciar sesión: " + (data.mensaje || "Error"));
+                    alert("Error al autenticar con Facebook: " + (data.mensaje || "Desconocido"));
                 }
             } catch (err) {
                 alert("Problemas conectando con el servidor de Facebook.");

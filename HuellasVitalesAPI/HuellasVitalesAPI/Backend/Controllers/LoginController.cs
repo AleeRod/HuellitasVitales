@@ -101,8 +101,6 @@ namespace HuellitasVitalesAPI.Controllers
                     return BadRequest(new { success = false, mensaje = "El token de Facebook es obligatorio." });
                 }
 
-                // El servicio se encarga de: validar token, buscar por email, 
-                // actualizar si existe o crear si es nuevo.
                 var usuario = await _usuarioService.AutenticarFacebookAsync(request.Token);
 
                 if (usuario == null)
