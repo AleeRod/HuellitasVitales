@@ -94,21 +94,36 @@ namespace HuellitasVitalesAPI.Controllers
         [HttpPost("facebook")]
         public async Task<IActionResult> LoginFacebook([FromBody] LoginSocialRequest request)
         {
-            if (string.IsNullOrEmpty(request.Token))
+            try
             {
-                return BadRequest("El token de Facebook es obligatorio.");
+                if (string.IsNullOrEmpty(request.Token))
+                {
+                    return BadRequest(new { success = false, mensaje = "El token de Facebook es obligatorio." });
+                }
+
+                // El servicio se encarga de: validar token, buscar por email, 
+                // actualizar si existe o crear si es nuevo.
+                var usuario = await _usuarioService.AutenticarFacebookAsync(request.Token);
+
+                if (usuario == null)
+                {
+                    return Unauthorized(new { success = false, mensaje = "No se pudo obtener información del usuario de Facebook." });
+                }
+
+                var jwtToken = _usuarioService.GenerarTokenJWT(usuario);
+
+                return Ok(new
+                {
+                    success = true,
+                    mensaje = "¡Bienvenido a Huellitas Vitales!",
+                    token = jwtToken,
+                    usuario = new { usuario.Nombre, usuario.Correo, usuario.IdRol }
+                });
             }
-
-            var usuario = await _usuarioService.AutenticarFacebookAsync(request.Token);
-
-            if (usuario == null)
+            catch (Exception ex)
             {
-                return Unauthorized("Autenticación con Facebook fallida.");
+                return StatusCode(500, new { success = false, mensaje = "Error interno: " + ex.Message });
             }
-
-            var jwtToken = _usuarioService.GenerarTokenJWT(usuario);
-
-            return Ok(new { token = jwtToken, nombre = usuario.Nombre });
         }
     }
 }

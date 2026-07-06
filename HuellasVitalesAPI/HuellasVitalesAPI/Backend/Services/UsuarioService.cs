@@ -150,11 +150,9 @@ namespace HuellitasVitalesAPI.Services
             try
             {
                 using var httpClient = new HttpClient();
-
                 var verifyTokenUrl = $"https://graph.facebook.com/me?fields=first_name,last_name,email,id&access_token={fbToken}";
 
                 var response = await httpClient.GetAsync(verifyTokenUrl);
-
                 if (!response.IsSuccessStatusCode) return null;
 
                 var jsonResult = await response.Content.ReadAsStringAsync();
@@ -166,6 +164,7 @@ namespace HuellitasVitalesAPI.Services
 
                 if (usuario == null)
                 {
+                    // Registro de usuario nuevo
                     usuario = new Usuario
                     {
                         Nombre = fbUser.FirstName ?? "Usuario",
@@ -173,7 +172,7 @@ namespace HuellitasVitalesAPI.Services
                         Correo = fbUser.Email,
                         Proveedor_Auth = "Facebook",
                         Proveedor_Id = fbUser.Id,
-                        IdRol = 3, // Rol de cliente por defecto
+                        IdRol = 3,
                         Activo = true,
                         FechaRegistro = DateTime.Now
                     };
@@ -181,11 +180,24 @@ namespace HuellitasVitalesAPI.Services
                     _context.Usuarios.Add(usuario);
                     await _context.SaveChangesAsync();
                 }
+                else
+                {
+                    // Actualizar datos de usuario con mismo correo de Facebook
+                    if (usuario.Proveedor_Auth != "Facebook")
+                    {
+                        usuario.Proveedor_Auth = "Facebook";
+                        usuario.Proveedor_Id = fbUser.Id;
+
+                        _context.Usuarios.Update(usuario);
+                        await _context.SaveChangesAsync();
+                    }
+                }
 
                 return usuario;
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Error de Facebook: {ex.Message}");
                 return null;
             }
         }
