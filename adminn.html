@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Huellitas Vitales — Administración Global</title>
+
+<link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
+<style>
+:root {
+    --pine: #1B4332;
+    --pine-dk: #112b21;
+    --pine-soft: #2d6a4f;
+    --mint: #52B788;
+    --mint-lt: #95d5b2;
+    --cream: #FEFAE0;
+    --amber: #DDA15E;
+    --amber-dk: #c07d3a;
+    --text-dk: #1a1a1a;
+    --text-md: #4a5568;
+    --text-lt: #718096;
+    --line: #dde3d8;
+    --white: #ffffff;
+    --danger: #dc3545;
+    --radius: 18px;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    background:
+        radial-gradient(circle at top left, rgba(82,183,136,.18), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(221,161,94,.16), transparent 28%),
+        var(--cream);
+    color: var(--text-dk);
+    overflow-x: hidden;
+}
+
+.admin-shell {
+    min-height: 100vh;
+    display: flex;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 292px;
+    min-height: 100vh;
+    background: linear-gradient(155deg, var(--pine-dk) 0%, var(--pine) 56%, var(--pine-soft) 100%);
+    color: #fff;
+    padding: 1.3rem;
+    position: fixed;
+    left: 0;
+    top: 0;
+    overflow: hidden;
+}
+
+.sidebar::before {
+    content: '';
+    position: absolute;
+    width: 360px;
+    height: 360px;
+    border-radius: 50%;
+    border: 2px solid rgba(82,183,136,.13);
+    top: -110px;
+    right: -150px;
+}
+
+.sidebar::after {
+    content: '';
+    position: absolute;
+    width: 230px;
+    height: 230px;
+    border-radius: 50%;
+    border: 2px solid rgba(82,183,136,.10);
+    bottom: -70px;
+    left: -80px;
+}
+
+.sidebar-inner {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-card {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    padding: .9rem;
+    border-radius: 18px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    backdrop-filter: blur(6px);
+    margin-bottom: 1.35rem;
+}
+
+.brand-card img {
+    width: 58px;
+    height: 46px;
+    object-fit: contain;
+}
+
+.brand-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    line-height: 1;
+    font-weight: 700;
+}
+
+.brand-badge {
+    color: var(--mint-lt);
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    margin-top: .25rem;
+    font-weight: 600;
+}
+
+.sidebar-section {
+    font-size: .7rem;
+    color: rgba(255,255,255,.45);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-weight: 700;
+    margin: 1rem .7rem .45rem;
+}
+
+.nav-link-admin {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    color: rgba(255,255,255,.74);
+    text-decoration: none;
+    padding: .78rem .85rem;
+    border-radius: 14px;
+    margin-bottom: .35rem;
+    transition: all .18s ease;
+    font-size: .92rem;
+}
+
+.nav-link-admin:hover {
+    color: #fff;
+    background: rgba(255,255,255,.10);
+    transform: translateX(3px);
+}
+
+.nav-link-admin.active {
+    color: #fff;
+    background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.15);
+    box-shadow: inset 0 0 0 1px rgba(82,183,136,.08);
+}
+
+.nav-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: rgba(255,255,255,.09);
+    flex-shrink: 0;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding: .9rem;
+    border-radius: 18px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+}
+
+.sidebar-footer-title {
+    color: var(--mint-lt);
+    font-weight: 700;
+    font-size: .86rem;
+}
+
+.sidebar-footer-text {
+    color: rgba(255,255,255,.58);
+    font-size: .76rem;
+    line-height: 1.5;
+    margin-top: .35rem;
+}
+
+/* CONTENT */
+.main-content {
+    margin-left: 292px;
+    width: calc(100% - 292px);
+    padding: 1.35rem 1.6rem 2rem;
+}
+
+.topbar {
+    min-height: 92px;
+    background: rgba(255,255,255,.76);
+    border: 1px solid rgba(221,227,216,.85);
+    border-radius: 24px;
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 12px 28px rgba(27,67,50,.07);
+    margin-bottom: 1.25rem;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    background: rgba(82,183,136,.13);
+    color: var(--pine);
+    border: 1px solid rgba(82,183,136,.22);
+    padding: .34rem .75rem;
+    border-radius: 50px;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: .45rem;
+}
+
+.hero-title {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine);
+    font-size: 2rem;
+    line-height: 1.08;
+    margin: 0;
+}
+
+.hero-sub {
+    color: var(--text-lt);
+    font-size: .9rem;
+    margin-top: .28rem;
+}
+
+.top-actions {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+.top-search {
+    position: relative;
+    width: 280px;
+}
+
+.top-search input {
+    width: 100%;
+    border: 1.5px solid var(--line);
+    background: #fff;
+    border-radius: 14px;
+    padding: .78rem 1rem .78rem 2.55rem;
+    outline: none;
+    font-size: .88rem;
+}
+
+.top-search span {
+    position: absolute;
+    left: .9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-lt);
+}
+
+.icon-button {
+    width: 44px;
+    height: 44px;
+    border: 1.5px solid var(--line);
+    background: #fff;
+    color: var(--pine);
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    position: relative;
+}
+
+.icon-button::after {
+    content: '';
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    background: var(--amber);
+    border-radius: 50%;
+    top: 9px;
+    right: 10px;
+    border: 2px solid #fff;
+}
+
+.profile-mini {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    background: #fff;
+    border: 1.5px solid var(--line);
+    border-radius: 16px;
+    padding: .48rem .65rem;
+}
+
+.profile-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--pine), var(--pine-soft));
+    color: #fff;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+}
+
+.profile-name {
+    font-weight: 700;
+    color: var(--pine);
+    font-size: .87rem;
+}
+
+.profile-role {
+    color: var(--text-lt);
+    font-size: .72rem;
+}
+
+/* DASHBOARD GRID */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.15rem;
+}
+
+.stat-card {
+    background: rgba(255,255,255,.86);
+    border: 1px solid rgba(221,227,216,.92);
+    border-radius: 22px;
+    padding: 1.12rem;
+    box-shadow: 0 12px 26px rgba(27,67,50,.06);
+    position: relative;
+    overflow: hidden;
+    animation: slideUp .45s ease both;
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(82,183,136,.10);
+    right: -46px;
+    top: -50px;
+}
+
+.stat-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.stat-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    background: rgba(82,183,136,.15);
+    color: var(--pine);
+    display: grid;
+    place-items: center;
+}
+
+.stat-chip {
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--mint);
+}
+
+.stat-label {
+    color: var(--text-lt);
+    font-size: .82rem;
+    margin-top: .9rem;
+}
+
+.stat-number {
+    font-size: 1.8rem;
+    color: var(--pine);
+    font-weight: 800;
+    margin-top: .1rem;
+}
+
+.stat-note {
+    color: var(--text-lt);
+    font-size: .76rem;
+    margin-top: .25rem;
+}
+
+/* CONTENT CARD */
+.content-card {
+    background: rgba(255,255,255,.9);
+    border: 1px solid rgba(221,227,216,.95);
+    border-radius: 24px;
+    box-shadow: 0 12px 26px rgba(27,67,50,.06);
+    overflow: hidden;
+    animation: slideUp .55s ease both;
+}
+
+.card-top {
+    padding: 1.2rem;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.card-title {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine);
+    font-size: 1.55rem;
+    margin: 0;
+}
+
+.card-subtitle {
+    color: var(--text-lt);
+    font-size: .86rem;
+    margin-top: .25rem;
+}
+
+.btn-main {
+    border: none;
+    background: linear-gradient(135deg, var(--pine) 0%, var(--pine-soft) 100%);
+    color: #fff;
+    border-radius: 14px;
+    padding: .78rem 1rem;
+    font-weight: 700;
+    transition: all .18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    white-space: nowrap;
+}
+
+.btn-main:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(27,67,50,.28);
+}
+
+.btn-soft {
+    border: 1.5px solid var(--line);
+    background: #fff;
+    color: var(--pine);
+    border-radius: 14px;
+    padding: .78rem 1rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.toolbar {
+    padding: 1rem 1.2rem;
+    display: flex;
+    gap: .75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.search-field {
+    flex: 1;
+    min-width: 260px;
+    position: relative;
+}
+
+.search-field input,
+.filter-field {
+    width: 100%;
+    border: 1.5px solid var(--line);
+    background: #fff;
+    border-radius: 14px;
+    padding: .78rem 1rem;
+    outline: none;
+    font-size: .88rem;
+}
+
+.search-field input {
+    padding-left: 2.55rem;
+}
+
+.search-field span {
+    position: absolute;
+    left: .9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-lt);
+}
+
+.search-field input:focus,
+.filter-field:focus,
+.top-search input:focus {
+    border-color: var(--mint);
+    box-shadow: 0 0 0 3px rgba(82,183,136,.17);
+}
+
+/* TABLE */
+.table-wrap {
+    padding: 0 1.2rem 1.2rem;
+}
+
+.table-responsive {
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.table {
+    margin: 0;
+}
+
+.table thead th {
+    background: #f7faf7;
+    color: var(--pine);
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 1rem .95rem;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+}
+
+.table tbody td {
+    padding: 1rem .95rem;
+    vertical-align: middle;
+    color: var(--text-md);
+    font-size: .9rem;
+    border-color: #eef2eb;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+.user-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(82,183,136,.22), rgba(221,161,94,.18));
+    color: var(--pine);
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.user-name {
+    font-weight: 800;
+    color: var(--text-dk);
+}
+
+.user-id {
+    font-size: .75rem;
+    color: var(--text-lt);
+    margin-top: .15rem;
+}
+
+.role-badge,
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .42rem .65rem;
+    border-radius: 999px;
+    font-size: .74rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.role-admin {
+    background: rgba(27,67,50,.12);
+    color: var(--pine);
+}
+
+.role-vet {
+    background: rgba(82,183,136,.18);
+    color: #2d6a4f;
+}
+
+.role-client {
+    background: rgba(221,161,94,.18);
+    color: #945d18;
+}
+
+.status-active {
+    background: rgba(82,183,136,.16);
+    color: #2d6a4f;
+}
+
+.status-inactive {
+    background: rgba(113,128,150,.14);
+    color: #4a5568;
+}
+
+.status-blocked {
+    background: rgba(220,53,69,.12);
+    color: var(--danger);
+}
+
+.action-group {
+    display: flex;
+    gap: .35rem;
+}
+
+.action-btn {
+    width: 35px;
+    height: 35px;
+    border-radius: 11px;
+    border: 1px solid #edf1ea;
+    background: #f7faf7;
+    color: var(--pine);
+    display: grid;
+    place-items: center;
+    transition: all .16s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    background: rgba(82,183,136,.13);
+}
+
+.action-btn.danger {
+    color: var(--danger);
+}
+
+.pagination-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .95rem 1.2rem 1.25rem;
+    color: var(--text-lt);
+    font-size: .82rem;
+}
+
+/* MODAL */
+.modal-content {
+    border: none;
+    border-radius: 22px;
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--pine-dk), var(--pine), var(--pine-soft));
+    color: #fff;
+    border: none;
+    padding: 1.1rem 1.25rem;
+}
+
+.modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+}
+
+.modal-body {
+    background: var(--cream);
+    padding: 1.25rem;
+}
+
+.modal-footer {
+    background: var(--cream);
+    border-top: 1px solid var(--line);
+}
+
+.form-label {
+    font-size: .75rem;
+    font-weight: 800;
+    color: var(--text-md);
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.form-control,
+.form-select {
+    border-radius: 12px;
+    border: 1.5px solid var(--line);
+    padding: .75rem .9rem;
+    font-size: .9rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--mint);
+    box-shadow: 0 0 0 3px rgba(82,183,136,.17);
+}
+
+/* ANIMACIONES */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stat-card:nth-child(1) { animation-delay: .05s; }
+.stat-card:nth-child(2) { animation-delay: .10s; }
+.stat-card:nth-child(3) { animation-delay: .15s; }
+.stat-card:nth-child(4) { animation-delay: .20s; }
+
+/* RESPONSIVE */
+@media (max-width: 1100px) {
+    .top-actions {
+        display: none;
+    }
+
+    .stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .admin-shell {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        position: relative;
+        width: 100%;
+        min-height: auto;
+        border-radius: 0 0 24px 24px;
+    }
+
+    .sidebar-footer {
+        display: none;
+    }
+
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+
+@media (max-width: 620px) {
+    .main-content {
+        padding: 1rem;
+    }
+
+    .stat-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .topbar,
+    .card-top,
+    .pagination-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .hero-title {
+        font-size: 1.65rem;
+    }
+
+    .toolbar {
+        padding: .95rem;
+    }
+
+    .table-wrap {
+        padding: 0 .95rem .95rem;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="admin-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-inner">
+            <div class="brand-card">
+                <img src="Imagenes/logo.png" alt="Logo Huellitas Vitales">
+                <div>
+                    <div class="brand-name">Huellitas Vitales</div>
+                    <div class="brand-badge">Clínica Veterinaria</div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">Panel global</div>
+            <a href="#" class="nav-link-admin active">
+                <span class="nav-icon">🏠</span>
+                Dashboard
+            </a>
+            <a href="#" class="nav-link-admin">
+                <span class="nav-icon">👥</span>
+                Usuarios
+            </a>
+            <a href="#" class="nav-link-admin">
+                <span class="nav-icon">🐾</span>
+                Mascotas
+            </a>
+            <a href="#" class="nav-link-admin">
+                <span class="nav-icon">🩺</span>
+                Veterinarios
+            </a>
+            <a href="#" class="nav-link-admin">
+                <span class="nav-icon">📅</span>
+                Citas
+            </a>
+            <a href="#" class="nav-link-admin">
+                <span class="nav-icon">📊</span>
+                Reportes
+            </a>
+
+            <div class="sidebar-section">Administración</div>
+            <a href="#" class="nav-link-admin">
+                <span class="nav-icon">🔐</span>
+                Roles y permisos
+            </a>
+            <a href="#" class="nav-link-admin">
+                <span class="nav-icon">⚙️</span>
+                Configuración
+            </a>
+            <a href="login.html" class="nav-link-admin">
+                <span class="nav-icon">🚪</span>
+                Cerrar sesión
+            </a>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-footer-title">Sistema seguro</div>
+                <div class="sidebar-footer-text">
+                    Control de usuarios, roles y estados para proteger la información clínica.
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOPBAR -->
+        <section class="topbar">
+            <div>
+                <div class="hero-badge">
+                    <svg width="9" height="9" viewBox="0 0 10 10">
+                        <circle cx="5" cy="5" r="5" fill="#52B788"/>
+                    </svg>
+                    Administración global
+                </div>
+                <h1 class="hero-title">Panel de administración</h1>
+                <p class="hero-sub">
+                    Controla usuarios, permisos y estados dentro de Huellitas Vitales.
+                </p>
+            </div>
+
+            <div class="top-actions">
+                <div class="top-search">
+                    <span>🔎</span>
+                    <input type="text" placeholder="Buscar en el sistema...">
+                </div>
+
+                <button class="icon-button" title="Notificaciones">🔔</button>
+
+                <div class="profile-mini">
+                    <div class="profile-avatar">A</div>
+                    <div>
+                        <div class="profile-name">Administrador</div>
+                        <div class="profile-role">Acceso global</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STATS -->
+        <section class="stat-grid">
+            <article class="stat-card">
+                <div class="stat-top">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-chip">+12</div>
+                </div>
+                <div class="stat-label">Total de usuarios</div>
+                <div class="stat-number">152</div>
+                <div class="stat-note">Usuarios registrados en la plataforma</div>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-top">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-chip">91%</div>
+                </div>
+                <div class="stat-label">Usuarios activos</div>
+                <div class="stat-number">139</div>
+                <div class="stat-note">Cuentas habilitadas actualmente</div>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-top">
+                    <div class="stat-icon">🩺</div>
+                    <div class="stat-chip">Equipo</div>
+                </div>
+                <div class="stat-label">Veterinarios</div>
+                <div class="stat-number">18</div>
+                <div class="stat-note">Personal médico registrado</div>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-top">
+                    <div class="stat-icon">🔐</div>
+                    <div class="stat-chip">Admin</div>
+                </div>
+                <div class="stat-label">Administradores</div>
+                <div class="stat-number">5</div>
+                <div class="stat-note">Usuarios con permisos globales</div>
+            </article>
+        </section>
+
+        <!-- TABLE CARD -->
+        <section class="content-card">
+            <div class="card-top">
+                <div>
+                    <h2 class="card-title">Gestión de usuarios</h2>
+                    <p class="card-subtitle">
+                        Maquetación de tabla administrativa para consultar, filtrar, editar y controlar usuarios.
+                    </p>
+                </div>
+
+                <button class="btn-main" data-bs-toggle="modal" data-bs-target="#userModal">
+                    <span>＋</span> Nuevo usuario
+                </button>
+            </div>
+
+            <div class="toolbar">
+                <div class="search-field">
+                    <span>🔎</span>
+                    <input type="text" placeholder="Buscar por nombre, correo o ID...">
+                </div>
+
+                <select class="filter-field" style="max-width:190px;">
+                    <option>Todos los roles</option>
+                    <option>Administrador</option>
+                    <option>Veterinario</option>
+                    <option>Cliente</option>
+                </select>
+
+                <select class="filter-field" style="max-width:190px;">
+                    <option>Todos los estados</option>
+                    <option>Activo</option>
+                    <option>Inactivo</option>
+                    <option>Bloqueado</option>
+                </select>
+
+                <button class="btn-soft">Exportar</button>
+            </div>
+
+            <div class="table-wrap">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Correo</th>
+                                <th>Rol</th>
+                                <th>Estado</th>
+                                <th>Registro</th>
+                                <th>Último acceso</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-avatar">AM</div>
+                                        <div>
+                                            <div class="user-name">Ana Mora</div>
+                                            <div class="user-id">ID: USR-001</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>ana.mora@email.com</td>
+                                <td><span class="role-badge role-admin">🔐 Administrador</span></td>
+                                <td><span class="status-badge status-active">● Activo</span></td>
+                                <td>29/06/2026</td>
+                                <td>Hoy, 8:30 a.m.</td>
+                                <td>
+                                    <div class="action-group">
+                                        <button class="action-btn" title="Ver">👁</button>
+                                        <button class="action-btn" title="Editar">✏️</button>
+                                        <button class="action-btn danger" title="Eliminar">🗑</button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-avatar">CR</div>
+                                        <div>
+                                            <div class="user-name">Carlos Rojas</div>
+                                            <div class="user-id">ID: USR-002</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>carlos.rojas@email.com</td>
+                                <td><span class="role-badge role-vet">🩺 Veterinario</span></td>
+                                <td><span class="status-badge status-active">● Activo</span></td>
+                                <td>20/06/2026</td>
+                                <td>Ayer, 5:12 p.m.</td>
+                                <td>
+                                    <div class="action-group">
+                                        <button class="action-btn" title="Ver">👁</button>
+                                        <button class="action-btn" title="Editar">✏️</button>
+                                        <button class="action-btn danger" title="Eliminar">🗑</button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-avatar">LP</div>
+                                        <div>
+                                            <div class="user-name">Laura Pérez</div>
+                                            <div class="user-id">ID: USR-003</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>laura.perez@email.com</td>
+                                <td><span class="role-badge role-client">🐾 Cliente</span></td>
+                                <td><span class="status-badge status-active">● Activo</span></td>
+                                <td>18/06/2026</td>
+                                <td>Hoy, 10:45 a.m.</td>
+                                <td>
+                                    <div class="action-group">
+                                        <button class="action-btn" title="Ver">👁</button>
+                                        <button class="action-btn" title="Editar">✏️</button>
+                                        <button class="action-btn danger" title="Eliminar">🗑</button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-avatar">JM</div>
+                                        <div>
+                                            <div class="user-name">José Méndez</div>
+                                            <div class="user-id">ID: USR-004</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>jose.mendez@email.com</td>
+                                <td><span class="role-badge role-client">🐾 Cliente</span></td>
+                                <td><span class="status-badge status-inactive">● Inactivo</span></td>
+                                <td>10/06/2026</td>
+                                <td>Hace 7 días</td>
+                                <td>
+                                    <div class="action-group">
+                                        <button class="action-btn" title="Ver">👁</button>
+                                        <button class="action-btn" title="Editar">✏️</button>
+                                        <button class="action-btn danger" title="Eliminar">🗑</button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-avatar">RS</div>
+                                        <div>
+                                            <div class="user-name">Ricardo Solís</div>
+                                            <div class="user-id">ID: USR-005</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>ricardo.solis@email.com</td>
+                                <td><span class="role-badge role-client">🐾 Cliente</span></td>
+                                <td><span class="status-badge status-blocked">● Bloqueado</span></td>
+                                <td>01/06/2026</td>
+                                <td>Sin acceso</td>
+                                <td>
+                                    <div class="action-group">
+                                        <button class="action-btn" title="Ver">👁</button>
+                                        <button class="action-btn" title="Editar">✏️</button>
+                                        <button class="action-btn danger" title="Eliminar">🗑</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="pagination-bar">
+                <div>Mostrando 5 de 152 usuarios registrados</div>
+                <div>
+                    <button class="btn-soft" style="padding:.55rem .8rem;">Anterior</button>
+                    <button class="btn-main" style="padding:.55rem .8rem;">Siguiente</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="userModalLabel">Registrar nuevo usuario</h5>
+                    <div style="font-size:.78rem;color:rgba(255,255,255,.62);">
+                        Formulario visual para alta de usuarios administrativos.
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control" placeholder="Nombre">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Apellido</label>
+                        <input type="text" class="form-control" placeholder="Apellido">
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Correo electrónico</label>
+                        <input type="email" class="form-control" placeholder="correo@email.com">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Rol</label>
+                        <select class="form-select">
+                            <option>Cliente</option>
+                            <option>Veterinario</option>
+                            <option>Administrador</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Estado</label>
+                        <select class="form-select">
+                            <option>Activo</option>
+                            <option>Inactivo</option>
+                            <option>Bloqueado</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Observaciones</label>
+                        <textarea class="form-control" rows="3" placeholder="Notas internas del usuario"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-main">Guardar usuario</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="node_modules/@popperjs/core/dist/umd/popper.min.js"></script>
+<script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+
+</body>
+</html>
