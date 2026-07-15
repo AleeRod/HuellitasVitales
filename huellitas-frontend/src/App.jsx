@@ -1,24 +1,24 @@
+import 'bootstrap/dist/css/bootstrap.min.css';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import Login from './pages/Auth/Login';
+import Register from './pages/Auth/Register';
+import DashboardAdmin from './pages/admin/DashboardAdmin';
+import PanelVeterinario from './pages/veterinario/PanelVeterinario';
+import DashboardCliente from './pages/cliente/DashboardCliente';
 
-// Importamos Bootstrap para que esté disponible en toda la aplicación
-import 'bootstrap/dist/css/bootstrap.min.css';
+function App() { 
 
-function App() {
   return (
     <Router>
       <Routes>
-        {/* Ruta principal: Landing Page */}
         <Route path="/" element={<Home />} />
-
-        {/* Ruta de Login */}
         <Route path="/login" element={<Login />} />
-
-        {/* Ruta de Registro */}
         <Route path="/register" element={<Register />} />
+        <Route path="/admin" element={<DashboardAdmin />} />
+        <Route path="/veterinario" element={<PanelVeterinario />} />
+        <Route path="/cliente" element={<DashboardCliente />} />
       </Routes>
     </Router>
   );

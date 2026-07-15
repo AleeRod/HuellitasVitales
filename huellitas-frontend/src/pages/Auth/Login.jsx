@@ -11,7 +11,7 @@ function Login() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // 1. Facebook SDK (Aislado y limpio)
+        // 1. Facebook SDK
         if (!document.getElementById('facebook-jssdk')) {
             window.fbAsyncInit = () => {
                 window.FB.init({
@@ -109,11 +109,11 @@ function Login() {
         }
     };
 
-    const redirigirPorRol = (rol) => {
-        if (rol === 1) navigate('/dashboard-admin');
-        else if (rol === 2) navigate('/dashboard-veterinario');
-        else navigate('/dashboard-cliente');
-    };
+        const redirigirPorRol = (rol) => {
+            if (rol === 1) navigate('/admin');
+            else if (rol === 2) navigate('/veterinario');
+            else navigate('/cliente');
+        };
 
     const handleRipple = (e) => {
         const button = e.currentTarget;
