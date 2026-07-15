@@ -40,29 +40,37 @@ namespace HuellitasVitalesAPI.Controllers
         }
 
         [HttpPost("google")]
+    public async Task<IActionResult> LoginConGoogle([FromBody] LoginSocialRequest request)
+    {
+        // 1. Validar que el request no llegue vacío
+        if (request == null || string.IsNullOrEmpty(request.Token))
+            return BadRequest(new { success = false, mensaje = "El token es requerido." });
 
-        public async Task<IActionResult> LoginConGoogle([FromBody] LoginSocialRequest request)
+        try 
         {
-            if (string.IsNullOrEmpty(request.Token))
-                return BadRequest(new { success = false, mensaje = "El token es requerido." });
-
+            // 2. Llamada al servicio
             var usuario = await _usuarioService.AutenticarGoogleAsync(request.Token);
+            
             if (usuario == null)
-
                 return Unauthorized(new { success = false, mensaje = "Autenticación de Google inválida." });
 
-            // Generar el Token JWT
+            // 3. Generar JWT
             var tokenJwt = _usuarioService.GenerarTokenJWT(usuario);
 
             return Ok(new
             {
                 success = true,
-                mensaje = "¡Bienvenido a Huellitas Vitales!",
+                mensaje = "¡Bienvenido!",
                 token = tokenJwt,
                 usuario = new { usuario.Nombre, usuario.Correo, usuario.IdRol }
             });
         }
-
+        catch (Exception ex)
+        {
+            // AQUÍ ESTÁ LA CLAVE: Si algo explota, enviaremos el mensaje real de vuelta al navegador
+            return StatusCode(500, new { success = false, mensaje = "Error interno: " + ex.Message });
+        }
+    }
 
 
         [HttpPost("local")]

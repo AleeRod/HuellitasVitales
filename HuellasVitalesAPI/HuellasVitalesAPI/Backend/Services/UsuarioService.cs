@@ -100,8 +100,13 @@ namespace HuellitasVitalesAPI.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error de Google en C#: {ex.Message}");
-                return null;
+                // Esto es lo único que nos interesa ver ahora mismo
+                Console.WriteLine("--- ERROR CRÍTICO EN AUTENTICAR GOOGLE ---");
+                Console.WriteLine("Mensaje: " + ex.Message);
+                Console.WriteLine("Stack Trace: " + ex.StackTrace);
+                
+                // Lanzamos la excepción para que el controlador la vea y no devuelva un null silencioso
+                throw; 
             }
         }
 
