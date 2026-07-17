@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { Link, useNavigate } from 'react-router-dom';
-import './Login.css';
+import styles from './Login.module.css';
 
 function Login() {
     const [correo, setCorreo] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    
+    // Estado para notificaciones
+    const [notification, setNotification] = useState({ message: '', type: '' });
+    
     const navigate = useNavigate();
+
+    const triggerNotification = (message, type = 'error') => {
+        setNotification({ message, type });
+        setTimeout(() => setNotification({ message: '', type: '' }), 5000);
+    };
 
     useEffect(() => {
         // 1. Facebook SDK
@@ -31,7 +40,7 @@ function Login() {
     const manejarLoginLocal = async (e) => {
         e.preventDefault();
         if (!correo || !password) {
-            alert("Por favor, ingresa tu correo y contraseña.");
+            triggerNotification("Por favor, ingresa tu correo y contraseña.");
             return;
         }
 
@@ -50,10 +59,10 @@ function Login() {
                 localStorage.setItem('token_huellitas', data.token);
                 redirigirPorRol(data.usuario.idRol);
             } else {
-                alert(data.mensaje || "Error al iniciar sesión.");
+                triggerNotification(data.mensaje || "Error al iniciar sesión.");
             }
         } catch (error) {
-            alert("Problemas conectando con el servidor. Verifica que tu API en C# esté corriendo.");
+            triggerNotification("Problemas conectando con el servidor. Verifica que tu API en C# esté corriendo.");
         } finally {
             setIsLoading(false);
         }
@@ -71,16 +80,16 @@ function Login() {
                 localStorage.setItem('token_huellitas', data.token);
                 redirigirPorRol(data.usuario.idRol);
             } else {
-                alert("Error al autenticar: " + (data.mensaje || "Desconocido"));
+                triggerNotification("Error al autenticar: " + (data.mensaje || "Desconocido"));
             }
         } catch (err) {
-            alert("Problemas conectando con el servidor de Google.");
+            triggerNotification("Problemas conectando con el servidor de Google.");
         }
     };
 
     const loginWithFacebook = () => {
         if (!window.FB) {
-            alert("Facebook aún se está cargando, espera un segundo.");
+            triggerNotification("Facebook aún se está cargando, espera un segundo.");
             return;
         }
         window.FB.login(function (response) {
@@ -102,18 +111,18 @@ function Login() {
                 localStorage.setItem('token_huellitas', data.token);
                 redirigirPorRol(data.usuario.idRol);
             } else {
-                alert("Error al autenticar con Facebook: " + (data.mensaje || "Desconocido"));
+                triggerNotification("Error al autenticar con Facebook: " + (data.mensaje || "Desconocido"));
             }
         } catch (err) {
-            alert("Problemas conectando con el servidor de Facebook.");
+            triggerNotification("Problemas conectando con el servidor de Facebook.");
         }
     };
 
-        const redirigirPorRol = (rol) => {
-            if (rol === 1) navigate('/admin');
-            else if (rol === 2) navigate('/veterinario');
-            else navigate('/cliente');
-        };
+    const redirigirPorRol = (rol) => {
+        if (rol === 1) navigate('/admin');
+        else if (rol === 2) navigate('/veterinario');
+        else navigate('/cliente');
+    };
 
     const handleRipple = (e) => {
         const button = e.currentTarget;
@@ -134,15 +143,15 @@ function Login() {
         <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', margin: 0, padding: 0 }}>
             
             {/* ═══ PANEL IZQUIERDO (HERO) ═══ */}
-            <div className="panel-hero">
-                <div className="hero-badge">
+            <div className={styles['panel-hero']}>
+                <div className={styles['hero-badge']}>
                     <svg width="10" height="10" viewBox="0 0 10 10">
                         <circle cx="5" cy="5" r="5" fill="#52B788" />
                     </svg>
                     Clínica Veterinaria
                 </div>
 
-                <div className="mascot-wrap mb-4">
+                <div className={`${styles['mascot-wrap']} mb-4`}>
                     <svg viewBox="0 0 280 300" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <ellipse cx="88" cy="108" rx="36" ry="50" fill="#8B5E3C" transform="rotate(-15 88 108)" />
                         <ellipse cx="192" cy="108" rx="36" ry="50" fill="#8B5E3C" transform="rotate(15 192 108)" />
@@ -177,10 +186,10 @@ function Login() {
                     </svg>
                 </div>
 
-                <h1 className="hero-title">Tu mascota merece<br />la mejor <span>atención</span></h1>
-                <p className="hero-sub">Accede a fichas clínicas, citas y reportes<br />de salud de tus pacientes en un solo lugar.</p>
+                <h1 className={styles['hero-title']}>Tu mascota merece<br />la mejor <span>atención</span></h1>
+                <p className={styles['hero-sub']}>Accede a fichas clínicas, citas y reportes<br />de salud de tus pacientes en un solo lugar.</p>
 
-                <div className="dots-grid">
+                <div className={styles['dots-grid']}>
                     <span></span><span></span><span></span><span></span><span></span><span></span>
                     <span></span><span></span><span></span><span></span><span></span><span></span>
                     <span></span><span></span><span></span><span></span><span></span><span></span>
@@ -189,24 +198,31 @@ function Login() {
             </div>
 
             {/* ═══ PANEL FORMULARIO ═══ */}
-            <div className="panel-form">
-                <div className="form-card">
+            <div className={styles['panel-form']}>
+                <div className={styles['form-card']}>
                     
-                    <div className="paw-logo">
-                        <div className="paw-icon">
+                    {notification.message && (
+                        <div className={`${styles.notification} ${notification.type === 'error' ? styles.notifError : styles.notifSuccess}`}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            <span>{notification.message}</span>
+                        </div>
+                    )}
+                    
+                    <div className={styles['paw-logo']}>
+                        <div className={styles['paw-icon']}>
                             <img src="/Imagenes/logo.png" alt="Logo" width="100" height="65" />
                         </div>
-                        <span className="brand-name">Huellitas Vitales</span>
+                        <span className={styles['brand-name']}>Huellitas Vitales</span>
                     </div>
 
-                    <h2 className="form-heading">Bienvenidos a la mejor clínica</h2>
-                    <p className="form-sub">Ingresa tus datos para continuar</p>
+                    <h2 className={styles['form-heading']}>Bienvenidos a la mejor clínica</h2>
+                    <p className={styles['form-sub']}>Ingresa tus datos para continuar</p>
 
                     <form onSubmit={manejarLoginLocal} noValidate>
                         
-                        <div className="field-group">
+                        <div className={styles['field-group']}>
                             <label htmlFor="email">Correo electrónico</label>
-                            <div className="input-wrap">
+                            <div className={styles['input-wrap']}>
                                 <input 
                                     type="email" 
                                     id="email" 
@@ -216,7 +232,7 @@ function Login() {
                                     value={correo}
                                     onChange={(e) => setCorreo(e.target.value)}
                                 />
-                                <span className="input-icon">
+                                <span className={styles['input-icon']}>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <rect x="2" y="4" width="20" height="16" rx="2" />
                                         <path d="m2 7 10 7 10-7" />
@@ -225,9 +241,9 @@ function Login() {
                             </div>
                         </div>
 
-                        <div className="field-group">
+                        <div className={styles['field-group']}>
                             <label htmlFor="password">Contraseña</label>
-                            <div className="input-wrap">
+                            <div className={styles['input-wrap']}>
                                 <input 
                                     type={showPassword ? "text" : "password"} 
                                     id="password" 
@@ -237,7 +253,7 @@ function Login() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
-                                <span className="input-icon">
+                                <span className={styles['input-icon']}>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <rect x="3" y="11" width="18" height="11" rx="2" />
                                         <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -245,7 +261,7 @@ function Login() {
                                 </span>
                                 <button 
                                     type="button" 
-                                    className="toggle-pass" 
+                                    className={styles['toggle-pass']} 
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -266,17 +282,17 @@ function Login() {
                             </div>
                         </div>
 
-                        <div className="form-extras">
-                            <label className="custom-check">
+                        <div className={styles['form-extras']}>
+                            <label className={styles['custom-check']}>
                                 <input type="checkbox" id="remember" />
                                 Recordarme
                             </label>
-                            <Link to="#" className="forgot-link">¿Olvidaste tu clave?</Link>
+                            <Link to="#" className={styles['forgot-link']}>¿Olvidaste tu clave?</Link>
                         </div>
 
                         <button 
                             type="submit" 
-                            className="btn-login" 
+                            className={styles['btn-login']} 
                             disabled={isLoading} 
                             style={{ opacity: isLoading ? 0.7 : 1 }}
                             onClick={handleRipple}
@@ -290,15 +306,15 @@ function Login() {
                         </button>
                     </form>
 
-                    <div className="divider">o continúa con</div>
+                    <div className={styles['divider']}>o continúa con</div>
 
-                    <div className="social-row">
+                    <div className={styles['social-row']}>
                         <GoogleLogin
                             onSuccess={credentialResponse => {
                                 handleGoogleResponse(credentialResponse);
                             }}
                             onError={() => {
-                                alert("Error de autenticación con Google");
+                                triggerNotification("Error de autenticación con Google");
                             }}
                             useOneTap={false}
                             type="standard"
@@ -307,7 +323,7 @@ function Login() {
                             shape="rectangular"  
                         />
 
-                        <button type="button" className="btn-social" onClick={loginWithFacebook}>
+                        <button type="button" className={styles['btn-social']} onClick={loginWithFacebook}>
                             <svg width="18" height="18" viewBox="0 0 24 24">
                                 <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                             </svg>
@@ -315,7 +331,7 @@ function Login() {
                         </button>
                     </div>
 
-                    <p className="register-txt">
+                    <p className={styles['register-txt']}>
                         ¿No tienes cuenta? <Link to="/register">Regístrate gratis</Link>
                     </p>
 
