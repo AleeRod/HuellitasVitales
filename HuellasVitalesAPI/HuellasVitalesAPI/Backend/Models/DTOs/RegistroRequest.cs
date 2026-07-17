@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace HuellitasVitalesAPI.Models.DTOs
+namespace HuellasVitalesAPI.Backend.Models.DTOs
 {
     public class RegistroRequest
     {

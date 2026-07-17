@@ -40,6 +40,7 @@ builder.Services.AddDbContext<ConexionDB>(options =>
 
 // 4. Inyección de Dependencias
 builder.Services.AddScoped<UsuarioService>();
+builder.Services.AddScoped<ComercioService>();
 
 var app = builder.Build();
 

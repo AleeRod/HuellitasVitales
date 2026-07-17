@@ -12,11 +12,17 @@ namespace HuellitasVitalesAPI.Data
         public DbSet<Rol> Roles { get; set; }
         public DbSet<Veterinario> Veterinarios { get; set; }
 
+        public DbSet<Comercio> Comercios { get; set; }
+
+        public DbSet<PersonaLegal> PersonasLegales { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Usuario>().ToTable("USUARIO");
             modelBuilder.Entity<Rol>().ToTable("ROL");
             modelBuilder.Entity<Veterinario>().ToTable("VETERINARIO");
+            modelBuilder.Entity<Comercio>().ToTable("COMERCIO");
+            modelBuilder.Entity<PersonaLegal>().ToTable("PERSONA_LEGAL");
         }
     }
 }

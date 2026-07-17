@@ -1,6 +1,20 @@
 @HuellasVitalesAPI_HostAddress = http://localhost:5010
 
-GET {{HuellasVitalesAPI_HostAddress}}/weatherforecast/
-Accept: application/json
+### Crear Solicitud Exitosa (Usuario Nuevo o Nombre Nuevo)
+POST {{HuellasVitalesAPI_HostAddress}}/api/comercio/solicitud
+Content-Type: application/json
 
-###
+{
+  "idUsuario": 1,
+  "idTipoPersona": 2,
+  "identificacion": "4-000-999999", 
+  "razonSocial": "Veterinaria Nueva S.A.",
+  "comercios": [
+    {
+      "idTipoComercio": 1,
+      "nombreComercial": "Veterinaria El Roble",
+      "direccion": "San Pedro, frente al parque",
+      "telefono": "2222-3333"
+    }
+  ]
+}

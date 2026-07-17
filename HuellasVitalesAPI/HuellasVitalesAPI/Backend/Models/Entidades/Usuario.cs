@@ -15,8 +15,12 @@ namespace HuellasVitalesAPI.Backend.Models.Entidades
         public string Proveedor_Auth { get; set; } = "Local";
         public string? Proveedor_Id { get; set; }
 
-        public int IdRol { get; set; }
-        public bool Activo { get; set; } = true;
+        // Se cambia a byte para coincidir con TINYINT de la base de datos
+        public byte IdRol { get; set; }
+        
+        // Reemplaza a 'Activo' (1 = ACTIVA, 2 = INVITADA, 3 = SUSPENDIDA)
+        public byte IdEstadoCuenta { get; set; } = 1; 
+        
         public DateTime FechaRegistro { get; set; } = DateTime.Now;
     }
 }

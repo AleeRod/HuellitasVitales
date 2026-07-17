@@ -1,9 +1,7 @@
 ﻿using Google.Apis.Auth;
 using HuellasVitalesAPI.Backend.Models.DTOs;
-using HuellitasVitalesAPI.Models.DTOs;
 using HuellitasVitalesAPI.Services;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
 
 namespace HuellitasVitalesAPI.Controllers
 {
@@ -25,12 +23,10 @@ namespace HuellitasVitalesAPI.Controllers
             try
             {
                 var resultado = _usuarioService.RegistrarNuevoUsuario(request);
-
                 if (!resultado.Exito)
                 {
                     return BadRequest(new { mensaje = resultado.Mensaje });
                 }
-
                 return Ok(new { mensaje = resultado.Mensaje });
             }
             catch (Exception ex)
@@ -40,38 +36,34 @@ namespace HuellitasVitalesAPI.Controllers
         }
 
         [HttpPost("google")]
-    public async Task<IActionResult> LoginConGoogle([FromBody] LoginSocialRequest request)
-    {
-        // 1. Validar que el request no llegue vacío
-        if (request == null || string.IsNullOrEmpty(request.Token))
-            return BadRequest(new { success = false, mensaje = "El token es requerido." });
-
-        try 
+        public async Task<IActionResult> LoginConGoogle([FromBody] LoginSocialRequest request)
         {
-            // 2. Llamada al servicio
-            var usuario = await _usuarioService.AutenticarGoogleAsync(request.Token);
-            
-            if (usuario == null)
-                return Unauthorized(new { success = false, mensaje = "Autenticación de Google inválida." });
-
-            // 3. Generar JWT
-            var tokenJwt = _usuarioService.GenerarTokenJWT(usuario);
-
-            return Ok(new
+            // 1. Validar que el request no llegue vacío
+            if (request == null || string.IsNullOrEmpty(request.Token))
+                return BadRequest(new { success = false, mensaje = "El token es requerido." });
+            try 
             {
-                success = true,
-                mensaje = "¡Bienvenido!",
-                token = tokenJwt,
-                usuario = new { usuario.Nombre, usuario.Correo, usuario.IdRol }
-            });
-        }
-        catch (Exception ex)
-        {
-            // AQUÍ ESTÁ LA CLAVE: Si algo explota, enviaremos el mensaje real de vuelta al navegador
-            return StatusCode(500, new { success = false, mensaje = "Error interno: " + ex.Message });
-        }
-    }
+                // 2. Llamada al servicio
+                var usuario = await _usuarioService.AutenticarGoogleAsync(request.Token);
 
+                if (usuario == null)
+                    return Unauthorized(new { success = false, mensaje = "Autenticación de Google inválida." });
+
+                // 3. Generar JWT
+                var tokenJwt = _usuarioService.GenerarTokenJWT(usuario);
+                return Ok(new
+                {
+                    success = true,
+                    mensaje = "¡Bienvenido!",
+                    token = tokenJwt,
+                    usuario = new { usuario.Nombre, usuario.Correo, usuario.IdRol }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, mensaje = "Error interno: " + ex.Message });
+            }
+        }
 
         [HttpPost("local")]
         public async Task<IActionResult> LoginLocal([FromBody] LoginRequest request)
@@ -79,12 +71,10 @@ namespace HuellitasVitalesAPI.Controllers
             try
             {
                 var usuario = await _usuarioService.AutenticarLocalAsync(request);
-
                 if (usuario == null)
                     return Unauthorized(new { success = false, mensaje = "Correo o contraseña incorrectos." });
 
                 var tokenJwt = _usuarioService.GenerarTokenJWT(usuario);
-
                 return Ok(new
                 {
                     success = true,
@@ -110,14 +100,12 @@ namespace HuellitasVitalesAPI.Controllers
                 }
 
                 var usuario = await _usuarioService.AutenticarFacebookAsync(request.Token);
-
                 if (usuario == null)
                 {
                     return Unauthorized(new { success = false, mensaje = "No se pudo obtener información del usuario de Facebook." });
                 }
 
                 var jwtToken = _usuarioService.GenerarTokenJWT(usuario);
-
                 return Ok(new
                 {
                     success = true,

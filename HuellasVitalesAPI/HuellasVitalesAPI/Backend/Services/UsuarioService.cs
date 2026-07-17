@@ -2,7 +2,7 @@
 using Google.Apis.Auth;
 using HuellasVitalesAPI.Backend.Models.Entidades;
 using HuellitasVitalesAPI.Data;
-using HuellitasVitalesAPI.Models.DTOs;
+using HuellasVitalesAPI.Backend.Models.DTOs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -21,7 +21,7 @@ namespace HuellitasVitalesAPI.Services
         public UsuarioService(ConexionDB context, IConfiguration config)
         {
             _context = context;
-          _config = config;
+            _config = config;
         }
 
         public (bool Exito, string Mensaje) RegistrarNuevoUsuario(RegistroRequest request)
@@ -42,7 +42,7 @@ namespace HuellitasVitalesAPI.Services
                 PasswordHash = contraseñaHasheada,
                 Proveedor_Auth = "Local",
                 IdRol = 3, // Rol Cliente
-                Activo = true,
+                IdEstadoCuenta = 1, // 1 = ACTIVA (Reemplaza a Activo = true)
                 FechaRegistro = DateTime.Now
             };
 
@@ -78,7 +78,7 @@ namespace HuellitasVitalesAPI.Services
                         Proveedor_Auth = "Google",
                         Proveedor_Id = payload.Subject,
                         IdRol = 3,
-                        Activo = true,
+                        IdEstadoCuenta = 1, // ACTIVA
                         FechaRegistro = DateTime.Now
                     };
 
@@ -100,12 +100,9 @@ namespace HuellitasVitalesAPI.Services
             }
             catch (Exception ex)
             {
-                // Esto es lo único que nos interesa ver ahora mismo
                 Console.WriteLine("--- ERROR CRÍTICO EN AUTENTICAR GOOGLE ---");
                 Console.WriteLine("Mensaje: " + ex.Message);
                 Console.WriteLine("Stack Trace: " + ex.StackTrace);
-                
-                // Lanzamos la excepción para que el controlador la vea y no devuelva un null silencioso
                 throw; 
             }
         }
@@ -116,6 +113,12 @@ namespace HuellitasVitalesAPI.Services
             var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Correo == request.Correo);
 
             if (usuario == null) return null;
+
+            // Validar que el usuario no esté suspendido o como invitado temporal
+            if (usuario.IdEstadoCuenta != 1)
+            {
+                throw new Exception("Esta cuenta no se encuentra activa.");
+            }
 
             if (usuario.Proveedor_Auth == "Google" && string.IsNullOrEmpty(usuario.PasswordHash))
             {
@@ -137,10 +140,10 @@ namespace HuellitasVitalesAPI.Services
 
             var claims = new[]
             {
-            new Claim(JwtRegisteredClaimNames.Sub, usuario.IdUsuario.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, usuario.Correo),
-            new Claim("rol", usuario.IdRol.ToString())
-        };
+                new Claim(JwtRegisteredClaimNames.Sub, usuario.IdUsuario.ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, usuario.Correo),
+                new Claim("rol", usuario.IdRol.ToString())
+            };
 
             var token = new JwtSecurityToken(
                 claims: claims,
@@ -178,7 +181,7 @@ namespace HuellitasVitalesAPI.Services
                         Proveedor_Auth = "Facebook",
                         Proveedor_Id = fbUser.Id,
                         IdRol = 3,
-                        Activo = true,
+                        IdEstadoCuenta = 1, // ACTIVA
                         FechaRegistro = DateTime.Now
                     };
 
@@ -207,6 +210,7 @@ namespace HuellitasVitalesAPI.Services
             }
         }
     }
+
     public class FacebookTokenResponse
     {
         [JsonPropertyName("id")]
