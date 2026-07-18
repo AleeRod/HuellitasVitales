@@ -1,0 +1,182 @@
+/* ============================================================
+   Contenedor: fija la pila de toasts en la esquina superior derecha
+   ============================================================ */
+.container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 380px;
+    width: calc(100% - 32px);
+    pointer-events: none;
+}
+
+@media (max-width: 480px) {
+    .container {
+        top: 12px;
+        right: 12px;
+        left: 12px;
+        max-width: none;
+    }
+}
+
+/* ============================================================
+   Tarjeta del toast
+   ============================================================ */
+.toast {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 40px 14px 14px;
+    border-radius: 14px;
+    background: #FFFFFF;
+    box-shadow: 0 8px 24px rgba(23, 43, 45, 0.14), 0 2px 6px rgba(23, 43, 45, 0.08);
+    overflow: hidden;
+    pointer-events: auto;
+    animation: slideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast.closing {
+    animation: slideOut 0.22s ease-in forwards;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(24px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+        max-height: 200px;
+    }
+    to {
+        opacity: 0;
+        transform: translateX(16px) scale(0.98);
+        max-height: 0;
+        margin-top: -12px;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+}
+
+/* ============================================================
+   Icono circular con color según tipo
+   ============================================================ */
+.iconWrap {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+}
+
+.iconWrap svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ============================================================
+   Texto
+   ============================================================ */
+.body {
+    flex: 1;
+    min-width: 0;
+}
+
+.title {
+    margin: 0 0 2px;
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: 0.1px;
+    color: #17232B;
+}
+
+.message {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.4;
+    color: #4B5A63;
+    word-break: break-word;
+}
+
+/* ============================================================
+   Botón de cerrar
+   ============================================================ */
+.closeBtn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: transparent;
+    color: #9AA6AC;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.closeBtn:hover {
+    background: #F1F4F5;
+    color: #4B5A63;
+}
+
+.closeBtn svg {
+    width: 13px;
+    height: 13px;
+}
+
+/* ============================================================
+   Barra de progreso inferior (se vacía durante "duration")
+   ============================================================ */
+.progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    transform-origin: left;
+    animation: shrink linear forwards;
+}
+
+@keyframes shrink {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+}
+
+/* ============================================================
+   Variantes por tipo
+   ============================================================ */
+.success .iconWrap { background: #E8F7F0; color: #1F9D6C; }
+.success .progress { background: #1F9D6C; }
+.toast.success { border-left: 3px solid #1F9D6C; }
+
+.error .iconWrap { background: #FCEBE7; color: #D64F31; }
+.error .progress { background: #D64F31; }
+.toast.error { border-left: 3px solid #D64F31; }
+
+.warning .iconWrap { background: #FBF1DD; color: #C7930B; }
+.warning .progress { background: #C7930B; }
+.toast.warning { border-left: 3px solid #C7930B; }
+
+.info .iconWrap { background: #E7F1F4; color: #2C7A99; }
+.info .progress { background: #2C7A99; }
+.toast.info { border-left: 3px solid #2C7A99; }

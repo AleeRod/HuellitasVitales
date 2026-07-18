@@ -7,12 +7,14 @@ import Register from './pages/Auth/Register';
 import DashboardAdmin from './pages/admin/DashboardAdmin';
 import PanelVeterinario from './pages/veterinario/PanelVeterinario';
 import DashboardCliente from './pages/cliente/DashboardCliente';
+import SolicitudComercio from './pages/SolicitudComercio/SolicitudComercio';
 
 function App() { 
 
   return (
     <Router>
       <Routes>
+        <Route path="/SolicitudComercio" element={<SolicitudComercio />} />
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

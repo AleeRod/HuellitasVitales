@@ -17,7 +17,7 @@ const CommercePromo = () => {
           </p>
 
           <button 
-            onClick={() => navigate('/register-business')} 
+            onClick={() => navigate('/SolicitudComercio')} 
             className="btn-solid"
             style={{ marginTop: '2.5rem' }}
           >
