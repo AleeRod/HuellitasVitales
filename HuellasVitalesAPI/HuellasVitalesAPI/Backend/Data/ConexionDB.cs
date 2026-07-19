@@ -11,6 +11,9 @@ namespace HuellitasVitalesAPI.Data
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Rol> Roles { get; set; }
         public DbSet<Veterinario> Veterinarios { get; set; }
+        public DbSet<Producto> Productos { get; set; }
+        
+        public DbSet<CategoriaProductoCat> CategoriasProductoCat { get; set; }
 
         public DbSet<Comercio> Comercios { get; set; }
 
@@ -23,6 +26,8 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<Veterinario>().ToTable("VETERINARIO");
             modelBuilder.Entity<Comercio>().ToTable("COMERCIO");
             modelBuilder.Entity<PersonaLegal>().ToTable("PERSONA_LEGAL");
+            modelBuilder.Entity<CategoriaProductoCat>().ToTable("CATEGORIA_PRODUCTO_CAT");
+            modelBuilder.Entity<Producto>().ToTable("PRODUCTO");
         }
     }
 }
