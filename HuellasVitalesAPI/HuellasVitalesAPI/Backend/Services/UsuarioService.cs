@@ -24,6 +24,26 @@ namespace HuellitasVitalesAPI.Services
             _config = config;
         }
 
+        // ─── TAREA 3: Obtener el perfil público de un usuario ───
+        public async Task<PerfilUsuarioDTO?> ObtenerPerfilAsync(int idUsuario)
+        {
+            var u = await _context.Usuarios.FirstOrDefaultAsync(x => x.IdUsuario == idUsuario);
+            if (u == null) return null;
+
+            return new PerfilUsuarioDTO
+            {
+                IdUsuario = u.IdUsuario,
+                Nombre = u.Nombre,
+                Apellidos = u.Apellidos,
+                Correo = u.Correo,
+                Telefono = u.Telefono,
+                IdRol = u.IdRol,
+                IdEstadoCuenta = u.IdEstadoCuenta,
+                Proveedor = u.Proveedor_Auth,
+                FechaRegistro = u.FechaRegistro
+            };
+        }
+
         public (bool Exito, string Mensaje) RegistrarNuevoUsuario(RegistroRequest request)
         {
             string contraseñaHasheada = BCrypt.Net.BCrypt.HashPassword(request.Password);
