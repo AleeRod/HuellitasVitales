@@ -35,10 +35,10 @@ steps:
 # ==========================================
 # 2. COMPILACIÓN DEL FRONTEND (React)
 # ==========================================
-- task: NodeTool@0
+- task: UseNode@1
   displayName: 'Instalar Node.js para React'
   inputs:
-    versionSpec: '18.x' # Puedes cambiar a 20.x si usan una versión más reciente
+    version: '18.x'
 
 - script: |
     npm install
