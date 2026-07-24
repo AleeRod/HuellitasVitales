@@ -1,5 +1,5 @@
 trigger:
-- main # Asegúrate de que esta sea tu rama principal (o usa 'develop' si están integrando ahí)
+- Landing-Page # Asegúrate de que esta sea tu rama principal (o usa 'develop' si están integrando ahí)
 
 pool:
   vmImage: 'ubuntu-latest'
