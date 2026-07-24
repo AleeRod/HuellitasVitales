@@ -1,0 +1,64 @@
+trigger:
+- main # Asegúrate de que esta sea tu rama principal (o usa 'develop' si están integrando ahí)
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+# ==========================================
+# 1. COMPILACIÓN DEL BACKEND (ASP.NET Core)
+# ==========================================
+- task: DotNetCoreCLI@2
+  displayName: 'Restaurar dependencias del Backend'
+  inputs:
+    command: 'restore'
+    projects: '**/*.csproj'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Compilar la API'
+  inputs:
+    command: 'build'
+    projects: '**/*.csproj'
+    arguments: '--configuration $(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publicar Backend (Preparar para despliegue)'
+  inputs:
+    command: 'publish'
+    publishWebProjects: true
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/backend'
+    zipAfterPublish: true
+
+# ==========================================
+# 2. COMPILACIÓN DEL FRONTEND (React)
+# ==========================================
+- task: NodeTool@0
+  displayName: 'Instalar Node.js para React'
+  inputs:
+    versionSpec: '18.x' # Puedes cambiar a 20.x si usan una versión más reciente
+
+- script: |
+    npm install
+    npm run build
+  workingDirectory: 'huellitas-frontend' # ⚠️ IMPORTANTE: Cambia 'ClientApp' por el nombre exacto de la carpeta donde está el package.json de React
+  displayName: 'Instalar paquetes y Compilar Frontend'
+
+- task: CopyFiles@2
+  displayName: 'Copiar build de React'
+  inputs:
+    SourceFolder: 'huellitas-frontend/dist' # ⚠️ IMPORTANTE: Cambia 'ClientApp' por tu carpeta. Usa /dist si usan Vite, o /build si usan Create React App.
+    Contents: '**'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)/frontend'
+
+# ==========================================
+# 3. PUBLICAR ARTEFACTOS (Para el Release)
+# ==========================================
+- task: PublishBuildArtifacts@1
+  displayName: 'Publicar Artefactos del Proyecto'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
