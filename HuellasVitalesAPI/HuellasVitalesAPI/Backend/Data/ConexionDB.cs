@@ -8,13 +8,11 @@ namespace HuellitasVitalesAPI.Data
         public ConexionDB(DbContextOptions<ConexionDB> options) : base(options) { }
 
         // MAPEAR TABLAS DE DATOS
-        public DbSet<Usuario> Usuarios { get; set; }
-        public DbSet<Rol> Roles { get; set; }
-        public DbSet<Veterinario> Veterinarios { get; set; }
-
-        public DbSet<Comercio> Comercios { get; set; }
-
-        public DbSet<PersonaLegal> PersonasLegales { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; } = null!;
+        public DbSet<Rol> Roles { get; set; } = null!;
+        public DbSet<Veterinario> Veterinarios { get; set; } = null!;
+        public DbSet<Comercio> Comercios { get; set; } = null!;
+        public DbSet<PersonaLegal> PersonasLegales { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
