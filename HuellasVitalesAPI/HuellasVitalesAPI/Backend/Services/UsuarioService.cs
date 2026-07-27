@@ -63,7 +63,7 @@ namespace HuellitasVitalesAPI.Services
                 Proveedor_Auth = "Local",
                 IdRol = 3, // Rol Cliente
                 IdEstadoCuenta = 1, // 1 = ACTIVA (Reemplaza a Activo = true)
-                FechaRegistro = DateTime.Now
+                FechaRegistro = DateTime.UtcNow
             };
 
             _context.Usuarios.Add(nuevoUsuario);
