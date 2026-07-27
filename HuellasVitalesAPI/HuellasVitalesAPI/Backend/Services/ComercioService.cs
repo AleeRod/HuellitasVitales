@@ -64,7 +64,7 @@ namespace HuellitasVitalesAPI.Services
                         Direccion = comDTO.Direccion,
                         Telefono = comDTO.Telefono,
                         IdEstadoSolicitud = 1,
-                        FechaSolicitud = DateTime.Now
+                        FechaSolicitud = DateTime.UtcNow
                     });
                 }
 
@@ -99,7 +99,7 @@ namespace HuellitasVitalesAPI.Services
                     return (false, "Este comercio ya se encuentra aprobado.", 409);
 
                 comercio.IdEstadoSolicitud = 2;              // 2 = APROBADO
-                comercio.FechaResolucion = DateTime.Now;
+                comercio.FechaResolucion = DateTime.UtcNow; // Fecha de resolución
                 comercio.IdUsuarioResolvio = idAdmin;
 
                 await _context.SaveChangesAsync();

@@ -99,7 +99,7 @@ namespace HuellitasVitalesAPI.Services
                         Proveedor_Id = payload.Subject,
                         IdRol = 3,
                         IdEstadoCuenta = 1, // ACTIVA
-                        FechaRegistro = DateTime.Now
+                        FechaRegistro = DateTime.UtcNow
                     };
 
                     _context.Usuarios.Add(usuario);
@@ -167,7 +167,7 @@ namespace HuellitasVitalesAPI.Services
 
             var token = new JwtSecurityToken(
                 claims: claims,
-                expires: DateTime.Now.AddHours(2),
+                expires: DateTime.UtcNow.AddHours(2),
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
@@ -202,7 +202,7 @@ namespace HuellitasVitalesAPI.Services
                         Proveedor_Id = fbUser.Id,
                         IdRol = 3,
                         IdEstadoCuenta = 1, // ACTIVA
-                        FechaRegistro = DateTime.Now
+                        FechaRegistro = DateTime.UtcNow
                     };
 
                     _context.Usuarios.Add(usuario);
