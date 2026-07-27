@@ -15,7 +15,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("PermitirFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.SetIsOriginAllowed(origin =>
+                origin == "http://localhost:5173" ||
+                (origin.StartsWith("https://huellitas-vitales") && origin.EndsWith(".vercel.app"))
+              )
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
