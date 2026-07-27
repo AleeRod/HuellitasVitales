@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styles from './Register.module.css';
+import { API_BASE } from '../../api/config.js';
 
 function Register() {
     
