@@ -56,7 +56,7 @@ function Login() {
 
             const data = await response.json();
 
-                if (res.ok && data.success) {
+                if (response.ok && data.success) {
                 // Guarda el token y los datos del usuario
                 localStorage.setItem('token_huellitas', data.token);
                 localStorage.setItem('usuario_huellitas', JSON.stringify(data.usuario));
