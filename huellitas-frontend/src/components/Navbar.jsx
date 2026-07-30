@@ -1,7 +1,51 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const [usuario, setUsuario] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Cargar usuario del localStorage al iniciar
+  useEffect(() => {
+    const usuarioGuardado = localStorage.getItem('usuario_huellitas');
+    if (usuarioGuardado) {
+      setUsuario(JSON.parse(usuarioGuardado));
+    }
+  }, []);
+
+  // Cerrar el dropdown si se hace clic fuera de él
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Función para redirigir según el rol
+  const irAlPanel = () => {
+    if (!usuario) return;
+    const rol = usuario.idRol;
+    
+    if (rol === 1) navigate('/admin');
+    else if (rol === 2) navigate('/veterinario');
+    else navigate('/cliente');
+    setDropdownOpen(false);
+  };
+
+  // Cerrar sesión
+  const cerrarSesion = () => {
+    localStorage.removeItem('token_huellitas');
+    localStorage.removeItem('usuario_huellitas');
+    setUsuario(null);
+    setDropdownOpen(false);
+    navigate('/');
+  };
+
   return (
     <nav className="landing-nav">
       <div className="landing-brand">
@@ -19,12 +63,152 @@ const Navbar = () => {
         <a href="#contacto" className="nav-item-link">Contacto</a>
       </div>
       
-      <div className="landing-nav-links">
-        <Link to="/login" className="btn-outline">Iniciar Sesión</Link>
-        <Link to="/register" className="btn-solid">Registrarse</Link>
+      <div className="landing-nav-links" ref={dropdownRef}>
+        {usuario ? (
+          // 🟢 CONTENEDOR DEL DROPDOWN DE USUARIO
+          <div className="user-dropdown-container" style={{ position: 'relative' }}>
+            
+            {/* Botón principal del perfil */}
+            <button 
+              onClick={() => setDropdownOpen(!dropdownOpen)} 
+              className="user-menu-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                background: 'rgba(82, 183, 136, 0.15)',
+                border: '1px solid #52B788',
+                padding: '6px 14px',
+                borderRadius: '30px',
+                cursor: 'pointer',
+                color: '#fff',
+                fontFamily: 'inherit',
+                fontWeight: '600'
+              }}
+            >
+              <div style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                backgroundColor: '#52B788',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}>
+                {usuario.nombre ? usuario.nombre.charAt(0).toUpperCase() : 'U'}
+              </div>
+              <span>{usuario.nombre ? usuario.nombre.split(' ')[0] : 'Usuario'}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </button>
+
+            {/* Menú Desplegable (Dropdown) */}
+            {dropdownOpen && (
+              <div className="dropdown-menu-custom" style={{
+                position: 'absolute',
+                right: 0,
+                top: '45px',
+                background: '#1a2e26',
+                border: '1px solid rgba(82, 183, 136, 0.3)',
+                borderRadius: '12px',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+                width: '230px',
+                padding: '8px 0',
+                zIndex: 1000,
+                display: 'flex',
+                flexDirection: 'column'
+              }}>
+                <div style={{ padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '5px' }}>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#a0aec0' }}>Conectado como</p>
+                  <p style={{ margin: 0, fontSize: '13px', fontWeight: 'bold', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {usuario.correo || usuario.nombre}
+                  </p>
+                </div>
+
+                {/* Opción: Mi Perfil */}
+                <Link 
+                  to="/perfil" 
+                  onClick={() => setDropdownOpen(false)}
+                  style={dropdownItemStyle}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '10px', verticalAlign: 'middle' }}>
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  Mi Perfil
+                </Link>
+
+                {/* Opción: Mi Carrito (Marketplace) */}
+                <Link 
+                  to="/carrito" 
+                  onClick={() => setDropdownOpen(false)}
+                  style={dropdownItemStyle}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '10px', verticalAlign: 'middle' }}>
+                    <circle cx="9" cy="21" r="1"></circle>
+                    <circle cx="20" cy="21" r="1"></circle>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                  </svg>
+                  Mi Carrito
+                </Link>
+
+                {/* Opción: Ir al Panel */}
+                <button 
+                  onClick={irAlPanel}
+                  style={{ ...dropdownItemStyle, background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '10px' }}>
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                  <span>Panel ({usuario.idRol === 1 ? 'Admin' : usuario.idRol === 2 ? 'Veterinario' : 'Cliente'})</span>
+                </button>
+
+                <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.1)', margin: '5px 0' }}></div>
+
+                {/* Opción: Cerrar Sesión */}
+                <button 
+                  onClick={cerrarSesion}
+                  style={{ ...dropdownItemStyle, color: '#ff6b6b', background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '10px' }}>
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  Cerrar Sesión
+                </button>
+              </div>
+            )}
+
+          </div>
+        ) : (
+          // 🔴 VISTA ANÓNIMA
+          <>
+            <Link to="/login" className="btn-outline">Iniciar Sesión</Link>
+            <Link to="/register" className="btn-solid">Registrarse</Link>
+          </>
+        )}
       </div>
     </nav>
   );
+};
+
+// Estilo auxiliar optimizado para las opciones con iconos
+const dropdownItemStyle = {
+  padding: '10px 16px',
+  color: '#e2e8f0',
+  textDecoration: 'none',
+  fontSize: '14px',
+  display: 'flex',
+  alignItems: 'center',
+  transition: 'background 0.2s',
+  fontFamily: 'inherit'
 };
 
 export default Navbar;

@@ -56,9 +56,13 @@ function Login() {
 
             const data = await response.json();
 
-            if (response.ok && data.success) {
+                if (res.ok && data.success) {
+                // Guarda el token y los datos del usuario
                 localStorage.setItem('token_huellitas', data.token);
-                redirigirPorRol(data.usuario.idRol);
+                localStorage.setItem('usuario_huellitas', JSON.stringify(data.usuario));
+                
+                // Redirige a la Landing Page
+                navigate('/');
             } else {
                 triggerNotification(data.mensaje || "Error al iniciar sesión.");
             }
@@ -77,9 +81,13 @@ function Login() {
                 body: JSON.stringify({ token: response.credential })
             });
             const data = await res.json();
-            if (res.ok && data.success) {
+                if (res.ok && data.success) {
+                // Guarda el token y los datos del usuario
                 localStorage.setItem('token_huellitas', data.token);
-                redirigirPorRol(data.usuario.idRol);
+                localStorage.setItem('usuario_huellitas', JSON.stringify(data.usuario));
+                
+                // Redirige a la Landing Page
+                navigate('/');
             } else {
                 triggerNotification("Error al autenticar: " + (data.mensaje || "Desconocido"));
             }
@@ -109,8 +117,12 @@ function Login() {
             });
             const data = await res.json();
             if (res.ok && data.success) {
+                // Guarda el token y los datos del usuario
                 localStorage.setItem('token_huellitas', data.token);
-                redirigirPorRol(data.usuario.idRol);
+                localStorage.setItem('usuario_huellitas', JSON.stringify(data.usuario));
+                
+                // Redirige a la Landing Page
+                navigate('/');
             } else {
                 triggerNotification("Error al autenticar con Facebook: " + (data.mensaje || "Desconocido"));
             }
