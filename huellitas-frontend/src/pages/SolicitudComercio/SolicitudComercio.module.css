@@ -1,0 +1,231 @@
+/* Fondo global con gradiente animado */
+.solicitudLayout {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem 1.5rem;
+    
+    /* Gradiente animado */
+    background: linear-gradient(-45deg, var(--cream), #b2e4b6, #fdf6e3, rgba(221,161,94,.15));
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Tarjeta principal con animación de entrada */
+.formContainer {
+    width: 100%;
+    max-width: 800px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(221,227,216,.8);
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(27,67,50,.08);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    
+    /* Animación de entrada */
+    opacity: 0;
+    animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Encabezado de la tarjeta */
+.cardHead {
+    padding: 2.5rem 2.5rem 2rem;
+    background: linear-gradient(135deg, rgba(82,183,136,.1), rgba(27,67,50,.03));
+    border-bottom: 1px solid var(--line);
+    text-align: center;
+}
+
+.heroBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(82,183,136,.15);
+    color: var(--pine);
+    border: 1px solid rgba(82,183,136,.3);
+    padding: 0.5rem 1.2rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 1rem;
+    
+    /* Animación de latido (Pulse) */
+    animation: pulseBadge 2s infinite;
+}
+
+@keyframes pulseBadge {
+    0% { box-shadow: 0 0 0 0 rgba(82,183,136,.4); }
+    70% { box-shadow: 0 0 0 10px rgba(82,183,136, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(82,183,136, 0); }
+}
+
+.cardTitle {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine);
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.cardSubtitle {
+    color: var(--text-md);
+    font-size: 1rem;
+}
+
+/* Área del formulario */
+.formArea {
+    padding: 2.5rem;
+}
+
+.panelGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.fullWidth {
+    grid-column: 1 / -1;
+}
+
+.sectionTitle {
+    font-size: 1rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    color: var(--pine);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+/* Línea decorativa al lado del título */
+.sectionTitle::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+}
+
+/* Cajas interactivas de los comercios */
+.comercioToggleBox {
+    background: rgba(255, 255, 255, 0.6);
+    border: 2px solid var(--line);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Efecto Hover */
+.comercioToggleBox:hover {
+    border-color: var(--mint-lt);
+    background: #fff;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(82,183,136,.12);
+}
+
+/* Cuando el checkbox está activo */
+.comercioToggleBoxActive {
+    border-color: var(--pine);
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(27,67,50,.08);
+}
+
+.toggleLabel {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.customCheckbox {
+    accent-color: var(--mint);
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.customCheckbox:active {
+    transform: scale(0.9); /* Efecto al darle clic */
+}
+
+.toggleText {
+    font-weight: 800;
+    color: var(--pine-dk);
+    font-size: 1.15rem;
+}
+
+/* Grid que aparece cuando se marca el checkbox */
+.nestedGrid {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed rgba(82,183,136,.4);
+    
+    /* Animación de desvanecimiento hacia abajo */
+    animation: fadeInDown 0.4s ease forwards;
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Botón de enviar animado */
+.submitBtnContainer {
+    margin-top: 2.5rem;
+}
+
+.submitBtn {
+    width: 100%;
+    padding: 1.2rem;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+.submitBtn:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(27,67,50,.25);
+}
+
+/* Responsivo para móviles */
+@media (max-width: 768px) {
+    .panelGrid {
+        grid-template-columns: 1fr;
+    }
+    .formArea {
+        padding: 1.5rem;
+    }
+    .cardHead {
+        padding: 2rem 1.5rem;
+    }
+}
+
+
+/* El layout principal debe tener un margen superior para no ser tapado por el miniNav */
+.solicitudLayout {
+    padding-top: 100px !important; 
+}

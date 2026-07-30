@@ -1,0 +1,243 @@
+/* Paleta del sistema (misma que el resto de vistas) */
+:root {
+    --pine: #1B4332;
+    --pine-dk: #112b21;
+    --mint: #52B788;
+    --mint-lt: #95d5b2;
+    --cream: #FEFAE0;
+    --text-md: #4a5568;
+    --line: #dde3d8;
+}
+
+/* --- LAYOUT (mobile-first) --- */
+.layout {
+    min-height: 100vh;
+    padding: 100px 1rem 3rem; /* 100px = espacio para el DogNav flotante */
+    background: linear-gradient(-45deg, var(--cream), #b2e4b6, #fdf6e3, rgba(221, 161, 94, .15));
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.container {
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* --- TARJETA DE CABECERA --- */
+.cover {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(27, 67, 50, .08);
+    animation: slideUpFade .7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.coverBanner {
+    height: 110px;
+    background: linear-gradient(135deg, var(--pine), var(--mint));
+}
+
+.identity {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0 1.5rem 1.8rem;
+    margin-top: -55px; /* superpone el avatar sobre el banner */
+}
+
+.avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(135deg, var(--mint), var(--pine));
+    border: 5px solid #fff;
+    box-shadow: 0 10px 24px rgba(27, 67, 50, .18);
+}
+
+.identityText {
+    margin-top: 1rem;
+    width: 100%;
+}
+
+.name {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine);
+    font-size: 1.7rem;
+    margin: 0 0 .6rem;
+}
+
+.tags {
+    display: flex;
+    gap: .5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.roleTag {
+    font-size: .78rem;
+    font-weight: 800;
+    color: var(--pine);
+    background: rgba(149, 213, 178, .35);
+    padding: .3rem .9rem;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.estadoTag {
+    font-size: .78rem;
+    font-weight: 700;
+    padding: .3rem .9rem;
+    border-radius: 50px;
+}
+
+.estadoActiva { color: #1b7a4b; background: rgba(82, 183, 136, .18); }
+.estadoInvitada { color: #a06a00; background: rgba(221, 161, 94, .2); }
+.estadoSuspendida { color: #c0392b; background: rgba(192, 57, 43, .12); }
+
+/* --- INFORMACIÓN PERSONAL --- */
+.infoCard {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 1.8rem 1.5rem;
+    box-shadow: 0 20px 40px rgba(27, 67, 50, .06);
+    animation: slideUpFade .7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: .1s;
+}
+
+.sectionTitle {
+    font-size: .95rem;
+    font-weight: 800;
+    color: var(--pine);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin: 0 0 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+}
+
+.sectionTitle::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+}
+
+.infoGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.1rem;
+}
+
+.campo {
+    display: flex;
+    align-items: flex-start;
+    gap: .9rem;
+    padding: .9rem 1rem;
+    background: rgba(254, 250, 224, .5);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+}
+
+.campoIcon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.campoBody {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.campoLabel {
+    font-size: .74rem;
+    font-weight: 700;
+    color: var(--text-md);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.campoValue {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--pine-dk);
+    word-break: break-word;
+}
+
+/* --- ERROR --- */
+.errorBox {
+    background: #fff;
+    border: 1px solid rgba(192, 57, 43, .25);
+    border-radius: 20px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    color: var(--text-md);
+}
+
+.errorIcon { font-size: 2.4rem; display: block; margin-bottom: .5rem; }
+
+/* --- SKELETON --- */
+.skeleton {
+    position: relative;
+    background: linear-gradient(90deg, #eef2ee 25%, #f6f9f6 50%, #eef2ee 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.3s infinite;
+    border-radius: 8px;
+}
+
+.skelName { width: 60%; height: 24px; margin: 0 auto .7rem; }
+.skelSub { width: 40%; height: 16px; margin: 0 auto; border-radius: 50px; }
+.skelValue { width: 70%; height: 16px; margin-top: .2rem; }
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+@keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- RESPONSIVE (tablet / desktop) --- */
+@media (min-width: 640px) {
+    .layout { padding-left: 2rem; padding-right: 2rem; }
+
+    .identity {
+        flex-direction: row;
+        text-align: left;
+        align-items: flex-end;
+        gap: 1.4rem;
+        padding-bottom: 1.6rem;
+    }
+
+    .identityText { margin-top: 0; padding-bottom: .4rem; }
+
+    .name { font-size: 2rem; }
+
+    .tags { justify-content: flex-start; }
+
+    .infoGrid { grid-template-columns: 1fr 1fr; }
+}

@@ -1,0 +1,101 @@
+.dogRoot {
+    display: inline-block;
+    line-height: 0;
+    pointer-events: none;
+}
+
+.dogSvg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    display: block;
+}
+
+/* ============================================================
+   Cuerpo: pequeño rebote vertical, dos veces por zancada
+   (como cuando las patas tocan el piso)
+   ============================================================ */
+.bodyBob {
+    animation: bodyBob var(--bob-duration, 0.4s) ease-in-out infinite;
+}
+
+@keyframes bodyBob {
+    0%   { transform: translateY(0); }
+    25%  { transform: translateY(-2.5px); }
+    50%  { transform: translateY(0); }
+    75%  { transform: translateY(-2.5px); }
+    100% { transform: translateY(0); }
+}
+
+/* ============================================================
+   Patas: cada grupo gira desde su pivote (hombro/cadera).
+   Los pares diagonales se mueven juntos, como un trote real:
+   - Delantera cercana + trasera lejana  -> "adelante"
+   - Delantera lejana + trasera cercana  -> "atrás"
+   ============================================================ */
+.legFrontNear,
+.legBackFar {
+    transform-origin: 0 0;
+    animation: strideForward var(--stride-duration, 0.4s) ease-in-out infinite;
+}
+
+.legFrontFar,
+.legBackNear {
+    transform-origin: 0 0;
+    animation: strideBackward var(--stride-duration, 0.4s) ease-in-out infinite;
+}
+
+@keyframes strideForward {
+    0%   { transform: rotate(-30deg); }
+    50%  { transform: rotate(30deg); }
+    100% { transform: rotate(-30deg); }
+}
+
+@keyframes strideBackward {
+    0%   { transform: rotate(30deg); }
+    50%  { transform: rotate(-30deg); }
+    100% { transform: rotate(30deg); }
+}
+
+/* ============================================================
+   Oreja: se sacude un poco con cada rebote del cuerpo
+   ============================================================ */
+.earFlop {
+    transform-origin: -2px -4px;
+    animation: earFlop var(--bob-duration, 0.4s) ease-in-out infinite;
+}
+
+@keyframes earFlop {
+    0%   { transform: rotate(0deg); }
+    25%  { transform: rotate(10deg); }
+    50%  { transform: rotate(0deg); }
+    75%  { transform: rotate(10deg); }
+    100% { transform: rotate(0deg); }
+}
+
+/* ============================================================
+   Cola: se mueve más lento e independiente del galope
+   ============================================================ */
+.tailWag {
+    transform-origin: 0 0;
+    animation: tailWag 0.5s ease-in-out infinite;
+}
+
+@keyframes tailWag {
+    0%   { transform: rotate(-12deg); }
+    50%  { transform: rotate(14deg); }
+    100% { transform: rotate(-12deg); }
+}
+
+/* Respeta la preferencia del usuario de reducir movimiento */
+@media (prefers-reduced-motion: reduce) {
+    .bodyBob,
+    .legFrontNear,
+    .legBackFar,
+    .legFrontFar,
+    .legBackNear,
+    .earFlop,
+    .tailWag {
+        animation: none;
+    }
+}
