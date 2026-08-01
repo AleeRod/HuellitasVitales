@@ -8,7 +8,10 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+
+// Cambiamos AddOpenApi por SwaggerGen
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 // 1. Configurar CORS
 builder.Services.AddCors(options =>
@@ -33,7 +36,35 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
             ValidateIssuer = false,
-            ValidateAudience = false
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            NameClaimType = System.Security.Claims.ClaimTypes.NameIdentifier
+        };
+
+        // 🔥 ESTO TE DICE LA RAZÓN REAL SI EL TOKEN FALLA
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var authHeader = context.Request.Headers["Authorization"].ToString();
+                Console.WriteLine("🔍 AUTHORIZATION HEADER CRUDO: [" + authHeader + "]");
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine("❌ JWT FALLÓ: " + context.Exception.GetType().Name + " - " + context.Exception.Message);
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                Console.WriteLine("⚠️ CHALLENGE: " + context.Error + " | " + context.ErrorDescription);
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                Console.WriteLine("✅ TOKEN OK. Claims: " + context.Principal?.Claims.Count());
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -49,8 +80,10 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
+
 app.UseCors("PermitirFrontend");
 
 app.UseAuthentication();

@@ -24,6 +24,35 @@ namespace HuellitasVitalesAPI.Services
             _config = config;
         }
 
+        // Actualizar los datos del perfil de usuario
+        public async Task<(bool Exito, string Mensaje)> ActualizarPerfilAsync(int idUsuario, ActualizarPerfilDTO dto)
+        {
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
+
+            if (usuario == null) 
+                return (false, "El usuario no existe.");
+
+            // Validar si el nuevo correo ya pertenece a OTRO usuario registrado
+            if (usuario.Correo != dto.Correo)
+            {
+                var existeCorreo = await _context.Usuarios.AnyAsync(u => u.Correo == dto.Correo && u.IdUsuario != idUsuario);
+                if (existeCorreo)
+                {
+                    return (false, "El correo electrónico ya se encuentra registrado por otro usuario.");
+                }
+            }
+
+            // Actualizar los campos solicitados
+            usuario.Nombre = dto.Nombre;
+            usuario.Apellidos = dto.Apellidos;
+            usuario.Correo = dto.Correo;
+            usuario.Telefono = dto.Telefono;
+
+            await _context.SaveChangesAsync();
+
+            return (true, "Perfil actualizado con éxito.");
+        }
+
         // ─── TAREA 3: Obtener el perfil público de un usuario ───
         public async Task<PerfilUsuarioDTO?> ObtenerPerfilAsync(int idUsuario)
         {
@@ -78,7 +107,6 @@ namespace HuellitasVitalesAPI.Services
             {
                 var settings = new GoogleJsonWebSignature.ValidationSettings()
                 {
-                    // Verificar ID CLIENTE de la aplicación en Google Cloud Console
                     Audience = new List<string> { "345969836543-cmegbuqmfc6dv7l0abo6cjj4u2fpdlqi.apps.googleusercontent.com" }
                 };
 
@@ -134,7 +162,6 @@ namespace HuellitasVitalesAPI.Services
 
             if (usuario == null) return null;
 
-            // Validar que el usuario no esté suspendido o como invitado temporal
             if (usuario.IdEstadoCuenta != 1)
             {
                 throw new Exception("Esta cuenta no se encuentra activa.");
@@ -192,7 +219,6 @@ namespace HuellitasVitalesAPI.Services
 
                 if (usuario == null)
                 {
-                    // Registro de usuario nuevo
                     usuario = new Usuario
                     {
                         Nombre = fbUser.FirstName ?? "Usuario",
@@ -210,7 +236,6 @@ namespace HuellitasVitalesAPI.Services
                 }
                 else
                 {
-                    // Actualizar datos de usuario con mismo correo de Facebook
                     if (usuario.Proveedor_Auth != "Facebook")
                     {
                         usuario.Proveedor_Auth = "Facebook";

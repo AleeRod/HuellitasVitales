@@ -11,7 +11,6 @@ namespace HuellitasVitalesAPI.Controllers
     {
         private readonly UsuarioService _usuarioService;
 
-        // Inyecta a SERVICIO, no la base de datos
         public LoginController(UsuarioService usuarioService)
         {
             _usuarioService = usuarioService;
@@ -38,18 +37,15 @@ namespace HuellitasVitalesAPI.Controllers
         [HttpPost("google")]
         public async Task<IActionResult> LoginConGoogle([FromBody] LoginSocialRequest request)
         {
-            // 1. Validar que el request no llegue vacío
             if (request == null || string.IsNullOrEmpty(request.Token))
                 return BadRequest(new { success = false, mensaje = "El token es requerido." });
-            try 
+            try
             {
-                // 2. Llamada al servicio
                 var usuario = await _usuarioService.AutenticarGoogleAsync(request.Token);
 
                 if (usuario == null)
                     return Unauthorized(new { success = false, mensaje = "Autenticación de Google inválida." });
 
-                // 3. Generar JWT
                 var tokenJwt = _usuarioService.GenerarTokenJWT(usuario);
                 return Ok(new
                 {

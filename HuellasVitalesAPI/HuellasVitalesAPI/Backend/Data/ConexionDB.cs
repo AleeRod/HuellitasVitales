@@ -21,6 +21,28 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<Veterinario>().ToTable("VETERINARIO");
             modelBuilder.Entity<Comercio>().ToTable("COMERCIO");
             modelBuilder.Entity<PersonaLegal>().ToTable("PERSONA_LEGAL");
+
+            // Fuerza que TODOS los DateTime se traten como UTC
+            // al leer/escribir en Postgres, evitando el error
+            // "Cannot write DateTime with Kind=Unspecified..."
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime))
+                    {
+                        property.SetValueConverter(new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime, DateTime>(
+                            v => DateTime.SpecifyKind(v, DateTimeKind.Utc),
+                            v => DateTime.SpecifyKind(v, DateTimeKind.Utc)));
+                    }
+                    else if (property.ClrType == typeof(DateTime?))
+                    {
+                        property.SetValueConverter(new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime?, DateTime?>(
+                            v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v,
+                            v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v));
+                    }
+                }
+            }
         }
     }
 }
