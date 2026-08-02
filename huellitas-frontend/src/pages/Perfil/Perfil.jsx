@@ -1,42 +1,56 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import DogNav from '../../components/DogNav/DogNav';
+// 👇 Asegúrese de que esta ruta coincida con donde guardó su componente Toast
+import { ToastContainer } from '../../components/Toast/Toast'; 
 import { API_BASE } from '../../api/config';
 import styles from './Perfil.module.css';
+import { User, Contact, Mail, Phone, Lock, Calendar, Edit2, AlertTriangle, KeyRound } from 'lucide-react';
 
-// Mapa de roles para mostrar una etiqueta legible
-const ROLES = {
-    1: 'Administrador',
-    2: 'Veterinario',
-    3: 'Cliente'
-};
-
+const ROLES = { 1: 'Administrador', 2: 'Veterinario', 3: 'Cliente' };
 const ESTADOS_CUENTA = {
     1: { label: 'Activa', clase: 'estadoActiva' },
     2: { label: 'Invitada', clase: 'estadoInvitada' },
     3: { label: 'Suspendida', clase: 'estadoSuspendida' }
 };
 
-// Genera las iniciales a partir del nombre y apellidos
 const obtenerIniciales = (nombre = '', apellidos = '') => {
     const a = nombre.trim()[0] || '';
     const b = apellidos.trim()[0] || '';
-    return (a + b).toUpperCase() || '👤';
+    return (a + b).toUpperCase() || 'US';
 };
 
 const Perfil = () => {
-    // El id puede venir por la URL (/perfil/5); si no, se toma el del usuario
-    // logueado guardado en localStorage, con 1 como valor de respaldo.
     const { id: idParam } = useParams();
     const idUsuario = idParam || localStorage.getItem('idUsuario') || 1;
 
     const [perfil, setPerfil] = useState(null);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState(false);
+    
+    const [editando, setEditando] = useState(false);
+    const [guardando, setGuardando] = useState(false);
+    const [formData, setFormData] = useState({
+        nombre: '', apellidos: '', correo: '', telefono: ''
+    });
+    
+    const [erroresForm, setErroresForm] = useState({});
+
+    // --- ESTADO Y FUNCIONES PARA LOS TOASTS ---
+    const [toasts, setToasts] = useState([]);
+
+    const addToast = (message, type = 'info', duration = 4000) => {
+        const id = Date.now();
+        setToasts((prev) => [...prev, { id, message, type, duration }]);
+    };
+
+    const removeToast = (id) => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+    };
+    // ------------------------------------------
 
     useEffect(() => {
         let activo = true;
-
         const cargarPerfil = async () => {
             setCargando(true);
             setError(false);
@@ -45,37 +59,123 @@ const Perfil = () => {
                 if (!res.ok) throw new Error('No se pudo obtener el perfil');
 
                 const data = await res.json();
-                if (activo) setPerfil(data);
+                if (activo) {
+                    setPerfil(data);
+                    setFormData({
+                        nombre: data.nombre || '',
+                        apellidos: data.apellidos || '',
+                        correo: data.correo || '',
+                        telefono: data.telefono || ''
+                    });
+                }
             } catch {
                 if (activo) setError(true);
             } finally {
                 if (activo) setCargando(false);
             }
         };
-
         cargarPerfil();
         return () => { activo = false; };
     }, [idUsuario]);
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+        if (erroresForm[e.target.name]) {
+            setErroresForm({ ...erroresForm, [e.target.name]: '' });
+        }
+    };
+
+    const validarFormulario = () => {
+        const errores = {};
+        const regexLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+        const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const regexTelefono = /^[0-9]{8}$/;
+
+        if (!formData.nombre.trim()) {
+            errores.nombre = "El nombre es obligatorio.";
+        } else if (!regexLetras.test(formData.nombre)) {
+            errores.nombre = "El nombre solo puede contener letras.";
+        }
+
+        if (!formData.apellidos.trim()) {
+            errores.apellidos = "Los apellidos son obligatorios.";
+        } else if (!regexLetras.test(formData.apellidos)) {
+            errores.apellidos = "Los apellidos solo pueden contener letras.";
+        }
+
+        if (!formData.correo.trim()) {
+            errores.correo = "El correo es obligatorio.";
+        } else if (!regexCorreo.test(formData.correo)) {
+            errores.correo = "Ingresa un formato de correo válido.";
+        }
+
+        if (formData.telefono && !regexTelefono.test(formData.telefono.trim())) {
+            errores.telefono = "El teléfono debe tener exactamente 8 dígitos.";
+        }
+
+        setErroresForm(errores);
+        
+        // 👇 Si hay errores, disparamos el Toast de Warning
+        if (Object.keys(errores).length > 0) {
+            addToast("Revisa los errores en los campos del formulario.", "warning");
+            return false;
+        }
+        return true;
+    };
+
+    const handleGuardar = async (e) => {
+        e.preventDefault();
+        
+        if (!validarFormulario()) return;
+
+        setGuardando(true);
+        try {
+            const token = localStorage.getItem('jwt') || localStorage.getItem('token_huellitas'); 
+            const res = await fetch(`${API_BASE}/usuario/perfil`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!res.ok) throw new Error('Error al actualizar');
+            
+            setPerfil((prev) => ({ ...prev, ...formData }));
+            setEditando(false);
+            
+            // 👇 Toast de Success al guardar bien
+            addToast("Información actualizada correctamente.", "success");
+            
+        } catch (err) {
+            console.error("No se pudo guardar", err);
+            // 👇 Toast de Error si el backend falla
+            addToast("Ocurrió un problema al guardar los cambios.", "error");
+        } finally {
+            setGuardando(false);
+        }
+    };
 
     const estado = perfil ? (ESTADOS_CUENTA[perfil.idEstadoCuenta] || ESTADOS_CUENTA[1]) : null;
 
     return (
         <>
+            {/* 👇 El contenedor de Toasts se renderiza aquí arriba */}
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
+            
             <DogNav />
-
             <main className={styles.layout}>
                 <div className={styles.container}>
-
-                    {/* --- TARJETA DE CABECERA --- */}
+                    
                     <section className={styles.cover}>
                         <div className={styles.coverBanner} />
-
                         <div className={styles.identity}>
                             {cargando ? (
                                 <div className={`${styles.avatar} ${styles.skeleton}`} />
                             ) : (
                                 <div className={styles.avatar}>
-                                    {perfil ? obtenerIniciales(perfil.nombre, perfil.apellidos) : '👤'}
+                                    {perfil ? obtenerIniciales(perfil.nombre, perfil.apellidos) : <User size={40} />}
                                 </div>
                             )}
 
@@ -106,32 +206,112 @@ const Perfil = () => {
                         </div>
                     </section>
 
-                    {/* --- ESTADO DE ERROR --- */}
                     {error && !cargando && (
                         <div className={styles.errorBox}>
-                            <span className={styles.errorIcon}>⚠️</span>
+                            <AlertTriangle className={styles.errorIcon} size={48} />
                             <p>No pudimos cargar la información del perfil. Inténtalo más tarde.</p>
                         </div>
                     )}
 
-                    {/* --- INFORMACIÓN PERSONAL --- */}
                     {!error && (
                         <section className={styles.infoCard}>
-                            <h2 className={styles.sectionTitle}>Información personal</h2>
-
-                            <div className={styles.infoGrid}>
-                                <Campo etiqueta="Nombre" valor={perfil?.nombre} cargando={cargando} icono="🧑" />
-                                <Campo etiqueta="Apellidos" valor={perfil?.apellidos} cargando={cargando} icono="🪪" />
-                                <Campo etiqueta="Correo electrónico" valor={perfil?.correo} cargando={cargando} icono="✉️" />
-                                <Campo etiqueta="Teléfono" valor={perfil?.telefono || 'No registrado'} cargando={cargando} icono="📞" />
-                                <Campo etiqueta="Método de acceso" valor={perfil?.proveedor} cargando={cargando} icono="🔐" />
-                                <Campo
-                                    etiqueta="Miembro desde"
-                                    valor={perfil ? new Date(perfil.fechaRegistro).toLocaleDateString('es-CR', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
-                                    cargando={cargando}
-                                    icono="📅"
-                                />
+                            <div className={styles.sectionHeader}>
+                                <h2 className={styles.sectionTitle}>Información personal</h2>
+                                {!cargando && !editando && (
+                                    <button className={styles.editBtn} onClick={() => setEditando(true)}>
+                                        <Edit2 size={14} /> Editar
+                                    </button>
+                                )}
                             </div>
+
+                            {editando ? (
+                                <form onSubmit={handleGuardar} className={styles.editForm}>
+                                    <div className={styles.infoGrid}>
+                                        <div className={styles.formGroup}>
+                                            <label>Nombre</label>
+                                            <input 
+                                                type="text" name="nombre" value={formData.nombre} 
+                                                onChange={handleChange} required 
+                                                className={erroresForm.nombre ? styles.inputError : ''}
+                                            />
+                                            {erroresForm.nombre && <span className={styles.errorText}>{erroresForm.nombre}</span>}
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label>Apellidos</label>
+                                            <input 
+                                                type="text" name="apellidos" value={formData.apellidos} 
+                                                onChange={handleChange} required 
+                                                className={erroresForm.apellidos ? styles.inputError : ''}
+                                            />
+                                            {erroresForm.apellidos && <span className={styles.errorText}>{erroresForm.apellidos}</span>}
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label>Correo electrónico</label>
+                                            <input 
+                                                type="email" name="correo" value={formData.correo} 
+                                                onChange={handleChange} required 
+                                                className={erroresForm.correo ? styles.inputError : ''}
+                                            />
+                                            {erroresForm.correo && <span className={styles.errorText}>{erroresForm.correo}</span>}
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label>Teléfono</label>
+                                            <input 
+                                                type="tel" name="telefono" value={formData.telefono} 
+                                                onChange={handleChange} 
+                                                className={erroresForm.telefono ? styles.inputError : ''}
+                                            />
+                                            {erroresForm.telefono && <span className={styles.errorText}>{erroresForm.telefono}</span>}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className={styles.formActions}>
+                                        <button 
+                                            type="button" className={styles.cancelBtn} 
+                                            onClick={() => {
+                                                setEditando(false);
+                                                setErroresForm({});
+                                                setFormData({
+                                                    nombre: perfil.nombre,
+                                                    apellidos: perfil.apellidos,
+                                                    correo: perfil.correo,
+                                                    telefono: perfil.telefono || ''
+                                                });
+                                            }}
+                                            disabled={guardando}
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button type="submit" className={styles.saveBtn} disabled={guardando}>
+                                            {guardando ? 'Guardando...' : 'Guardar Cambios'}
+                                        </button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <div className={styles.infoGrid}>
+                                    <Campo etiqueta="Nombre" valor={perfil?.nombre} cargando={cargando} icono={<User size={20} />} />
+                                    <Campo etiqueta="Apellidos" valor={perfil?.apellidos} cargando={cargando} icono={<Contact size={20} />} />
+                                    <Campo etiqueta="Correo electrónico" valor={perfil?.correo} cargando={cargando} icono={<Mail size={20} />} />
+                                    <Campo etiqueta="Teléfono" valor={perfil?.telefono || 'No registrado'} cargando={cargando} icono={<Phone size={20} />} />
+                                    <Campo etiqueta="Método de acceso" valor={perfil?.proveedor} cargando={cargando} icono={<Lock size={20} />} />
+                                    <Campo etiqueta="Miembro desde" valor={perfil ? new Date(perfil.fechaRegistro).toLocaleDateString('es-CR', { year: 'numeric', month: 'long', day: 'numeric' }) : ''} cargando={cargando} icono={<Calendar size={20} />} />
+                                </div>
+                            )}
+
+                            {!cargando && !editando && (
+                                <div className={styles.securitySection}>
+                                    <h2 className={styles.sectionTitle} style={{ marginTop: '2rem' }}>Seguridad</h2>
+                                    <div className={styles.securityAction}>
+                                        <div className={styles.securityText}>
+                                            <strong>Contraseña</strong>
+                                            <p>Actualiza tu contraseña periódicamente para mantener tu cuenta segura.</p>
+                                        </div>
+                                        <button className={styles.passwordBtn}>
+                                            <KeyRound size={16} /> Cambiar Contraseña
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </section>
                     )}
                 </div>
@@ -140,10 +320,11 @@ const Perfil = () => {
     );
 };
 
-// Fila reutilizable de dato: muestra un skeleton mientras carga
 const Campo = ({ etiqueta, valor, cargando, icono }) => (
     <div className={styles.campo}>
-        <span className={styles.campoIcon}>{icono}</span>
+        <span className={styles.campoIcon} style={{ color: 'var(--mint)', display: 'flex', alignItems: 'center' }}>
+            {icono}
+        </span>
         <div className={styles.campoBody}>
             <span className={styles.campoLabel}>{etiqueta}</span>
             {cargando ? (

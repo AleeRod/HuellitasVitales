@@ -2,6 +2,7 @@ using HuellasVitalesAPI.Backend.Models.DTOs;
 using HuellitasVitalesAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
 namespace HuellitasVitalesAPI.Controllers
@@ -11,10 +12,12 @@ namespace HuellitasVitalesAPI.Controllers
     public class UsuarioController : ControllerBase
     {
         private readonly UsuarioService _usuarioService;
+        private readonly ILogger<UsuarioController> _logger;
 
-        public UsuarioController(UsuarioService usuarioService)
+        public UsuarioController(UsuarioService usuarioService, ILogger<UsuarioController> logger)
         {
             _usuarioService = usuarioService;
+            _logger = logger;
         }
 
         // ─── TAREA 3: Datos del perfil de usuario ───
@@ -31,8 +34,10 @@ namespace HuellitasVitalesAPI.Controllers
 
                 return Ok(perfil);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                // El error real se queda en el backend
+                _logger.LogError(ex, "Error al obtener el perfil del usuario {IdUsuario}", id);
                 return StatusCode(500, new { success = false, mensaje = "Error al obtener el perfil del usuario." });
             }
         }
@@ -45,14 +50,9 @@ namespace HuellitasVitalesAPI.Controllers
         {
             try
             {
-                Console.WriteLine("--- TOTAL CLAIMS RECIBIDOS: " + User.Claims.Count() + " ---");
-                foreach (var claim in User.Claims)
-                {
-                    Console.WriteLine($"TIPO: {claim.Type} | VALOR: {claim.Value}");
-                }
-
-                var userIdClaim = User.FindFirst("sub")?.Value
-                                  ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                // Extraer el ID del usuario directamente del token JWT
+                var userIdClaim = User.FindFirst("sub")?.Value 
+                               ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
                 if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idUsuario))
                 {
@@ -70,7 +70,9 @@ namespace HuellitasVitalesAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { success = false, mensaje = "Error interno: " + ex.Message });
+                // El error real se queda en el backend
+                _logger.LogError(ex, "Error interno al actualizar el perfil del usuario.");
+                return StatusCode(500, new { success = false, mensaje = "Ocurrió un error interno al intentar actualizar el perfil." });
             }
         }
     }
