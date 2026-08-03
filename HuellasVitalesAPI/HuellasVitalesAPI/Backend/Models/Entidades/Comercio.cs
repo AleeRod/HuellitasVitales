@@ -23,7 +23,7 @@ namespace HuellasVitalesAPI.Backend.Models.Entidades
         public byte IdEstadoSolicitud { get; set; } = 1;
 
         [Column("FECHA_SOLICITUD")] // Mapeo con SQL
-        public DateTime FechaSolicitud { get; set; } = DateTime.Now;
+        public DateTime FechaSolicitud { get; set; } = DateTime.UtcNow;
 
         [Column("FECHA_RESOLUCION")] // Mapeo con SQL
         public DateTime? FechaResolucion { get; set; }

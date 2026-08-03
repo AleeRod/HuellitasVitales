@@ -1,6 +1,5 @@
 import React from 'react';
 import './PanelVeterinario.css';
-// Si el logo está en src/assets descomenta la siguiente línea y cambia el src del img:
 // import logo from '../../assets/logo.png';
 
 const PanelVeterinario = () => {
