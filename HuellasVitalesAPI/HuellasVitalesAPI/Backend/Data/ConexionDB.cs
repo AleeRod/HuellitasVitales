@@ -18,6 +18,8 @@ namespace HuellitasVitalesAPI.Data
         public DbSet<Comercio> Comercios { get; set; }
 
         public DbSet<PersonaLegal> PersonasLegales { get; set; }
+        public DbSet<Carrito> Carritos { get; set; }
+        public DbSet<CarritoItem> CarritoItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -28,6 +30,8 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<PersonaLegal>().ToTable("PERSONA_LEGAL");
             modelBuilder.Entity<CategoriaProductoCat>().ToTable("CATEGORIA_PRODUCTO_CAT");
             modelBuilder.Entity<Producto>().ToTable("PRODUCTO");
+            modelBuilder.Entity<Carrito>().ToTable("CARRITO");
+            modelBuilder.Entity<CarritoItem>().ToTable("CARRITO_ITEM");
         }
     }
 }
