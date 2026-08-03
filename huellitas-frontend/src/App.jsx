@@ -8,6 +8,7 @@ import DashboardAdmin from './pages/admin/DashboardAdmin';
 import PanelVeterinario from './pages/veterinario/PanelVeterinario';
 import DashboardCliente from './pages/cliente/DashboardCliente';
 import SolicitudComercio from './pages/SolicitudComercio/SolicitudComercio';
+import Marketplace from './pages/Marketplace/Marketplace';
 
 function App() { 
 
@@ -21,6 +22,7 @@ function App() {
         <Route path="/admin" element={<DashboardAdmin />} />
         <Route path="/veterinario" element={<PanelVeterinario />} />
         <Route path="/cliente" element={<DashboardCliente />} />
+        <Route path="/marketplace" element={<Marketplace />} />
       </Routes>
     </Router>
   );
