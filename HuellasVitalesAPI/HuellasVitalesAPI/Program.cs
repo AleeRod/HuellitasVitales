@@ -37,7 +37,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 // 3. Configurar Base de Datos
 builder.Services.AddDbContext<ConexionDB>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 4. Inyección de Dependencias
 builder.Services.AddScoped<UsuarioService>();
