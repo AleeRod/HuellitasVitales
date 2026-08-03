@@ -1,61 +1,106 @@
-import React from 'react';
-import './PanelVeterinario.css';
+import React, { useEffect, useState } from 'react';
+import styles from './PanelVeterinario.module.css';
+import {
+  Home,
+  CalendarDays,
+  PawPrint,
+  ClipboardList,
+  Syringe,
+  Receipt,
+  BarChart3,
+  LogOut,
+  Bell,
+  AlertTriangle,
+  Plus,
+  Download,
+} from 'lucide-react';
+import PanelServicios from '../../components/ComercioAdmin/PanelServicios/PanelServicios';
 // Si el logo está en src/assets descomenta la siguiente línea y cambia el src del img:
 // import logo from '../../assets/logo.png';
 
 const PanelVeterinario = () => {
+  const [vista, setVista] = useState('clinico'); // 'clinico' | 'servicios'
+  const [usuario, setUsuario] = useState(null);
+
+  useEffect(() => {
+    try {
+      const guardado = localStorage.getItem('usuario_huellitas');
+      if (guardado) setUsuario(JSON.parse(guardado));
+    } catch (err) {
+      console.error('No se pudo leer el usuario guardado', err);
+    }
+  }, []);
+
+  // Fallbacks por si el campo viene con otro nombre desde el backend
+  const nombreUsuario = usuario?.nombre || usuario?.Nombre || usuario?.nombreCompleto || 'Usuario';
+  const rolUsuario = usuario?.rol?.nombre || usuario?.rolNombre || 'Veterinario';
+  const inicialAvatar = nombreUsuario.charAt(0).toUpperCase();
+
+  const irA = (destino) => (e) => {
+    e.preventDefault();
+    setVista(destino);
+  };
+
   return (
-    <div className="vet-shell">
+    <div className={styles.vetShell}>
       {/* SIDEBAR */}
-      <aside className="sidebar">
-        <div className="sidebar-content">
-          <div className="brand-card">
+      <aside className={styles.sidebar}>
+        <div className={styles.sidebarContent}>
+          <div className={styles.brandCard}>
             <img src="/Imagenes/logo.png" alt="Logo Huellitas Vitales" />
             <div>
-              <div className="brand-name">Huellitas Vitales</div>
-              <div className="brand-label">Panel Veterinario</div>
+              <div className={styles.brandName}>Huellitas Vitales</div>
+              <div className={styles.brandLabel}>Panel Veterinario</div>
             </div>
           </div>
 
-          <div className="nav-section">Clínica</div>
-          <a href="#" className="nav-link-vet active">
-            <span className="nav-icon">🏠</span>
+          <div className={styles.navSection}>Clínica</div>
+          <a
+            href="#"
+            className={`${styles.navLinkVet} ${vista === 'clinico' ? styles.active : ''}`}
+            onClick={irA('clinico')}
+          >
+            <span className={styles.navIcon}><Home size={17} /></span>
             Panel clínico
           </a>
-          <a href="#" className="nav-link-vet">
-            <span className="nav-icon">📅</span>
+          <a href="#" className={styles.navLinkVet}>
+            <span className={styles.navIcon}><CalendarDays size={17} /></span>
             Agenda diaria
           </a>
-          <a href="#" className="nav-link-vet">
-            <span className="nav-icon">🐾</span>
+          <a href="#" className={styles.navLinkVet}>
+            <span className={styles.navIcon}><PawPrint size={17} /></span>
             Pacientes
           </a>
-          <a href="#" className="nav-link-vet">
-            <span className="nav-icon">📋</span>
+          <a href="#" className={styles.navLinkVet}>
+            <span className={styles.navIcon}><ClipboardList size={17} /></span>
             Expedientes
           </a>
-          <a href="#" className="nav-link-vet">
-            <span className="nav-icon">💉</span>
+          <a href="#" className={styles.navLinkVet}>
+            <span className={styles.navIcon}><Syringe size={17} /></span>
             Vacunas
           </a>
 
-          <div className="nav-section">Gestión</div>
-          <a href="#" className="nav-link-vet">
-            <span className="nav-icon">🧾</span>
-            Recetas
+          <div className={styles.navSection}>Gestión</div>
+          <a
+            href="#"
+            className={`${styles.navLinkVet} ${vista === 'servicios' ? styles.active : ''}`}
+            onClick={irA('servicios')}
+          >
+            <span className={styles.navIcon}><Receipt size={17} /></span>
+            Servicios
           </a>
-          <a href="#" className="nav-link-vet">
-            <span className="nav-icon">📊</span>
+          <a href="#" className={styles.navLinkVet}>
+            <span className={styles.navIcon}><BarChart3 size={17} /></span>
             Reportes
           </a>
-          <a href="/login" className="nav-link-vet">
-            <span className="nav-icon">🚪</span>
+          <a href="/LandingPage" className={styles.navLinkVet}>
+            <span className={styles.navIcon}><LogOut size={17} /></span>
             Cerrar sesión
           </a>
 
-          <div className="sidebar-note">
-            <div className="note-title">Turno de hoy</div>
-            <div className="note-text">
+          <div className={styles.sidebarNote}>
+            <div className={styles.noteTitle}>Turno de hoy</div>
+            <div className={styles.noteText}>
               8 citas agendadas, 2 controles urgentes y 1 vacunación pendiente.
             </div>
           </div>
@@ -63,325 +108,353 @@ const PanelVeterinario = () => {
       </aside>
 
       {/* MAIN */}
-      <main className="main-content">
+      <main className={styles.mainContent}>
         {/* TOPBAR */}
-        <section className="topbar">
+        <section className={styles.topbar}>
           <div>
-            <div className="hero-badge">
+            <div className={styles.heroBadge}>
               <svg width="9" height="9" viewBox="0 0 10 10">
                 <circle cx="5" cy="5" r="5" fill="#52B788" />
               </svg>
-              Panel clínico
+              {vista === 'clinico' ? 'Panel clínico' : 'Gestión de servicios'}
             </div>
-            <h1 className="hero-title">Agenda diaria del veterinario</h1>
-            <p className="hero-sub">Consulta citas del día, pacientes, expedientes y notas clínicas.</p>
+            <h1 className={styles.heroTitle}>
+              {vista === 'clinico' ? 'Agenda diaria del veterinario' : 'Servicios de la clínica'}
+            </h1>
+            <p className={styles.heroSub}>
+              {vista === 'clinico'
+                ? 'Consulta citas del día, pacientes, expedientes y notas clínicas.'
+                : 'Administrá las consultas, groomings y procedimientos que ofrecés.'}
+            </p>
           </div>
 
-          <div className="top-actions">
-            <button className="icon-button" title="Notificaciones">🔔</button>
-            <div className="profile-mini">
-              <div className="profile-avatar">V</div>
+          <div className={styles.topActions}>
+            <button className={styles.iconButton} title="Notificaciones">
+              <Bell size={18} />
+            </button>
+            <div className={styles.profileMini}>
+              <div className={styles.profileAvatar}>{inicialAvatar}</div>
               <div>
-                <div className="profile-name">Dr. Carlos Rojas</div>
-                <div className="profile-role">Veterinario</div>
+                <div className={styles.profileName}>{nombreUsuario}</div>
+                <div className={styles.profileRole}>{rolUsuario}</div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* STATS */}
-        <section className="stats-grid">
-          <article className="stat-card">
-            <div className="stat-icon">📅</div>
-            <div className="stat-label">Citas de hoy</div>
-            <div className="stat-number">8</div>
-            <div className="stat-note">Consultas y controles programados</div>
-          </article>
-
-          <article className="stat-card">
-            <div className="stat-icon">🐾</div>
-            <div className="stat-label">Pacientes atendidos</div>
-            <div className="stat-number">3</div>
-            <div className="stat-note">Consultas completadas durante el día</div>
-          </article>
-
-          <article className="stat-card">
-            <div className="stat-icon">💉</div>
-            <div className="stat-label">Vacunas pendientes</div>
-            <div className="stat-number">2</div>
-            <div className="stat-note">Aplicaciones programadas</div>
-          </article>
-
-          <article className="stat-card">
-            <div className="stat-icon">⚠️</div>
-            <div className="stat-label">Casos urgentes</div>
-            <div className="stat-number">1</div>
-            <div className="stat-note">Requiere atención prioritaria</div>
-          </article>
-        </section>
-
-        <section className="panel-grid">
-          {/* AGENDA DIARIA */}
-          <div className="content-card agenda-card">
-            <div className="card-head">
-              <div>
-                <h2 className="card-title">Vista de agenda diaria</h2>
-                <p className="card-subtitle">Listado visual de citas, horarios, pacientes y estado de atención.</p>
-              </div>
-              <button className="btn-main">＋ Nueva cita</button>
+        {vista === 'servicios' && (
+          <section className={styles.panelGrid}>
+            <div className={styles.tableArea}>
+              <PanelServicios />
             </div>
+          </section>
+        )}
 
-            <div className="agenda-toolbar">
-              <div className="date-pill">📅 Martes, 06 de julio de 2026</div>
-              <div className="d-flex gap-2 flex-wrap">
-                <select className="filter-select">
-                  <option>Todos los estados</option>
-                  <option>En espera</option>
-                  <option>En consulta</option>
-                  <option>Finalizado</option>
-                </select>
-                <button className="btn-soft">Exportar agenda</button>
-              </div>
-            </div>
+        {vista === 'clinico' && (
+          <>
+            {/* STATS */}
+            <section className={styles.statsGrid}>
+              <article className={styles.statCard}>
+                <div className={styles.statIcon}><CalendarDays size={20} /></div>
+                <div className={styles.statLabel}>Citas de hoy</div>
+                <div className={styles.statNumber}>8</div>
+                <div className={styles.statNote}>Consultas y controles programados</div>
+              </article>
 
-            <div className="schedule-list">
-              <div className="schedule-item">
-                <div className="time-box">
-                  8:00
-                  <span>a.m.</span>
+              <article className={styles.statCard}>
+                <div className={styles.statIcon}><PawPrint size={20} /></div>
+                <div className={styles.statLabel}>Pacientes atendidos</div>
+                <div className={styles.statNumber}>3</div>
+                <div className={styles.statNote}>Consultas completadas durante el día</div>
+              </article>
+
+              <article className={styles.statCard}>
+                <div className={styles.statIcon}><Syringe size={20} /></div>
+                <div className={styles.statLabel}>Vacunas pendientes</div>
+                <div className={styles.statNumber}>2</div>
+                <div className={styles.statNote}>Aplicaciones programadas</div>
+              </article>
+
+              <article className={styles.statCard}>
+                <div className={styles.statIcon}><AlertTriangle size={20} /></div>
+                <div className={styles.statLabel}>Casos urgentes</div>
+                <div className={styles.statNumber}>1</div>
+                <div className={styles.statNote}>Requiere atención prioritaria</div>
+              </article>
+            </section>
+
+            <section className={styles.panelGrid}>
+              {/* AGENDA DIARIA */}
+              <div className={`${styles.contentCard} ${styles.agendaCard}`}>
+                <div className={styles.cardHead}>
+                  <div>
+                    <h2 className={styles.cardTitle}>Vista de agenda diaria</h2>
+                    <p className={styles.cardSubtitle}>Listado visual de citas, horarios, pacientes y estado de atención.</p>
+                  </div>
+                  <button className={styles.btnMain}>
+                    <Plus size={16} />
+                    Nueva cita
+                  </button>
                 </div>
 
-                <div className="patient-info">
-                  <div className="pet-icon">🐶</div>
-                  <div>
-                    <div className="patient-title">Max — Consulta general</div>
-                    <div className="patient-detail">Golden Retriever · 4 años · Dueño: Brandon Alfaro</div>
+                <div className={styles.agendaToolbar}>
+                  <div className={styles.datePill}>
+                    <CalendarDays size={15} />
+                    Martes, 06 de julio de 2026
+                  </div>
+                  <div className="d-flex gap-2 flex-wrap">
+                    <select className={styles.filterSelect}>
+                      <option>Todos los estados</option>
+                      <option>En espera</option>
+                      <option>En consulta</option>
+                      <option>Finalizado</option>
+                    </select>
+                    <button className={styles.btnSoft}>Exportar agenda</button>
                   </div>
                 </div>
 
-                <span className="status-badge status-done">● Finalizado</span>
+                <div className={styles.scheduleList}>
+                  <div className={styles.scheduleItem}>
+                    <div className={styles.timeBox}>
+                      8:00
+                      <span>a.m.</span>
+                    </div>
+
+                    <div className={styles.patientInfo}>
+                      <div className={styles.petIcon}><PawPrint size={20} /></div>
+                      <div>
+                        <div className={styles.patientTitle}>Max — Consulta general</div>
+                        <div className={styles.patientDetail}>Golden Retriever · 4 años · Dueño: Brandon Alfaro</div>
+                      </div>
+                    </div>
+
+                    <span className={`${styles.statusBadge} ${styles.statusDone}`}>Finalizado</span>
+                  </div>
+
+                  <div className={styles.scheduleItem}>
+                    <div className={styles.timeBox}>
+                      9:30
+                      <span>a.m.</span>
+                    </div>
+
+                    <div className={styles.patientInfo}>
+                      <div className={styles.petIcon}><PawPrint size={20} /></div>
+                      <div>
+                        <div className={styles.patientTitle}>Luna — Vacunación</div>
+                        <div className={styles.patientDetail}>Gata Persa · 2 años · Dueña: Laura Pérez</div>
+                      </div>
+                    </div>
+
+                    <span className={`${styles.statusBadge} ${styles.statusReady}`}>En consulta</span>
+                  </div>
+
+                  <div className={styles.scheduleItem}>
+                    <div className={styles.timeBox}>
+                      11:00
+                      <span>a.m.</span>
+                    </div>
+
+                    <div className={styles.patientInfo}>
+                      <div className={styles.petIcon}><PawPrint size={20} /></div>
+                      <div>
+                        <div className={styles.patientTitle}>Rocky — Control dental</div>
+                        <div className={styles.patientDetail}>French Poodle · 6 años · Dueño: José Méndez</div>
+                      </div>
+                    </div>
+
+                    <span className={`${styles.statusBadge} ${styles.statusNext}`}>En espera</span>
+                  </div>
+
+                  <div className={styles.scheduleItem}>
+                    <div className={styles.timeBox}>
+                      1:30
+                      <span>p.m.</span>
+                    </div>
+
+                    <div className={styles.patientInfo}>
+                      <div className={styles.petIcon}><PawPrint size={20} /></div>
+                      <div>
+                        <div className={styles.patientTitle}>Toby — Revisión por dolor</div>
+                        <div className={styles.patientDetail}>Beagle · 5 años · Dueña: Ana Mora</div>
+                      </div>
+                    </div>
+
+                    <span className={`${styles.statusBadge} ${styles.statusUrgent}`}>Urgente</span>
+                  </div>
+                </div>
               </div>
 
-              <div className="schedule-item">
-                <div className="time-box">
-                  9:30
-                  <span>a.m.</span>
+              {/* PACIENTES ACTIVOS */}
+              <div className={styles.contentCard}>
+                <div className={styles.cardHead}>
+                  <div>
+                    <h2 className={styles.cardTitle}>Pacientes en atención</h2>
+                    <p className={styles.cardSubtitle}>Mascotas activas para consulta clínica.</p>
+                  </div>
+                  <button className={styles.btnSoft}>Ver todos</button>
                 </div>
 
-                <div className="patient-info">
-                  <div className="pet-icon">🐱</div>
+                <div className={styles.patientList}>
+                  <div className={styles.patientCard}>
+                    <div className={styles.patientInfo}>
+                      <div className={styles.petIcon}><PawPrint size={20} /></div>
+                      <div>
+                        <div className={styles.patientTitle}>Luna</div>
+                        <div className={styles.patientDetail}>Vacunación · Consultorio 1</div>
+                      </div>
+                    </div>
+                    <span className={`${styles.statusBadge} ${styles.statusReady}`}>En consulta</span>
+                  </div>
+
+                  <div className={styles.patientCard}>
+                    <div className={styles.patientInfo}>
+                      <div className={styles.petIcon}><PawPrint size={20} /></div>
+                      <div>
+                        <div className={styles.patientTitle}>Rocky</div>
+                        <div className={styles.patientDetail}>Control dental · Sala de espera</div>
+                      </div>
+                    </div>
+                    <span className={`${styles.statusBadge} ${styles.statusNext}`}>En espera</span>
+                  </div>
+
+                  <div className={styles.patientCard}>
+                    <div className={styles.patientInfo}>
+                      <div className={styles.petIcon}><PawPrint size={20} /></div>
+                      <div>
+                        <div className={styles.patientTitle}>Toby</div>
+                        <div className={styles.patientDetail}>Dolor abdominal · Prioridad alta</div>
+                      </div>
+                    </div>
+                    <span className={`${styles.statusBadge} ${styles.statusUrgent}`}>Urgente</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* FORMULARIO NOTA CLINICA */}
+              <div className={styles.contentCard}>
+                <div className={styles.cardHead}>
                   <div>
-                    <div className="patient-title">Luna — Vacunación</div>
-                    <div className="patient-detail">Gata Persa · 2 años · Dueña: Laura Pérez</div>
+                    <h2 className={styles.cardTitle}>Nota clínica rápida</h2>
+                    <p className={styles.cardSubtitle}>Maquetación para registrar observaciones de consulta.</p>
                   </div>
                 </div>
 
-                <span className="status-badge status-ready">● En consulta</span>
-              </div>
+                <div className={styles.formArea}>
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label className={styles.formLabel}>Paciente</label>
+                      <select className={styles.formSelect}>
+                        <option>Luna</option>
+                        <option>Rocky</option>
+                        <option>Toby</option>
+                        <option>Max</option>
+                      </select>
+                    </div>
 
-              <div className="schedule-item">
-                <div className="time-box">
-                  11:00
-                  <span>a.m.</span>
-                </div>
+                    <div className="col-md-6">
+                      <label className={styles.formLabel}>Tipo de consulta</label>
+                      <select className={styles.formSelect}>
+                        <option>Consulta general</option>
+                        <option>Vacunación</option>
+                        <option>Control dental</option>
+                        <option>Urgencia</option>
+                      </select>
+                    </div>
 
-                <div className="patient-info">
-                  <div className="pet-icon">🐶</div>
-                  <div>
-                    <div className="patient-title">Rocky — Control dental</div>
-                    <div className="patient-detail">French Poodle · 6 años · Dueño: José Méndez</div>
+                    <div className="col-md-6">
+                      <label className={styles.formLabel}>Peso</label>
+                      <input type="text" className={styles.formControl} placeholder="Ej: 12 kg" />
+                    </div>
+
+                    <div className="col-md-6">
+                      <label className={styles.formLabel}>Temperatura</label>
+                      <input type="text" className={styles.formControl} placeholder="Ej: 38.5 °C" />
+                    </div>
+
+                    <div className="col-12">
+                      <label className={styles.formLabel}>Observaciones</label>
+                      <textarea className={styles.formControl} rows="4" placeholder="Anotar síntomas, diagnóstico preliminar o recomendaciones..."></textarea>
+                    </div>
+
+                    <div className="col-12 d-flex justify-content-end gap-2">
+                      <button className={styles.btnSoft}>Cancelar</button>
+                      <button className={styles.btnMain}>Guardar nota</button>
+                    </div>
                   </div>
                 </div>
-
-                <span className="status-badge status-next">● En espera</span>
               </div>
 
-              <div className="schedule-item">
-                <div className="time-box">
-                  1:30
-                  <span>p.m.</span>
+              {/* HISTORIAL */}
+              <div className={`${styles.contentCard} ${styles.tableArea}`}>
+                <div className={styles.cardHead}>
+                  <div>
+                    <h2 className={styles.cardTitle}>Historial clínico reciente</h2>
+                    <p className={styles.cardSubtitle}>Últimas atenciones realizadas por el veterinario.</p>
+                  </div>
+                  <button className={styles.btnSoft}>
+                    <Download size={15} />
+                    Descargar reporte
+                  </button>
                 </div>
 
-                <div className="patient-info">
-                  <div className="pet-icon">🐕</div>
-                  <div>
-                    <div className="patient-title">Toby — Revisión por dolor</div>
-                    <div className="patient-detail">Beagle · 5 años · Dueña: Ana Mora</div>
+                <div className={styles.tableWrap}>
+                  <div className={styles.tableResponsive}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>Hora</th>
+                          <th>Paciente</th>
+                          <th>Servicio</th>
+                          <th>Dueño</th>
+                          <th>Estado</th>
+                          <th>Acción</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        <tr>
+                          <td>8:00 a.m.</td>
+                          <td>Max</td>
+                          <td>Consulta general</td>
+                          <td>Brandon Alfaro</td>
+                          <td><span className={`${styles.statusBadge} ${styles.statusDone}`}>Finalizado</span></td>
+                          <td><button className={styles.actionBtn}>Ver ficha</button></td>
+                        </tr>
+
+                        <tr>
+                          <td>9:30 a.m.</td>
+                          <td>Luna</td>
+                          <td>Vacunación</td>
+                          <td>Laura Pérez</td>
+                          <td><span className={`${styles.statusBadge} ${styles.statusReady}`}>En consulta</span></td>
+                          <td><button className={styles.actionBtn}>Abrir</button></td>
+                        </tr>
+
+                        <tr>
+                          <td>11:00 a.m.</td>
+                          <td>Rocky</td>
+                          <td>Control dental</td>
+                          <td>José Méndez</td>
+                          <td><span className={`${styles.statusBadge} ${styles.statusNext}`}>En espera</span></td>
+                          <td><button className={styles.actionBtn}>Abrir</button></td>
+                        </tr>
+
+                        <tr>
+                          <td>1:30 p.m.</td>
+                          <td>Toby</td>
+                          <td>Urgencia</td>
+                          <td>Ana Mora</td>
+                          <td><span className={`${styles.statusBadge} ${styles.statusUrgent}`}>Urgente</span></td>
+                          <td><button className={styles.actionBtn}>Atender</button></td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-
-                <span className="status-badge status-urgent">● Urgente</span>
               </div>
-            </div>
-          </div>
-
-          {/* PACIENTES ACTIVOS */}
-          <div className="content-card">
-            <div className="card-head">
-              <div>
-                <h2 className="card-title">Pacientes en atención</h2>
-                <p className="card-subtitle">Mascotas activas para consulta clínica.</p>
-              </div>
-              <button className="btn-soft">Ver todos</button>
-            </div>
-
-            <div className="patient-list">
-              <div className="patient-card">
-                <div className="patient-info">
-                  <div className="pet-icon">🐱</div>
-                  <div>
-                    <div className="patient-title">Luna</div>
-                    <div className="patient-detail">Vacunación · Consultorio 1</div>
-                  </div>
-                </div>
-                <span className="status-badge status-ready">En consulta</span>
-              </div>
-
-              <div className="patient-card">
-                <div className="patient-info">
-                  <div className="pet-icon">🐶</div>
-                  <div>
-                    <div className="patient-title">Rocky</div>
-                    <div className="patient-detail">Control dental · Sala de espera</div>
-                  </div>
-                </div>
-                <span className="status-badge status-next">En espera</span>
-              </div>
-
-              <div className="patient-card">
-                <div className="patient-info">
-                  <div className="pet-icon">🐕</div>
-                  <div>
-                    <div className="patient-title">Toby</div>
-                    <div className="patient-detail">Dolor abdominal · Prioridad alta</div>
-                  </div>
-                </div>
-                <span className="status-badge status-urgent">Urgente</span>
-              </div>
-            </div>
-          </div>
-
-          {/* FORMULARIO NOTA CLINICA */}
-          <div className="content-card">
-            <div className="card-head">
-              <div>
-                <h2 className="card-title">Nota clínica rápida</h2>
-                <p className="card-subtitle">Maquetación para registrar observaciones de consulta.</p>
-              </div>
-            </div>
-
-            <div className="form-area">
-              <div className="row g-3">
-                <div className="col-md-6">
-                  <label className="form-label">Paciente</label>
-                  <select className="form-select">
-                    <option>Luna</option>
-                    <option>Rocky</option>
-                    <option>Toby</option>
-                    <option>Max</option>
-                  </select>
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label">Tipo de consulta</label>
-                  <select className="form-select">
-                    <option>Consulta general</option>
-                    <option>Vacunación</option>
-                    <option>Control dental</option>
-                    <option>Urgencia</option>
-                  </select>
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label">Peso</label>
-                  <input type="text" className="form-control" placeholder="Ej: 12 kg" />
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label">Temperatura</label>
-                  <input type="text" className="form-control" placeholder="Ej: 38.5 °C" />
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label">Observaciones</label>
-                  <textarea className="form-control" rows="4" placeholder="Anotar síntomas, diagnóstico preliminar o recomendaciones..."></textarea>
-                </div>
-
-                <div className="col-12 d-flex justify-content-end gap-2">
-                  <button className="btn-soft">Cancelar</button>
-                  <button className="btn-main">Guardar nota</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* HISTORIAL */}
-          <div className="content-card table-area">
-            <div className="card-head">
-              <div>
-                <h2 className="card-title">Historial clínico reciente</h2>
-                <p className="card-subtitle">Últimas atenciones realizadas por el veterinario.</p>
-              </div>
-              <button className="btn-soft">Descargar reporte</button>
-            </div>
-
-            <div className="table-wrap">
-              <div className="table-responsive">
-                <table className="table table-hover align-middle">
-                  <thead>
-                    <tr>
-                      <th>Hora</th>
-                      <th>Paciente</th>
-                      <th>Servicio</th>
-                      <th>Dueño</th>
-                      <th>Estado</th>
-                      <th>Acción</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    <tr>
-                      <td>8:00 a.m.</td>
-                      <td>Max</td>
-                      <td>Consulta general</td>
-                      <td>Brandon Alfaro</td>
-                      <td><span className="status-badge status-done">Finalizado</span></td>
-                      <td><button className="action-btn">Ver ficha</button></td>
-                    </tr>
-
-                    <tr>
-                      <td>9:30 a.m.</td>
-                      <td>Luna</td>
-                      <td>Vacunación</td>
-                      <td>Laura Pérez</td>
-                      <td><span className="status-badge status-ready">En consulta</span></td>
-                      <td><button className="action-btn">Abrir</button></td>
-                    </tr>
-
-                    <tr>
-                      <td>11:00 a.m.</td>
-                      <td>Rocky</td>
-                      <td>Control dental</td>
-                      <td>José Méndez</td>
-                      <td><span className="status-badge status-next">En espera</span></td>
-                      <td><button className="action-btn">Abrir</button></td>
-                    </tr>
-
-                    <tr>
-                      <td>1:30 p.m.</td>
-                      <td>Toby</td>
-                      <td>Urgencia</td>
-                      <td>Ana Mora</td>
-                      <td><span className="status-badge status-urgent">Urgente</span></td>
-                      <td><button className="action-btn">Atender</button></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-        </section>
+            </section>
+          </>
+        )}
       </main>
     </div>
   );
