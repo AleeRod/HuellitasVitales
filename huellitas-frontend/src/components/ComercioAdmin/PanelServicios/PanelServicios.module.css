@@ -207,17 +207,17 @@
 
 /* --- MODAL --- */
 .overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(17, 43, 33, 0.45);
-    backdrop-filter: blur(3px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    padding: 1rem;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 9999 !important;
 }
-
 .modal {
     background: #fff;
     border-radius: 20px;

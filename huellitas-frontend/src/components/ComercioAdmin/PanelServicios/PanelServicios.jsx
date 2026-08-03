@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { X, Plus, Pencil, Trash2, Clock, DollarSign, Stethoscope, Scissors, Syringe } from "lucide-react";
+import { X, Plus, Pencil, Trash2, Clock, DollarSign, Stethoscope, Scissors, Syringe, Tags, CheckCircle, XCircle } from "lucide-react";
 import { API_BASE } from "../../../api/config";
 import styles from "./PanelServicios.module.css";
 
-// Catálogo de tipos de servicio (coincide con TIPO_SERVICIO_CAT)
-const TIPOS_SERVICIO = [
-  { id: 1, nombre: "Consulta", icon: Stethoscope },
-  { id: 2, nombre: "Grooming", icon: Scissors },
-  { id: 3, nombre: "Procedimiento", icon: Syringe },
+const TIPOS_SERVICIO_INICIALES = [
+  { id: 1, nombre: "Consulta", icon: Stethoscope, activo: true },
+  { id: 2, nombre: "Grooming", icon: Scissors, activo: true },
+  { id: 3, nombre: "Procedimiento", icon: Syringe, activo: true },
 ];
 
 const FORM_VACIO = {
@@ -31,22 +30,54 @@ const PanelServicios = () => {
   const [servicios, setServicios] = useState([]);
   const [estado, setEstado] = useState(ESTADO.CARGANDO);
   const [modalAbierto, setModalAbierto] = useState(false);
+  
+  const [modalTiposAbierto, setModalTiposAbierto] = useState(false);
+  const [tiposServicio, setTiposServicio] = useState(TIPOS_SERVICIO_INICIALES);
+  const [nombreTipoNuevo, setNombreTipoNuevo] = useState("");
+
   const [form, setForm] = useState(FORM_VACIO);
   const [editando, setEditando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [errorForm, setErrorForm] = useState("");
 
+  const [user, setUser] = useState(null);
+
   useEffect(() => {
+    // Lectura correcta según las llaves que se ven en tu local_storage
+    const usuarioGuardado = localStorage.getItem("usuario_huellitas") || localStorage.getItem("usuario") || localStorage.getItem("user");
+    if (usuarioGuardado) {
+      try {
+        setUser(JSON.parse(usuarioGuardado));
+      } catch (e) {
+        console.error("Error al parsear el usuario:", e);
+      }
+    }
+    
     cargarServicios();
   }, []);
+
+  // Función robusta para obtener el token correcto sin importar cómo se guardó
+  const obtenerToken = () => {
+    return (
+      localStorage.getItem("token_huellitas") ||
+      localStorage.getItem("token") ||
+      localStorage.getItem("huellitas_token") ||
+      localStorage.getItem("jwt") ||
+      ""
+    );
+  };
 
   const cargarServicios = async () => {
     setEstado(ESTADO.CARGANDO);
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE}/api/comercio/servicios`, {
+      const token = obtenerToken();
+      
+      // Se quita /api extra si API_BASE ya lo trae, o se ajusta de forma limpia
+      const baseClean = API_BASE.endsWith('/api') ? API_BASE.slice(0, -4) : API_BASE;
+      const res = await fetch(`${baseClean}/api/comercio/servicios`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      
       if (!res.ok) throw new Error("No se pudo cargar la lista de servicios");
       const data = await res.json();
       setServicios(data);
@@ -107,7 +138,7 @@ const PanelServicios = () => {
     setGuardando(true);
     setErrorForm("");
     try {
-      const token = localStorage.getItem("huellitas_token");
+      const token = obtenerToken();
       const payload = {
         nombre: form.nombre.trim(),
         descripcion: form.descripcion.trim() || null,
@@ -117,9 +148,10 @@ const PanelServicios = () => {
         activo: form.activo,
       };
 
+      const baseClean = API_BASE.endsWith('/api') ? API_BASE.slice(0, -4) : API_BASE;
       const url = editando
-        ? `${API_BASE}/api/comercio/servicios/${form.idServicio}`
-        : `${API_BASE}/api/comercio/servicios`;
+        ? `${baseClean}/api/comercio/servicios/${form.idServicio}`
+        : `${baseClean}/api/comercio/servicios`;
       const method = editando ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -150,8 +182,9 @@ const PanelServicios = () => {
     if (!confirmar) return;
 
     try {
-      const token = localStorage.getItem("huellitas_token");
-      const res = await fetch(`${API_BASE}/api/comercio/servicios/${servicio.idServicio}`, {
+      const token = obtenerToken();
+      const baseClean = API_BASE.endsWith('/api') ? API_BASE.slice(0, -4) : API_BASE;
+      const res = await fetch(`${baseClean}/api/comercio/servicios/${servicio.idServicio}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -163,7 +196,33 @@ const PanelServicios = () => {
     }
   };
 
-  const tipoInfo = (idTipo) => TIPOS_SERVICIO.find((t) => t.id === idTipo) || TIPOS_SERVICIO[0];
+  const handleCrearTipo = (e) => {
+    e.preventDefault();
+    const nombre = nombreTipoNuevo.trim();
+    if (!nombre) return;
+    if (tiposServicio.some((t) => t.nombre.toLowerCase() === nombre.toLowerCase())) {
+      alert("Ese tipo de servicio ya existe");
+      return;
+    }
+    const nuevoId = tiposServicio.length ? Math.max(...tiposServicio.map((t) => t.id)) + 1 : 1;
+    setTiposServicio([...tiposServicio, { id: nuevoId, nombre, icon: Stethoscope, activo: true }]);
+    setNombreTipoNuevo("");
+  };
+
+  const handleToggleTipo = (id) => {
+    setTiposServicio(
+      tiposServicio.map((t) => (t.id === id ? { ...t, activo: !t.activo } : t))
+    );
+  };
+
+  const tipoInfo = (idTipo) => tiposServicio.find((t) => t.id === idTipo) || tiposServicio[0];
+
+  // Verificación flexible del rol de administrador (soporta idRol === 1 o texto Administrador/Admin)
+  const esAdmin = 
+    Number(user?.idRol) === 1 || 
+    user?.rol === "Administrador" || 
+    user?.rol === "Admin" || 
+    user?.rol?.nombre === "Administrador";
 
   return (
     <div className={styles.panel}>
@@ -172,10 +231,25 @@ const PanelServicios = () => {
           <h2 className={styles.titulo}>Servicios</h2>
           <p className={styles.subtitulo}>Gestioná las consultas, groomings y procedimientos que ofrecés.</p>
         </div>
-        <button className={styles.btnNuevo} onClick={abrirNuevo}>
-          <Plus size={18} />
-          Nuevo servicio
-        </button>
+        
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {/* El botón se muestra si es Admin por ID o por texto */}
+          {esAdmin && (
+            <button 
+              className={styles.btnSecundario || styles.btnNuevo} 
+              onClick={() => setModalTiposAbierto(true)}
+              style={{ backgroundColor: '#e9ecef', color: '#1b4332', border: '1px solid #ced4da' }}
+            >
+              <Tags size={18} />
+              Tipos de servicio
+            </button>
+          )}
+          
+          <button className={styles.btnNuevo} onClick={abrirNuevo}>
+            <Plus size={18} />
+            Nuevo servicio
+          </button>
+        </div>
       </div>
 
       {estado === ESTADO.CARGANDO && (
@@ -215,7 +289,7 @@ const PanelServicios = () => {
             <tbody>
               {servicios.map((s) => {
                 const tipo = tipoInfo(s.idTipoServicio);
-                const TipoIcon = tipo.icon;
+                const TipoIcon = tipo.icon || Stethoscope;
                 return (
                   <tr key={s.idServicio}>
                     <td>
@@ -315,7 +389,7 @@ const PanelServicios = () => {
                     value={form.idTipoServicio}
                     onChange={(e) => handleChange("idTipoServicio", e.target.value)}
                   >
-                    {TIPOS_SERVICIO.map((t) => (
+                    {tiposServicio.filter(t => t.activo).map((t) => (
                       <option key={t.id} value={t.id}>{t.nombre}</option>
                     ))}
                   </select>
@@ -365,6 +439,78 @@ const PanelServicios = () => {
               </button>
               <button className={styles.btnPrimario} onClick={guardarServicio} disabled={guardando}>
                 {guardando ? "Guardando..." : editando ? "Guardar cambios" : "Crear servicio"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalTiposAbierto && (
+        <div className={styles.overlay} onClick={() => setModalTiposAbierto(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+            <div className={styles.modalHeader}>
+              <h3><Tags size={20} style={{ marginRight: '8px', verticalAlign: 'middle' }} /> Administrar Tipos de Servicio</h3>
+              <button className={styles.closeBtn} onClick={() => setModalTiposAbierto(false)} aria-label="Cerrar">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <form onSubmit={handleCrearTipo} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                <input
+                  type="text"
+                  placeholder="Nuevo tipo (ej. Odontología)"
+                  value={nombreTipoNuevo}
+                  onChange={(e) => setNombreTipoNuevo(e.target.value)}
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', border: '1px solid #ced4da' }}
+                  required
+                />
+                <button type="submit" className={styles.btnPrimario} style={{ padding: '8px 16px' }}>Agregar</button>
+              </form>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '250px', overflowY: 'auto' }}>
+                {tiposServicio.map((t) => (
+                  <div 
+                    key={t.id} 
+                    style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center', 
+                      padding: '10px 14px', 
+                      background: '#f8f9fa', 
+                      borderRadius: '8px',
+                      border: '1px solid #e9ecef',
+                      opacity: t.activo ? 1 : 0.6
+                    }}
+                  >
+                    <span style={{ fontWeight: 600, color: '#1b4332' }}>{t.nombre}</span>
+                    <button 
+                      onClick={() => handleToggleTipo(t.id)}
+                      style={{ 
+                        background: t.activo ? '#e8f5e9' : '#ffebee', 
+                        color: t.activo ? '#2e7d32' : '#c62828', 
+                        border: 'none', 
+                        padding: '5px 10px', 
+                        borderRadius: '6px', 
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontWeight: 600
+                      }}
+                    >
+                      {t.activo ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                      {t.activo ? "Activo" : "Inactivo"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button className={styles.btnSecundario} onClick={() => setModalTiposAbierto(false)}>
+                Cerrar
               </button>
             </div>
           </div>
