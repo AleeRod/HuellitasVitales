@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import DogNav from '../../components/DogNav/DogNav';
-// 👇 Asegúrese de que esta ruta coincida con donde guardó su componente Toast
 import { ToastContainer } from '../../components/Toast/Toast'; 
 import { API_BASE } from '../../api/config';
 import styles from './Perfil.module.css';
@@ -22,7 +21,6 @@ const obtenerIniciales = (nombre = '', apellidos = '') => {
 
 const Perfil = () => {
     const { id: idParam } = useParams();
-    const idUsuario = idParam || localStorage.getItem('idUsuario') || 1;
 
     const [perfil, setPerfil] = useState(null);
     const [cargando, setCargando] = useState(true);
@@ -55,7 +53,22 @@ const Perfil = () => {
             setCargando(true);
             setError(false);
             try {
-                const res = await fetch(`${API_BASE}/usuario/${idUsuario}`);
+                const token = localStorage.getItem('jwt') || localStorage.getItem('token_huellitas');
+                
+                // Si viene un idParam en la URL busca por ese ID; de lo contrario consulta el perfil del usuario logueado vía Token
+                const url = idParam 
+                    ? `${API_BASE}/usuario/${idParam}` 
+                    : `${API_BASE}/usuario/perfil`;
+
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const res = await fetch(url, { headers });
                 if (!res.ok) throw new Error('No se pudo obtener el perfil');
 
                 const data = await res.json();
@@ -68,15 +81,17 @@ const Perfil = () => {
                         telefono: data.telefono || ''
                     });
                 }
-            } catch {
+            } catch (err) {
+                console.error("Error al cargar el perfil:", err);
                 if (activo) setError(true);
             } finally {
                 if (activo) setCargando(false);
             }
         };
+
         cargarPerfil();
         return () => { activo = false; };
-    }, [idUsuario]);
+    }, [idParam]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -115,7 +130,6 @@ const Perfil = () => {
 
         setErroresForm(errores);
         
-        // 👇 Si hay errores, disparamos el Toast de Warning
         if (Object.keys(errores).length > 0) {
             addToast("Revisa los errores en los campos del formulario.", "warning");
             return false;
@@ -144,13 +158,10 @@ const Perfil = () => {
             
             setPerfil((prev) => ({ ...prev, ...formData }));
             setEditando(false);
-            
-            // 👇 Toast de Success al guardar bien
             addToast("Información actualizada correctamente.", "success");
             
         } catch (err) {
             console.error("No se pudo guardar", err);
-            // 👇 Toast de Error si el backend falla
             addToast("Ocurrió un problema al guardar los cambios.", "error");
         } finally {
             setGuardando(false);
@@ -161,7 +172,6 @@ const Perfil = () => {
 
     return (
         <>
-            {/* 👇 El contenedor de Toasts se renderiza aquí arriba */}
             <ToastContainer toasts={toasts} removeToast={removeToast} />
             
             <DogNav />
@@ -293,7 +303,7 @@ const Perfil = () => {
                                     <Campo etiqueta="Apellidos" valor={perfil?.apellidos} cargando={cargando} icono={<Contact size={20} />} />
                                     <Campo etiqueta="Correo electrónico" valor={perfil?.correo} cargando={cargando} icono={<Mail size={20} />} />
                                     <Campo etiqueta="Teléfono" valor={perfil?.telefono || 'No registrado'} cargando={cargando} icono={<Phone size={20} />} />
-                                    <Campo etiqueta="Método de acceso" valor={perfil?.proveedor} cargando={cargando} icono={<Lock size={20} />} />
+                                    <Campo etiqueta="Método de acceso" valor={perfil?.proveedor || 'Contraseña'} cargando={cargando} icono={<Lock size={20} />} />
                                     <Campo etiqueta="Miembro desde" valor={perfil ? new Date(perfil.fechaRegistro).toLocaleDateString('es-CR', { year: 'numeric', month: 'long', day: 'numeric' }) : ''} cargando={cargando} icono={<Calendar size={20} />} />
                                 </div>
                             )}
