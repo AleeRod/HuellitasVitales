@@ -2,10 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import DogNav from '../../components/DogNav/DogNav';
 import { useDebounce } from '../../hooks/useDebounce';
 import { API_BASE } from '../../api/config';
+import ModalRegistroRapido from '../../components/ModalRegistroRapido/ModalRegistroRapido'; // 👈 Asegúrate de ajustar la ruta según donde guardaste el modal
 import { 
     Search, ShoppingCart, Package, Stethoscope, 
     AlertCircle, Loader2, CalendarPlus, XCircle, LayoutGrid,
-    ChevronLeft, ChevronRight, DollarSign, Tag
+    ChevronLeft, ChevronRight, DollarSign, Tag, CreditCard
 } from 'lucide-react';
 import styles from './Marketplace.module.css';
 
@@ -98,6 +99,9 @@ const Marketplace = () => {
     const [termino, setTermino] = useState('');
     const [filtroActivo, setFiltroActivo] = useState('todos');
     
+    // Estado para controlar la visibilidad del Modal de Registro Rápido (Checkout)
+    const [modalCheckoutAbierto, setModalCheckoutAbierto] = useState(false);
+    
     const [filtrosAvanzados, setFiltrosAvanzados] = useState({
         precioMin: '',
         precioMax: '',
@@ -139,11 +143,8 @@ const Marketplace = () => {
                             setEstado(total === 0 ? ESTADO.VACIO : ESTADO.OK);
                             return;
                         }
-                    } catch {
-                        // Fallback temporal si el backend aún da 404
-                    }
+                    } catch {}
 
-                    // MOCK DE RESPALDO TEMPORAL
                     const mockCategorias = [
                         {
                             idCategoriaProducto: 1,
@@ -264,7 +265,6 @@ const Marketplace = () => {
         alert(`Redirigiendo al agendamiento de cita para el servicio ID: ${idServicio}`);
     };
 
-    // --- FILTRADO DE PRODUCTOS ---
     const aplicarFiltrosProductos = (listaProductos) => {
         return listaProductos.filter(prod => {
             const precioEfectivo = prod.precioDescuento ?? prod.precio;
@@ -276,17 +276,13 @@ const Marketplace = () => {
         });
     };
 
-    // --- NUEVO: FILTRADO DE SERVICIOS (Segundo Nivel de Filtros) ---
     const aplicarFiltrosServicios = (listaServicios) => {
         return listaServicios.filter(serv => {
             const precioEfectivo = serv.precio;
             const matchMin = filtrosAvanzados.precioMin === '' || precioEfectivo >= Number(filtrosAvanzados.precioMin);
             const matchMax = filtrosAvanzados.precioMax === '' || precioEfectivo <= Number(filtrosAvanzados.precioMax);
-            
-            // Si el usuario marcó una categoría o marca específica de productos, los servicios no aplican a menos que no haya filtro seleccionado
             const matchCat = filtrosAvanzados.categoriasIds.length === 0;
             const matchMarca = filtrosAvanzados.marcasIds.length === 0;
-
             return matchMin && matchMax && matchCat && matchMarca;
         });
     };
@@ -311,7 +307,6 @@ const Marketplace = () => {
     const mostrarProductos = (filtroActivo === 'todos' || filtroActivo === 'productos');
     const mostrarServicios = (filtroActivo === 'todos' || filtroActivo === 'servicios');
 
-    // Verificar si no hay resultados ni de productos ni de servicios tras los filtros
     const sinResultadosTrastFiltros = 
         (mostrarProductos && productosTotalesFiltrados.length === 0) && 
         (mostrarServicios && serviciosTotalesFiltrados.length === 0);
@@ -326,8 +321,36 @@ const Marketplace = () => {
                             <ShoppingCart className={styles.badgeIcon} size={18} />
                             <span className={styles.badge}>Marketplace</span>
                         </div>
-                        <h1 className={styles.title}>Explora productos y servicios</h1>
-                        <p className={styles.subtitle}>Todo lo que tu mascota necesita, centralizado en un solo lugar.</p>
+                        
+                        {/* CONTENEDOR DE TÍTULO Y BOTÓN TEMPORAL DE CHECKOUT */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                            <div>
+                                <h1 className={styles.title}>Explora productos y servicios</h1>
+                                <p className={styles.subtitle}>Todo lo que tu mascota necesita, centralizado en un solo lugar.</p>
+                            </div>
+                            
+                            {/* BOTÓN TEMPORAL PARA PROBAR EL FLUJO DE CHECKOUT / REGISTRO RÁPIDO */}
+                            <button 
+                                onClick={() => setModalCheckoutAbierto(true)}
+                                style={{
+                                    background: 'linear-gradient(135deg, #1B4332 0%, #2d6a4f 100%)',
+                                    color: '#fff',
+                                    border: 'none',
+                                    padding: '0.75rem 1.25rem',
+                                    borderRadius: '14px',
+                                    fontWeight: '700',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 12px rgba(27,67,50,0.15)',
+                                    transition: 'transform 0.2s'
+                                }}
+                            >
+                                <CreditCard size={18} />
+                                Simular Ir a Pagar (Checkout)
+                            </button>
+                        </div>
                     </header>
 
                     <div className={styles.searchContainer}>
@@ -444,12 +467,10 @@ const Marketplace = () => {
 
                             {estado === ESTADO.OK && !sinResultadosTrastFiltros && (
                                 <>
-                                    {/* CARRUSELES EN VISTA INICIAL (Sin filtros de sidebar activos) */}
                                     {!mostrarComoGridVertical && mostrarProductos && catalogoFiltradoCarrusel.map((catItem) => (
                                         <CategoriaCarrusel key={catItem.idCategoriaProducto} categoriaItem={catItem} agregarAlCarrito={agregarAlCarrito} />
                                     ))}
 
-                                    {/* SERVICIOS EN VISTA INICIAL / SIN BÚSQUEDA */}
                                     {!esModoBusqueda && mostrarServicios && serviciosTotalesFiltrados.length > 0 && (
                                         <div className={styles.seccion}>
                                             <div className={styles.seccionHeader}>
@@ -476,7 +497,6 @@ const Marketplace = () => {
                                         </div>
                                     )}
 
-                                    {/* PRODUCTOS EN GRID (Búsqueda o Filtros Aplicados) */}
                                     {mostrarComoGridVertical && mostrarProductos && productosTotalesFiltrados.length > 0 && (
                                         <div className={styles.seccion}>
                                             <div className={styles.seccionHeader}>
@@ -511,7 +531,6 @@ const Marketplace = () => {
                                         </div>
                                     )}
 
-                                    {/* SERVICIOS EN MODO BÚSQUEDA O CON FILTROS DE PRECIO */}
                                     {esModoBusqueda && mostrarServicios && serviciosTotalesFiltrados.length > 0 && (
                                         <div className={styles.seccion}>
                                             <div className={styles.seccionHeader}>
@@ -543,6 +562,16 @@ const Marketplace = () => {
                     </div>
                 </div>
             </main>
+
+            {/* MODAL DE REGISTRO RÁPIDO INTEGRADO */}
+            <ModalRegistroRapido 
+                isOpen={modalCheckoutAbierto}
+                onClose={() => setModalCheckoutAbierto(false)}
+                onRegistroExitoso={() => {
+                    setModalCheckoutAbierto(false);
+                    alert("¡Datos de contacto guardados correctamente! Aquí el sistema pasaría a la pasarela de pago.");
+                }}
+            />
         </>
     );
 };
