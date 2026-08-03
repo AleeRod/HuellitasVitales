@@ -18,8 +18,10 @@ import {
   Trash2,
   Plus,
   Tags,
+  Package,
 } from 'lucide-react';
 import PanelServicios from '../../components/ComercioAdmin/PanelServicios/PanelServicios';
+import PanelProductos from '../../components/ComercioAdmin/PanelProductos/PanelProductos';
 import styles from './DashboardAdmin.module.css';
 
 const DashboardAdmin = () => {
@@ -104,6 +106,14 @@ const DashboardAdmin = () => {
             >
               <Tags size={18} className={styles.navIcon} />
               Servicios
+            </button>
+
+            <button
+              className={`${styles.navLinkAdmin} ${seccionActiva === 'PanelProductos' ? styles.active : ''}`}
+              onClick={() => setSeccionActiva('PanelProductos')}
+            >
+              <Package size={18} className={styles.navIcon} />
+              Productos
             </button>
 
             <a href="#roles" className={styles.navLinkAdmin} onClick={(e) => e.preventDefault()}>
@@ -361,6 +371,14 @@ const DashboardAdmin = () => {
               <PanelServicios />
             </div>
           )}
+
+          {/* AQUÍ ESTABA EL PROBLEMA: Faltaba esta condición para renderizar los productos */}
+          {seccionActiva === 'PanelProductos' && (
+            <div style={{ width: '100%' }}>
+              <PanelProductos />
+            </div>
+          )}
+
         </main>
       </div>
 
