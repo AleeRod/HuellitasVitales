@@ -30,6 +30,8 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<Producto>().ToTable("PRODUCTO");
             modelBuilder.Entity<Carrito>().ToTable("CARRITO");
             modelBuilder.Entity<CarritoItem>().ToTable("CARRITO_ITEM");
+            modelBuilder.Entity<TipoServicioCat>().ToTable("TIPO_SERVICIO_CAT");
+            modelBuilder.Entity<Servicio>().ToTable("SERVICIO");
         }
     }
 }

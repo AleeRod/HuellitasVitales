@@ -7,43 +7,43 @@ namespace HuellasVitalesAPI.Backend.Models.Entidades
     public class Producto
     {
         [Key]
-        [Column("IDPRODUCTO")]
+        [Column("IdProducto")]
         public int IdProducto { get; set; }
 
-        [Column("IDCOMERCIO")]
+        [Column("IdComercio")]
         public int IdComercio { get; set; }
 
-        [Column("IDCATEGORIA")]
+        [Column("IdCategoria")]
         public byte IdCategoria { get; set; }
 
-        [Column("IDESPECIE")]
+        [Column("IdEspecie")]
         public byte? IdEspecie { get; set; }
 
-        [Column("IDMARCA")]
+        [Column("IdMarca")]
         public int? IdMarca { get; set; }
 
-        [Column("SKU")]
+        [Column("Sku")]
         public string? Sku { get; set; }
 
-        [Column("NOMBRE")]
+        [Column("Nombre")]
         public string Nombre { get; set; } = string.Empty;
 
-        [Column("DESCRIPCION")]
+        [Column("Descripcion")]
         public string? Descripcion { get; set; }
 
-        [Column("PRECIO")]
+        [Column("Precio")]
         public decimal Precio { get; set; }
 
         [Column("PRECIO_DESCUENTO")]
         public decimal? PrecioDescuento { get; set; }
 
-        [Column("STOCK")]
+        [Column("Stock")]
         public int? Stock { get; set; }
 
         [Column("IMAGEN_URL")]
         public string? ImagenUrl { get; set; }
 
-        [Column("ACTIVO")]
+        [Column("Activo")]
         public bool Activo { get; set; }
 
         [Column("FECHA_CREACION")]

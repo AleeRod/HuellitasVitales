@@ -115,6 +115,9 @@ const Marketplace = () => {
     const terminoDebounced = useDebounce(termino, 400);
     const abortRef = useRef(null);
 
+    // =========================================================================
+    // CONEXIÓN DIRECTA Y PURA A LA BASE DE DATOS (SIN MOCKS)
+    // =========================================================================
     useEffect(() => {
         const q = terminoDebounced.trim();
 
@@ -122,87 +125,48 @@ const Marketplace = () => {
         const controller = new AbortController();
         abortRef.current = controller;
 
-        const cargarDatosHibridos = async () => {
+        const cargarDatosBD = async () => {
             setEstado(ESTADO.CARGANDO);
             try {
                 if (q === '') {
-                    try {
-                        // Intento conectar al Backend real (Tareas 209 / 210)
-                        const res = await fetch(`${API_BASE}/marketplace/catalogo`, { signal: controller.signal });
-                        if (res.ok) {
-                            const data = await res.json();
-                            const categorias = data.categorias || data || [];
-                            const servicios = data.servicios || [];
-                            setCatalogoPorCategoria(categorias);
-                            setProductosBusqueda(categorias.flatMap(c => c.productos || []));
-                            setServiciosBusqueda(servicios);
-                            const total = categorias.flatMap(c => c.productos || []).length + servicios.length;
-                            setEstado(total === 0 ? ESTADO.VACIO : ESTADO.OK);
-                            return;
-                        }
-                    } catch {
-                        // Si el backend aún no responde (404), usamos Mock temporal para no bloquear el frontend
-                    }
-
-                    // MOCK DE RESPALDO TEMPORAL (Mientras terminas el backend)
-                    const mockCategorias = [
-                        {
-                            idCategoriaProducto: 1,
-                            nombreCategoria: "Alimentos y Nutrición",
-                            productos: [
-                                { idProducto: 101, nombreProducto: "Croquetas Pro Plan Adulto 15kg", idComercio: 1, nombreComercio: "Veterinaria San Rafael", idCategoriaProducto: 1, idMarca: 1, nombreMarca: "ProPlan", precio: 25000, precioDescuento: null, imagenUrl: null, agotado: false },
-                                { idProducto: 102, nombreProducto: "Snacks Dentales Higiene Oral", idComercio: 2, nombreComercio: "PetShop San José", idCategoriaProducto: 1, idMarca: 2, nombreMarca: "Pedigree", precio: 4200, precioDescuento: null, imagenUrl: null, agotado: false }
-                            ]
-                        },
-                        {
-                            idCategoriaProducto: 2,
-                            nombreCategoria: "Accesorios y Camas",
-                            productos: [
-                                { idProducto: 103, nombreProducto: "Cama Ortopédica Impermeable", idComercio: 2, nombreComercio: "PetShop San José", idCategoriaProducto: 2, idMarca: 3, nombreMarca: "Kong", precio: 25000, precioDescuento: null, imagenUrl: null, agotado: true }
-                            ]
-                        }
-                    ];
-                    const mockServicios = [
-                        { idServicio: 201, nombreServicio: "Consulta Médica General", idTipoServicio: 1, tipoServicio: "Medicina Preventiva", idComercio: 1, nombreComercio: "Veterinaria Huellitas", precio: 15000, duracionMinutos: 30 }
-                    ];
-
-                    setCatalogoPorCategoria(mockCategorias);
-                    setProductosBusqueda(mockCategorias.flatMap(c => c.productos));
-                    setServiciosBusqueda(mockServicios);
-                    setEstado(ESTADO.OK);
+                    const res = await fetch(`${API_BASE}/marketplace/catalogo`, { signal: controller.signal });
+                    if (!res.ok) throw new Error('Error al conectar con la base de datos');
+                    
+                    const data = await res.json();
+                    const categorias = data.categorias || data || [];
+                    const servicios = data.servicios || [];
+                    
+                    setCatalogoPorCategoria(categorias);
+                    setProductosBusqueda(categorias.flatMap(c => c.productos || []));
+                    setServiciosBusqueda(servicios);
+                    
+                    const total = categorias.flatMap(c => c.productos || []).length + servicios.length;
+                    setEstado(total === 0 ? ESTADO.VACIO : ESTADO.OK);
 
                 } else {
-                    try {
-                        const res = await fetch(`${API_BASE}/marketplace/buscar?q=${encodeURIComponent(q)}`, { signal: controller.signal });
-                        if (res.ok) {
-                            const data = await res.json();
-                            setProductosBusqueda(data.productos || []);
-                            setServiciosBusqueda(data.servicios || []);
-                            setCatalogoPorCategoria([]);
-                            const sinRes = (data.productos || []).length === 0 && (data.servicios || []).length === 0;
-                            setEstado(sinRes ? ESTADO.VACIO : ESTADO.OK);
+                    const res = await fetch(`${API_BASE}/marketplace/buscar?q=${encodeURIComponent(q)}`, { signal: controller.signal });
+                    
+                    if (!res.ok) {
+                        if (res.status === 400) {
+                            // Término muy corto - no es un error real, solo no hay suficientes caracteres aún
+                            setEstado(ESTADO.VACIO);
+                            setProductosBusqueda([]);
+                            setServiciosBusqueda([]);
                             return;
                         }
-                    } catch {}
-
-                    // Búsqueda local de respaldo si el endpoint de búsqueda tampoco está listo
-                    const queryLower = q.toLowerCase();
-                    const todosProds = [
-                        { idProducto: 101, nombreProducto: "Croquetas Pro Plan Adulto 15kg", idComercio: 1, nombreComercio: "Veterinaria San Rafael", idCategoriaProducto: 1, idMarca: 1, nombreMarca: "ProPlan", precio: 25000, precioDescuento: null, imagenUrl: null, agotado: false },
-                        { idProducto: 102, nombreProducto: "Snacks Dentales Higiene Oral", idComercio: 2, nombreComercio: "PetShop San José", idCategoriaProducto: 1, idMarca: 2, nombreMarca: "Pedigree", precio: 4200, precioDescuento: null, imagenUrl: null, agotado: false },
-                        { idProducto: 103, nombreProducto: "Cama Ortopédica Impermeable", idComercio: 2, nombreComercio: "PetShop San José", idCategoriaProducto: 2, idMarca: 3, nombreMarca: "Kong", precio: 25000, precioDescuento: null, imagenUrl: null, agotado: true }
-                    ];
-                    const todosServs = [
-                        { idServicio: 201, nombreServicio: "Consulta Médica General", idTipoServicio: 1, tipoServicio: "Medicina Preventiva", idComercio: 1, nombreComercio: "Veterinaria Huellitas", precio: 15000, duracionMinutos: 30 }
-                    ];
-
-                    const prodsFilt = todosProds.filter(p => p.nombreProducto.toLowerCase().includes(queryLower) || p.nombreMarca.toLowerCase().includes(queryLower));
-                    const servsFilt = todosServs.filter(s => s.nombreServicio.toLowerCase().includes(queryLower) || s.tipoServicio.toLowerCase().includes(queryLower));
-
-                    setProductosBusqueda(prodsFilt);
-                    setServiciosBusqueda(servsFilt);
+                        throw new Error('Error en la búsqueda');
+                    }
+                    
+                    const data = await res.json();
+                    const prods = data.productos || data.data || [];
+                    const servs = data.servicios || [];
+                    
+                    setProductosBusqueda(prods);
+                    setServiciosBusqueda(servs);
                     setCatalogoPorCategoria([]);
-                    setEstado(prodsFilt.length === 0 && servsFilt.length === 0 ? ESTADO.VACIO : ESTADO.OK);
+                    
+                    const sinRes = prods.length === 0 && servs.length === 0;
+                    setEstado(sinRes ? ESTADO.VACIO : ESTADO.OK);
                 }
             } catch (error) {
                 if (error.name === 'AbortError') return;
@@ -210,7 +174,7 @@ const Marketplace = () => {
             }
         };
 
-        cargarDatosHibridos();
+        cargarDatosBD();
         return () => controller.abort();
     }, [terminoDebounced, reintento]);
 
@@ -264,7 +228,7 @@ const Marketplace = () => {
         alert(`Redirigiendo al agendamiento de cita para el servicio ID: ${idServicio}`);
     };
 
-    const aplicarFiltrosAvanzados = (listaProductos) => {
+    const aplicarFiltrosProductos = (listaProductos) => {
         return listaProductos.filter(prod => {
             const precioEfectivo = prod.precioDescuento ?? prod.precio;
             const matchMin = filtrosAvanzados.precioMin === '' || precioEfectivo >= Number(filtrosAvanzados.precioMin);
@@ -275,21 +239,40 @@ const Marketplace = () => {
         });
     };
 
+    const aplicarFiltrosServicios = (listaServicios) => {
+        return listaServicios.filter(serv => {
+            const precioEfectivo = serv.precio;
+            const matchMin = filtrosAvanzados.precioMin === '' || precioEfectivo >= Number(filtrosAvanzados.precioMin);
+            const matchMax = filtrosAvanzados.precioMax === '' || precioEfectivo <= Number(filtrosAvanzados.precioMax);
+            const matchCat = filtrosAvanzados.categoriasIds.length === 0;
+            const matchMarca = filtrosAvanzados.marcasIds.length === 0;
+            return matchMin && matchMax && matchCat && matchMarca;
+        });
+    };
+
     const esModoBusqueda = terminoDebounced.trim() !== '';
     const tieneFiltrosAplicados = filtrosAvanzados.categoriasIds.length > 0 || filtrosAvanzados.marcasIds.length > 0 || filtrosAvanzados.precioMin !== '' || filtrosAvanzados.precioMax !== '';
     const mostrarComoGridVertical = esModoBusqueda || tieneFiltrosAplicados;
 
-    const productosTotalesFiltrados = aplicarFiltrosAvanzados(
+    const productosTotalesFiltrados = aplicarFiltrosProductos(
         esModoBusqueda ? productosBusqueda : catalogoPorCategoria.flatMap(c => c.productos || [])
+    );
+
+    const serviciosTotalesFiltrados = aplicarFiltrosServicios(
+        serviciosBusqueda
     );
 
     const catalogoFiltradoCarrusel = catalogoPorCategoria.map(cat => ({
         ...cat,
-        productos: aplicarFiltrosAvanzados(cat.productos || [])
+        productos: aplicarFiltrosProductos(cat.productos || [])
     })).filter(cat => cat.productos.length > 0);
 
     const mostrarProductos = (filtroActivo === 'todos' || filtroActivo === 'productos');
     const mostrarServicios = (filtroActivo === 'todos' || filtroActivo === 'servicios');
+
+    const sinResultadosTrastFiltros = 
+        (mostrarProductos && productosTotalesFiltrados.length === 0) && 
+        (mostrarServicios && serviciosTotalesFiltrados.length === 0);
 
     return (
         <>
@@ -404,33 +387,33 @@ const Marketplace = () => {
                                 <div className={`${styles.stateBox} ${styles.stateError}`}>
                                     <AlertCircle className={styles.stateIcon} size={40} />
                                     <h3>Error de conexión</h3>
-                                    <p>No pudimos cargar los datos del servidor.</p>
+                                    <p>No pudimos conectar con la base de datos o el servidor.</p>
                                     <button className={styles.retryBtn} onClick={() => setReintento((n) => n + 1)}>Reintentar</button>
                                 </div>
                             )}
 
-                            {estado === ESTADO.VACIO && (
+                            {(estado === ESTADO.VACIO || (estado === ESTADO.OK && sinResultadosTrastFiltros)) && (
                                 <div className={styles.stateBox}>
                                     <Search className={styles.stateIcon} size={40} />
                                     <h3>Sin resultados</h3>
-                                    <p>No encontramos elementos disponibles.</p>
+                                    <p>No hay elementos en la base de datos que coincidan con los filtros aplicados.</p>
                                 </div>
                             )}
 
-                            {estado === ESTADO.OK && (
+                            {estado === ESTADO.OK && !sinResultadosTrastFiltros && (
                                 <>
                                     {!mostrarComoGridVertical && mostrarProductos && catalogoFiltradoCarrusel.map((catItem) => (
                                         <CategoriaCarrusel key={catItem.idCategoriaProducto} categoriaItem={catItem} agregarAlCarrito={agregarAlCarrito} />
                                     ))}
 
-                                    {!esModoBusqueda && mostrarServicios && serviciosBusqueda.length > 0 && (
+                                    {!esModoBusqueda && mostrarServicios && serviciosTotalesFiltrados.length > 0 && (
                                         <div className={styles.seccion}>
                                             <div className={styles.seccionHeader}>
                                                 <Stethoscope className={styles.seccionIcon} size={22} />
                                                 <h2 className={styles.seccionTitulo}>Servicios Veterinarios</h2>
                                             </div>
                                             <ul className={styles.grid}>
-                                                {serviciosBusqueda.map((serv) => (
+                                                {serviciosTotalesFiltrados.map((serv) => (
                                                     <li key={serv.idServicio} className={styles.card}>
                                                         <div className={styles.cardBody}>
                                                             <h3 className={styles.cardTitle}>{serv.nombreServicio}</h3>
@@ -483,14 +466,14 @@ const Marketplace = () => {
                                         </div>
                                     )}
 
-                                    {esModoBusqueda && mostrarServicios && serviciosBusqueda.length > 0 && (
+                                    {esModoBusqueda && mostrarServicios && serviciosTotalesFiltrados.length > 0 && (
                                         <div className={styles.seccion}>
                                             <div className={styles.seccionHeader}>
                                                 <Stethoscope className={styles.seccionIcon} size={22} />
                                                 <h2 className={styles.seccionTitulo}>Servicios Encontrados</h2>
                                             </div>
                                             <ul className={styles.grid}>
-                                                {serviciosBusqueda.map((serv) => (
+                                                {serviciosTotalesFiltrados.map((serv) => (
                                                     <li key={serv.idServicio} className={styles.card}>
                                                         <div className={styles.cardBody}>
                                                             <h3 className={styles.cardTitle}>{serv.nombreServicio}</h3>

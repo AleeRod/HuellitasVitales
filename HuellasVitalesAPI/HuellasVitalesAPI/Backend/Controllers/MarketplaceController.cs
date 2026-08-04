@@ -15,17 +15,33 @@ namespace HuellitasVitalesAPI.Controllers
             _marketplaceService = marketplaceService;
         }
 
-        [HttpGet("buscar")]
-        public async Task<IActionResult> BuscarDinamico([FromQuery] string termino)
+        [HttpGet("catalogo")]
+        public async Task<IActionResult> GetCatalogo()
         {
-            if (string.IsNullOrWhiteSpace(termino) || termino.Length < 3)
+            try
             {
-                return BadRequest(new { mensaje = "Ingresa al menos 3 caracteres para buscar." });
+                var catalogo = await _marketplaceService.ObtenerCatalogoCompletoAsync();
+                return Ok(catalogo);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { mensaje = "Error interno al obtener el catálogo.", detalle = ex.Message });
+            }
+        }
+
+       [HttpGet("buscar")]
+        public async Task<IActionResult> BuscarDinamico([FromQuery] string? termino, [FromQuery] string? q)
+        {
+            string criterioBusqueda = !string.IsNullOrWhiteSpace(termino) ? termino : (q ?? "");
+
+            if (string.IsNullOrWhiteSpace(criterioBusqueda))
+            {
+                return BadRequest(new { mensaje = "Ingresa un término de búsqueda." });
             }
 
             try
             {
-                var resultados = await _marketplaceService.BuscarEnMarketplaceAsync(termino);
+                var resultados = await _marketplaceService.BuscarEnMarketplaceAsync(criterioBusqueda);
 
                 if (resultados == null || !resultados.Any())
                 {
@@ -34,9 +50,9 @@ namespace HuellitasVitalesAPI.Controllers
 
                 return Ok(new { mensaje = "Búsqueda exitosa", data = resultados });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return StatusCode(500, new { mensaje = "Error interno del servidor al realizar la búsqueda. Por favor, intenta de nuevo." });
+                return StatusCode(500, new { mensaje = "Error interno al realizar la búsqueda.", detalle = ex.Message });
             }
         }
     }

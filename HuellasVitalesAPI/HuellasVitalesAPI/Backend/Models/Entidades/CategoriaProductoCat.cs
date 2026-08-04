@@ -7,10 +7,10 @@ namespace HuellasVitalesAPI.Backend.Models.Entidades
     public class CategoriaProductoCat
     {
         [Key]
-        [Column("IDCATEGORIA")]
+        [Column("IdCategoria")]
         public byte IdCategoria { get; set; }
 
-        [Column("NOMBRE")]
+        [Column("Nombre")]
         public string Nombre { get; set; } = string.Empty;
     }
 }
