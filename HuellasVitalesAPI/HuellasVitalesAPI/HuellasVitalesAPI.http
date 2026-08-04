@@ -1,20 +1,22 @@
-@HuellasVitalesAPI_HostAddress = http://localhost:5010
-
-### Crear Solicitud Exitosa (Usuario Nuevo o Nombre Nuevo)
-POST {{HuellasVitalesAPI_HostAddress}}/api/comercio/solicitud
+### 1. LOGIN (Ejecuta esto y copia el token que sale a la derecha)
+POST http://localhost:5010/api/Login/local
 Content-Type: application/json
 
 {
-  "idUsuario": 1,
-  "idTipoPersona": 2,
-  "identificacion": "4-000-999999", 
-  "razonSocial": "Veterinaria Nueva S.A.",
-  "comercios": [
-    {
-      "idTipoComercio": 1,
-      "nombreComercial": "Veterinaria El Roble",
-      "direccion": "San Pedro, frente al parque",
-      "telefono": "2222-3333"
-    }
-  ]
+  "correo": "eduaba8@gmail.com",
+  "password": "1234"
+}
+
+### ------------------------------------------
+
+### 2. ACTUALIZAR PERFIL (Pega tu token limpio después de Bearer)
+PUT http://localhost:5010/api/Usuario/perfil
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJlZHVhYmE4QGdtYWlsLmNvbSIsInJvbCI6IjMiLCJleHAiOjE3ODU2Mjk3NTV9.KadgLhzXPJcm6AEOdXem8g7g1CXhT27D5gon7kZz0jQ
+Content-Type: application/json
+
+{
+  "nombre": "Javier Antonio",
+  "apellidos": "Powers Abarca",
+  "correo": "eduaba8@gmail.com",
+  "telefono": "88888888"
 }

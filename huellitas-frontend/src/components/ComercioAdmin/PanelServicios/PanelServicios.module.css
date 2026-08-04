@@ -1,0 +1,389 @@
+.panel {
+    --pine: #1B4332;
+    --pine-dk: #112b21;
+    --mint: #52B788;
+    --mint-lt: #95d5b2;
+    --cream: #FEFAE0;
+    --text-md: #4a5568;
+    --line: #dde3d8;
+    --danger: #c0392b;
+    width: 100%;
+}
+
+/* --- HEADER --- */
+.headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.titulo {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine);
+    font-size: 1.6rem;
+    margin: 0 0 0.3rem;
+}
+
+.subtitulo {
+    color: var(--text-md);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.btnNuevo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--pine);
+    color: #fff;
+    border: none;
+    padding: 0.7rem 1.2rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+    white-space: nowrap;
+}
+
+.btnNuevo:hover {
+    background: var(--pine-dk);
+    transform: translateY(-2px);
+}
+
+/* --- ESTADOS --- */
+.estadoBox {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-md);
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    border: 1px dashed var(--mint-lt);
+}
+
+.estadoBox h3 {
+    color: var(--pine);
+    margin: 0 0 0.5rem;
+}
+
+.linkBtn {
+    background: none;
+    border: none;
+    color: var(--mint);
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+/* --- TABLA --- */
+.tableWrap {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(27, 67, 50, 0.05);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table thead th {
+    text-align: left;
+    background: #f7faf7;
+    color: var(--pine);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.9rem 1.1rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.table tbody td {
+    padding: 0.9rem 1.1rem;
+    border-bottom: 1px solid #eef2eb;
+    vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background: rgba(82, 183, 136, 0.04);
+}
+
+.nombreCell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.nombreServicio {
+    font-weight: 700;
+    color: var(--pine-dk);
+}
+
+.descripcionServicio {
+    font-size: 0.8rem;
+    color: var(--text-md);
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tipoBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(82, 183, 136, 0.14);
+    color: var(--pine);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.3rem 0.7rem;
+    border-radius: 50px;
+}
+
+.metaCell {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--text-md);
+    font-size: 0.88rem;
+}
+
+.estadoOk {
+    color: var(--mint);
+    font-weight: 700;
+    font-size: 0.82rem;
+}
+
+.estadoOff {
+    color: #a0a5a0;
+    font-weight: 700;
+    font-size: 0.82rem;
+}
+
+.acciones {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: flex-end;
+}
+
+.iconBtn, .iconBtnDanger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--pine);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.iconBtn:hover {
+    background: var(--pine);
+    color: #fff;
+    border-color: var(--pine);
+}
+
+.iconBtnDanger {
+    color: var(--danger);
+}
+
+.iconBtnDanger:hover {
+    background: var(--danger);
+    color: #fff;
+    border-color: var(--danger);
+}
+
+/* --- MODAL --- */
+.overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 9999 !important;
+}
+.modal {
+    background: #fff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.3rem 1.5rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.modalHeader h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine);
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-md);
+    cursor: pointer;
+    display: flex;
+    padding: 0.2rem;
+}
+
+.closeBtn:hover {
+    color: var(--pine-dk);
+}
+
+.modalBody {
+    padding: 1.4rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.campoFila {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--pine-dk);
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+    font-family: inherit;
+    font-weight: 400;
+    font-size: 0.92rem;
+    color: var(--pine-dk);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.6rem 0.75rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+    resize: vertical;
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+    border-color: var(--mint);
+}
+
+.checkboxCampo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.88rem;
+    color: var(--text-md);
+    cursor: pointer;
+}
+
+.checkboxCampo input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--mint);
+    cursor: pointer;
+}
+
+.errorMsg {
+    color: var(--danger);
+    font-size: 0.85rem;
+    margin: 0;
+    background: rgba(192, 57, 43, 0.08);
+    padding: 0.6rem 0.8rem;
+    border-radius: 10px;
+}
+
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.7rem;
+    padding: 1.1rem 1.5rem;
+    border-top: 1px solid var(--line);
+}
+
+.btnPrimario, .btnSecundario {
+    padding: 0.65rem 1.3rem;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.btnPrimario {
+    background: var(--mint);
+    color: #fff;
+}
+
+.btnPrimario:hover {
+    background: var(--pine);
+}
+
+.btnPrimario:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btnSecundario {
+    background: transparent;
+    color: var(--text-md);
+    border: 1px solid var(--line);
+}
+
+.btnSecundario:hover {
+    background: #f7faf7;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 700px) {
+    .campoFila {
+        grid-template-columns: 1fr;
+    }
+    .table thead {
+        display: none;
+    }
+    .table, .table tbody, .table tbody tr, .table tbody td {
+        display: block;
+        width: 100%;
+    }
+    .table tbody tr {
+        border-bottom: 1px solid var(--line);
+        padding: 0.8rem 1rem;
+    }
+    .acciones {
+        justify-content: flex-start;
+        margin-top: 0.6rem;
+    }
+}

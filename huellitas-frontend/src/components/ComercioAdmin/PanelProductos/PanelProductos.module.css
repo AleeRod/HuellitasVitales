@@ -1,0 +1,399 @@
+.panel {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(221, 227, 216, 0.95);
+    border-radius: 24px;
+    box-shadow: 0 12px 26px rgba(27, 67, 50, 0.06);
+    padding: 1.5rem;
+    width: 100%;
+}
+
+.headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.badgeGestion {
+    display: inline-block;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    background: rgba(82, 183, 136, 0.15);
+    color: #1B4332;
+    padding: .25rem .65rem;
+    border-radius: 50px;
+    margin-bottom: .4rem;
+}
+
+.titulo {
+    font-family: 'Playfair Display', serif;
+    color: #1B4332;
+    font-size: 1.6rem;
+    margin: 0;
+}
+
+.subtitulo {
+    color: #718096;
+    font-size: .88rem;
+    margin-top: .2rem;
+}
+
+.btnNuevo {
+    background: linear-gradient(135deg, #1B4332 0%, #2d6a4f 100%);
+    color: #fff;
+    border: none;
+    padding: .75rem 1.1rem;
+    border-radius: 14px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    cursor: pointer;
+    transition: transform .18s ease;
+}
+
+.btnNuevo:hover {
+    transform: translateY(-2px);
+}
+
+.toolbar {
+    margin-bottom: 1.25rem;
+}
+
+.searchField {
+    position: relative;
+    max-width: 320px;
+}
+
+.searchField input {
+    width: 100%;
+    border: 1.5px solid #dde3d8;
+    background: #fff;
+    border-radius: 14px;
+    padding: .7rem 1rem .7rem 2.5rem;
+    outline: none;
+    font-size: .88rem;
+}
+
+.searchField span, .searchField svg {
+    position: absolute;
+    left: .9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #718096;
+}
+
+.tableWrap {
+    border: 1px solid #dde3d8;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.table thead th {
+    background: #f7faf7;
+    color: #1B4332;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 1rem;
+    border-bottom: 1px solid #dde3d8;
+}
+
+.table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    color: #4a5568;
+    font-size: .9rem;
+    border-bottom: 1px solid #eef2eb;
+}
+
+.nombreCell {
+    display: flex;
+    flex-direction: column;
+}
+
+.nombreProducto {
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.descProducto {
+    font-size: .78rem;
+    color: #718096;
+}
+
+.categoriaBadge, .precioCell, .stockNormal {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-weight: 600;
+}
+
+.stockAgotado {
+    color: #dc3545;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+}
+
+.estadoOk {
+    background: rgba(82, 183, 136, 0.16);
+    color: #2d6a4f;
+    padding: .35rem .65rem;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+.estadoOff {
+    background: rgba(113, 128, 150, 0.14);
+    color: #4a5568;
+    padding: .35rem .65rem;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+.acciones {
+    display: flex;
+    gap: .4rem;
+}
+
+.iconBtn, .iconBtnDanger {
+    width: 35px;
+    height: 35px;
+    border-radius: 11px;
+    border: 1px solid #edf1ea;
+    background: #f7faf7;
+    color: #1B4332;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+
+.iconBtnDanger {
+    color: #dc3545;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 2rem;
+    color: #718096;
+}
+
+/* MODAL Y FORMULARIO */
+.overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 9999 !important;
+}
+
+.modal {
+    background: #fff;
+    border-radius: 22px;
+    width: 100%;
+    max-width: 680px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+.modalHeader {
+    background: linear-gradient(135deg, #112b21, #1B4332, #2d6a4f);
+    color: #fff;
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modalHeader h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+}
+
+.modalBody {
+    background: #FEFAE0;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    width: 100%;
+}
+
+.campo span {
+    font-size: .75rem;
+    font-weight: 800;
+    color: #4a5568;
+    text-transform: uppercase;
+}
+
+.campo input, .campo select, .campo textarea {
+    border-radius: 12px;
+    border: 1.5px solid #dde3d8;
+    padding: .7rem .9rem;
+    font-size: .9rem;
+    outline: none;
+    background: #fff;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.campo input:focus, .campo select:focus, .campo textarea:focus {
+    border-color: #52B788;
+    box-shadow: 0 0 0 3px rgba(82,183,136,.17);
+}
+
+/* Grids ajustados para evitar desbordamientos */
+.campoFila {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .8rem;
+    width: 100%;
+}
+
+.campoFila3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .8rem;
+    width: 100%;
+}
+
+/* DROPZONE (Arrastrar y Soltar) */
+.dropzone {
+    border: 2px dashed #dde3d8;
+    border-radius: 12px;
+    background: #fff;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 130px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.dropzone:hover, .dropzoneActive {
+    border-color: #52B788;
+    background: rgba(82, 183, 136, 0.05);
+}
+
+.dropzoneText {
+    color: #718096;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dropzoneText p { margin: 0; font-size: .9rem; }
+.dropzoneText strong { color: #1B4332; }
+.dropzoneText small { font-size: .75rem; opacity: 0.8; }
+
+.previewContainer {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.previewImg {
+    max-height: 140px;
+    border-radius: 8px;
+    object-fit: contain;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.btnQuitarImagen {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.35rem 0.8rem;
+    font-size: .75rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: background 0.2s;
+}
+
+.btnQuitarImagen:hover {
+    background: #c82333;
+}
+
+/* FOOTER DEL MODAL */
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+    margin-top: .5rem;
+}
+
+.btnSecundario {
+    background: #fff;
+    border: 1.5px solid #dde3d8;
+    color: #1B4332;
+    padding: .65rem 1rem;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btnPrimario {
+    background: #1B4332;
+    border: none;
+    color: #fff;
+    padding: .65rem 1.2rem;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.errorMsg {
+    color: #dc3545;
+    font-size: .85rem;
+    font-weight: 600;
+    margin: 0;
+}
