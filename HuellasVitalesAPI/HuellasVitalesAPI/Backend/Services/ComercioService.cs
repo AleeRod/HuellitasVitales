@@ -64,7 +64,7 @@ namespace HuellitasVitalesAPI.Services
                         Direccion = comDTO.Direccion,
                         Telefono = comDTO.Telefono,
                         IdEstadoSolicitud = 1,
-                        FechaSolicitud = DateTime.Now
+                        FechaSolicitud = DateTime.UtcNow
                     });
                 }
 
@@ -80,6 +80,64 @@ namespace HuellitasVitalesAPI.Services
                 _logger.LogError(ex, "Error al procesar solicitud para {Identificacion}", request.Identificacion);
                 return (false, "Ocurrió un error interno al procesar la solicitud.");
             }
+        }
+
+        // ─── APROBAR UN COMERCIO (habilita su acceso al marketplace) ───
+        // Codigo = código HTTP sugerido para que el controlador lo retorne.
+        public async Task<(bool Exito, string Mensaje, int Codigo)> AprobarComercioAsync(int idComercio, int idAdmin)
+        {
+            try
+            {
+                var comercio = await _context.Comercios.FirstOrDefaultAsync(c => c.IdComercio == idComercio);
+
+                // 404 - No existe
+                if (comercio == null)
+                    return (false, "El comercio indicado no existe.", 404);
+
+                // 409 - Ya estaba aprobado (operación idempotente, no se repite la resolución)
+                if (comercio.IdEstadoSolicitud == 2)
+                    return (false, "Este comercio ya se encuentra aprobado.", 409);
+
+                comercio.IdEstadoSolicitud = 2;              // 2 = APROBADO
+                comercio.FechaResolucion = DateTime.UtcNow; // Fecha de resolución
+                comercio.IdUsuarioResolvio = idAdmin;
+
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Comercio {Id} aprobado por el administrador {Admin}", idComercio, idAdmin);
+                return (true, "Comercio aprobado. Ya tiene acceso al marketplace.", 200);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al aprobar el comercio {Id}", idComercio);
+                return (false, "Ocurrió un error interno al aprobar el comercio.", 500);
+            }
+        }
+
+        // ─── BÚSQUEDA DINÁMICA DE COMERCIOS APROBADOS (marketplace) ───
+        public async Task<List<ComercioBusquedaDTO>> BuscarComerciosAprobadosAsync(string termino)
+        {
+            // Solo se listan comercios ya aprobados (estado 2)
+            var query = _context.Comercios.Where(c => c.IdEstadoSolicitud == 2);
+
+            termino = termino?.Trim() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(termino))
+            {
+                query = query.Where(c => c.NombreComercial.Contains(termino));
+            }
+
+            return await query
+                .OrderBy(c => c.NombreComercial)
+                .Take(20) // Se limita la respuesta para no saturar la UI
+                .Select(c => new ComercioBusquedaDTO
+                {
+                    IdComercio = c.IdComercio,
+                    NombreComercial = c.NombreComercial,
+                    IdTipoComercio = c.IdTipoComercio,
+                    Direccion = c.Direccion,
+                    Telefono = c.Telefono
+                })
+                .ToListAsync();
         }
     }
 }

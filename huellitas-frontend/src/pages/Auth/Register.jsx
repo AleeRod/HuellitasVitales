@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styles from './Register.module.css';
+import { API_BASE } from '../../api/config.js';
 
 function Register() {
     
@@ -90,7 +91,7 @@ function Register() {
 
         setIsLoading(true);
         try {
-            const response = await fetch('http://localhost:5010/api/Login/registrar', {
+            const response = await fetch(`${API_BASE}/Login/registrar`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

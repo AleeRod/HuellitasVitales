@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
+import { API_BASE } from '../../api/config.js';
 
 function Login() {
     const [correo, setCorreo] = useState('');
@@ -47,7 +48,7 @@ function Login() {
         setIsLoading(true);
 
         try {
-            const response = await fetch('/api/login/local', {
+            const response = await fetch(`${API_BASE}/login/local`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ correo, password })
@@ -55,9 +56,13 @@ function Login() {
 
             const data = await response.json();
 
-            if (response.ok && data.success) {
+                if (response.ok && data.success) {
+                // Guarda el token y los datos del usuario
                 localStorage.setItem('token_huellitas', data.token);
-                redirigirPorRol(data.usuario.idRol);
+                localStorage.setItem('usuario_huellitas', JSON.stringify(data.usuario));
+                
+                // Redirige a la Landing Page
+                navigate('/');
             } else {
                 triggerNotification(data.mensaje || "Error al iniciar sesión.");
             }
@@ -70,15 +75,19 @@ function Login() {
 
     const handleGoogleResponse = async (response) => {
         try {
-            const res = await fetch('/api/login/google', {
+            const res = await fetch(`${API_BASE}/login/google`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: response.credential })
             });
             const data = await res.json();
-            if (res.ok && data.success) {
+                if (res.ok && data.success) {
+                // Guarda el token y los datos del usuario
                 localStorage.setItem('token_huellitas', data.token);
-                redirigirPorRol(data.usuario.idRol);
+                localStorage.setItem('usuario_huellitas', JSON.stringify(data.usuario));
+                
+                // Redirige a la Landing Page
+                navigate('/');
             } else {
                 triggerNotification("Error al autenticar: " + (data.mensaje || "Desconocido"));
             }
@@ -101,15 +110,19 @@ function Login() {
 
     const procesarLoginFacebook = async (accessToken) => {
         try {
-            const res = await fetch('/api/login/facebook', {
+            const res = await fetch(`${API_BASE}/login/facebook`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: accessToken })
             });
             const data = await res.json();
             if (res.ok && data.success) {
+                // Guarda el token y los datos del usuario
                 localStorage.setItem('token_huellitas', data.token);
-                redirigirPorRol(data.usuario.idRol);
+                localStorage.setItem('usuario_huellitas', JSON.stringify(data.usuario));
+                
+                // Redirige a la Landing Page
+                navigate('/');
             } else {
                 triggerNotification("Error al autenticar con Facebook: " + (data.mensaje || "Desconocido"));
             }

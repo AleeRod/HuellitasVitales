@@ -21,6 +21,6 @@ namespace HuellasVitalesAPI.Backend.Models.Entidades
         // Reemplaza a 'Activo' (1 = ACTIVA, 2 = INVITADA, 3 = SUSPENDIDA)
         public byte IdEstadoCuenta { get; set; } = 1; 
         
-        public DateTime FechaRegistro { get; set; } = DateTime.Now;
+        public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
     }
 }

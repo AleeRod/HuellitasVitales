@@ -8,23 +8,17 @@ namespace HuellitasVitalesAPI.Data
         public ConexionDB(DbContextOptions<ConexionDB> options) : base(options) { }
 
         // MAPEAR TABLAS DE DATOS
-        public DbSet<Usuario> Usuarios { get; set; }
-        public DbSet<Rol> Roles { get; set; }
-        public DbSet<Veterinario> Veterinarios { get; set; }
-        public DbSet<Producto> Productos { get; set; }
-        
-        public DbSet<CategoriaProductoCat> CategoriasProductoCat { get; set; }
-
-        public DbSet<Comercio> Comercios { get; set; }
-
-        public DbSet<PersonaLegal> PersonasLegales { get; set; }
-        public DbSet<Carrito> Carritos { get; set; }
-        public DbSet<CarritoItem> CarritoItems { get; set; }
-
-        public DbSet<TipoServicioCat> TipoServicioCat { get; set; }
-
-        public DbSet<Servicio> Servicios { get; set; }
-
+        public DbSet<Usuario> Usuarios { get; set; } = null!;
+        public DbSet<Rol> Roles { get; set; } = null!;
+        public DbSet<Veterinario> Veterinarios { get; set; } = null!;
+        public DbSet<Comercio> Comercios { get; set; } = null!;
+        public DbSet<PersonaLegal> PersonasLegales { get; set; } = null!;
+        public DbSet<Producto> Productos { get; set; } = null!;
+        public DbSet<CategoriaProductoCat> CategoriasProductoCat { get; set; } = null!;
+        public DbSet<Servicio> Servicios { get; set; } = null!;
+        public DbSet<TipoServicioCat> TiposServicioCat { get; set; } = null!;
+        public DbSet<Carrito> Carritos { get; set; } = null!;
+        public DbSet<CarritoItem> CarritoItems { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Usuario>().ToTable("USUARIO");

@@ -24,6 +24,26 @@ namespace HuellitasVitalesAPI.Services
             _config = config;
         }
 
+        // ─── TAREA 3: Obtener el perfil público de un usuario ───
+        public async Task<PerfilUsuarioDTO?> ObtenerPerfilAsync(int idUsuario)
+        {
+            var u = await _context.Usuarios.FirstOrDefaultAsync(x => x.IdUsuario == idUsuario);
+            if (u == null) return null;
+
+            return new PerfilUsuarioDTO
+            {
+                IdUsuario = u.IdUsuario,
+                Nombre = u.Nombre,
+                Apellidos = u.Apellidos,
+                Correo = u.Correo,
+                Telefono = u.Telefono,
+                IdRol = u.IdRol,
+                IdEstadoCuenta = u.IdEstadoCuenta,
+                Proveedor = u.Proveedor_Auth,
+                FechaRegistro = u.FechaRegistro
+            };
+        }
+
         public (bool Exito, string Mensaje) RegistrarNuevoUsuario(RegistroRequest request)
         {
             string contraseñaHasheada = BCrypt.Net.BCrypt.HashPassword(request.Password);
@@ -43,7 +63,7 @@ namespace HuellitasVitalesAPI.Services
                 Proveedor_Auth = "Local",
                 IdRol = 3, // Rol Cliente
                 IdEstadoCuenta = 1, // 1 = ACTIVA (Reemplaza a Activo = true)
-                FechaRegistro = DateTime.Now
+                FechaRegistro = DateTime.UtcNow
             };
 
             _context.Usuarios.Add(nuevoUsuario);
@@ -79,7 +99,7 @@ namespace HuellitasVitalesAPI.Services
                         Proveedor_Id = payload.Subject,
                         IdRol = 3,
                         IdEstadoCuenta = 1, // ACTIVA
-                        FechaRegistro = DateTime.Now
+                        FechaRegistro = DateTime.UtcNow
                     };
 
                     _context.Usuarios.Add(usuario);
@@ -147,7 +167,7 @@ namespace HuellitasVitalesAPI.Services
 
             var token = new JwtSecurityToken(
                 claims: claims,
-                expires: DateTime.Now.AddHours(2),
+                expires: DateTime.UtcNow.AddHours(2),
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
@@ -182,7 +202,7 @@ namespace HuellitasVitalesAPI.Services
                         Proveedor_Id = fbUser.Id,
                         IdRol = 3,
                         IdEstadoCuenta = 1, // ACTIVA
-                        FechaRegistro = DateTime.Now
+                        FechaRegistro = DateTime.UtcNow
                     };
 
                     _context.Usuarios.Add(usuario);
