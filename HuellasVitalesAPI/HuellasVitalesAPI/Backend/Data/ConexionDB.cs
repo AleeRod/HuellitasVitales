@@ -16,6 +16,8 @@ namespace HuellitasVitalesAPI.Data
 
         public DbSet<PersonaLegal> PersonasLegales { get; set; }
 
+        public DbSet<VeterinaryService> ServiciosVeterinarios { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Usuario>().ToTable("USUARIO");
@@ -23,6 +25,7 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<Veterinario>().ToTable("VETERINARIO");
             modelBuilder.Entity<Comercio>().ToTable("COMERCIO");
             modelBuilder.Entity<PersonaLegal>().ToTable("PERSONA_LEGAL");
+            modelBuilder.Entity<VeterinaryService>().ToTable("SERVICIO_VETERINARIO");
         }
     }
 }

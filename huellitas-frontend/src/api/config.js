@@ -1,3 +1,4 @@
 // URL base de la API. Centralizada para no repetir el host en cada fetch.
-// Si algún día cambia el puerto o se pasa a producción, se edita aquí.
-export const API_BASE = 'http://localhost:5010/api';
+// Se toma de la variable de entorno de Vite VITE_API_URL (ver .env / .env.example);
+// si no está definida se usa el backend local por defecto.
+export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5010/api';

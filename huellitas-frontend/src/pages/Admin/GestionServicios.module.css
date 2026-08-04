@@ -1,0 +1,122 @@
+.layout {
+    min-height: 100vh;
+    background: #f4f6f9;
+}
+
+.title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1f3d2b;
+    margin: 0;
+}
+
+.subtitle {
+    color: #6b7280;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.btnPrimary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #52b788;
+    border: none;
+    color: #fff;
+    font-weight: 600;
+}
+
+.btnPrimary:hover {
+    background: #429a72;
+    color: #fff;
+}
+
+.tableCard {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.tableCard th {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #8a94a6;
+    border-bottom: 2px solid #eef1f5;
+}
+
+.nombre {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.desc {
+    font-size: 0.82rem;
+    color: #9aa3b2;
+    max-width: 320px;
+}
+
+.tipoBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #eef7f1;
+    color: #2f7a57;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badgeActivo,
+.badgeInactivo {
+    display: inline-block;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.badgeActivo {
+    background: #e5f6ec;
+    color: #1e8e50;
+}
+
+.badgeInactivo {
+    background: #f1f1f4;
+    color: #8a8f99;
+}
+
+.filaInactiva {
+    opacity: 0.6;
+}
+
+.centered {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 3rem 1rem;
+    color: #6b7280;
+}
+
+.emptyBox {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: #fff;
+    border-radius: 14px;
+    border: 1px dashed #d5dbe3;
+    color: #6b7280;
+}
+
+.spin {
+    animation: girar 0.9s linear infinite;
+}
+
+@keyframes girar {
+    to {
+        transform: rotate(360deg);
+    }
+}

@@ -162,7 +162,8 @@ namespace HuellitasVitalesAPI.Services
             {
                 new Claim(JwtRegisteredClaimNames.Sub, usuario.IdUsuario.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, usuario.Correo),
-                new Claim("rol", usuario.IdRol.ToString())
+                new Claim("rol", usuario.IdRol.ToString()),   // numérico (compatibilidad con checks existentes)
+                new Claim("role", NombreRol(usuario.IdRol))    // por nombre, habilita [Authorize(Roles = "...")]
             };
 
             var token = new JwtSecurityToken(
@@ -172,6 +173,15 @@ namespace HuellitasVitalesAPI.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        // Traduce el IdRol numérico al nombre usado en la autorización por rol.
+        private static string NombreRol(byte idRol) => idRol switch
+        {
+            1 => "Administrador",
+            2 => "Veterinario",
+            3 => "Cliente",
+            _ => "Desconocido"
+        };
 
         public async Task<Usuario?> AutenticarFacebookAsync(string fbToken)
         {

@@ -30,7 +30,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
             ValidateIssuer = false,
-            ValidateAudience = false
+            ValidateAudience = false,
+            // El token incluye el rol por nombre en el claim "role" (ver UsuarioService).
+            // Esto permite usar [Authorize(Roles = "Administrador")].
+            RoleClaimType = "role"
         };
     });
 
@@ -41,6 +44,7 @@ builder.Services.AddDbContext<ConexionDB>(options =>
 // 4. Inyección de Dependencias
 builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<ComercioService>();
+builder.Services.AddScoped<ServicioVeterinarioService>();
 
 var app = builder.Build();
 

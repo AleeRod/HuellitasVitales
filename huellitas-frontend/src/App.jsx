@@ -10,6 +10,8 @@ import DashboardCliente from './pages/cliente/DashboardCliente';
 import SolicitudComercio from './pages/SolicitudComercio/SolicitudComercio';
 import Marketplace from './pages/Marketplace/Marketplace';
 import Perfil from './pages/Perfil/Perfil';
+import GestionServicios from './pages/Admin/GestionServicios';
+import RutaProtegida from './routes/RutaProtegida';
 
 function App() {
 
@@ -24,6 +26,14 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin" element={<DashboardAdmin />} />
+        <Route
+          path="/admin/servicios"
+          element={
+            <RutaProtegida roles={["Administrador"]}>
+              <GestionServicios />
+            </RutaProtegida>
+          }
+        />
         <Route path="/veterinario" element={<PanelVeterinario />} />
         <Route path="/cliente" element={<DashboardCliente />} />
       </Routes>
