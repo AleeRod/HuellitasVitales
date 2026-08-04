@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
+import { API_BASE } from '../../api/config.js';
 
 function Login() {
     const [correo, setCorreo] = useState('');
@@ -47,7 +48,7 @@ function Login() {
         setIsLoading(true);
 
         try {
-            const response = await fetch('/api/login/local', {
+            const response = await fetch(`${API_BASE}/login/local`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ correo, password })
@@ -70,7 +71,7 @@ function Login() {
 
     const handleGoogleResponse = async (response) => {
         try {
-            const res = await fetch('/api/login/google', {
+            const res = await fetch(`${API_BASE}/login/google`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: response.credential })
@@ -101,7 +102,7 @@ function Login() {
 
     const procesarLoginFacebook = async (accessToken) => {
         try {
-            const res = await fetch('/api/login/facebook', {
+            const res = await fetch(`${API_BASE}/login/facebook`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: accessToken })

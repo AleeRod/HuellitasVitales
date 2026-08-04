@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import RunningDog from '../DogNav/RunningDog';
+import RunningDog from '../DogNav/Runningdog';
 import styles from './DogNav.module.css';
 
 const DogNav = () => {
