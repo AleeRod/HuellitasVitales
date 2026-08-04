@@ -22,12 +22,22 @@ namespace HuellitasVitalesAPI.Controllers
 
         // ─── TAREA 3: Datos del perfil de usuario ───
         // GET api/usuario/{id}
-        [HttpGet("{id:int}")]
-        public async Task<IActionResult> ObtenerPerfil(int id)
+        // ─── GET api/usuario/perfil ───
+        [Authorize]
+        [HttpGet("perfil")]
+        public async Task<IActionResult> ObtenerPerfilAutenticado()
         {
             try
             {
-                var perfil = await _usuarioService.ObtenerPerfilAsync(id);
+                var userIdClaim = User.FindFirst("sub")?.Value 
+                            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idUsuario))
+                {
+                    return Unauthorized(new { success = false, mensaje = "Token inválido." });
+                }
+
+                var perfil = await _usuarioService.ObtenerPerfilAsync(idUsuario);
 
                 if (perfil == null)
                     return NotFound(new { success = false, mensaje = "El usuario no existe." });
@@ -36,9 +46,8 @@ namespace HuellitasVitalesAPI.Controllers
             }
             catch (Exception ex)
             {
-                // El error real se queda en el backend
-                _logger.LogError(ex, "Error al obtener el perfil del usuario {IdUsuario}", id);
-                return StatusCode(500, new { success = false, mensaje = "Error al obtener el perfil del usuario." });
+                _logger.LogError(ex, "Error al obtener el perfil del usuario autenticado.");
+                return StatusCode(500, new { success = false, mensaje = "Error interno al obtener el perfil." });
             }
         }
 
