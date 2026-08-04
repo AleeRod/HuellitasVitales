@@ -16,7 +16,7 @@ namespace HuellitasVitalesAPI.Data
         public DbSet<Producto> Productos { get; set; } = null!;
         public DbSet<CategoriaProductoCat> CategoriasProductoCat { get; set; } = null!;
         public DbSet<Servicio> Servicios { get; set; } = null!;
-        public DbSet<TipoServicioCat> TiposServicioCat { get; set; } = null!;
+        public DbSet<TipoServicioCat> TipoServicioCat { get; set; } = null!;
         public DbSet<Carrito> Carritos { get; set; } = null!;
         public DbSet<CarritoItem> CarritoItems { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
