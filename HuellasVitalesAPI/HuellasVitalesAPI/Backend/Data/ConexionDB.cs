@@ -13,6 +13,8 @@ namespace HuellitasVitalesAPI.Data
         public DbSet<Veterinario> Veterinarios { get; set; } = null!;
         public DbSet<Comercio> Comercios { get; set; } = null!;
         public DbSet<PersonaLegal> PersonasLegales { get; set; } = null!;
+        public DbSet<Producto> Productos { get; set; } = null!;
+        public DbSet<Servicio> Servicios { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -21,6 +23,8 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<Veterinario>().ToTable("VETERINARIO");
             modelBuilder.Entity<Comercio>().ToTable("COMERCIO");
             modelBuilder.Entity<PersonaLegal>().ToTable("PERSONA_LEGAL");
+            modelBuilder.Entity<Producto>().ToTable("PRODUCTO");
+            modelBuilder.Entity<Servicio>().ToTable("SERVICIO");
 
             // Fuerza que TODOS los DateTime se traten como UTC
             // al leer/escribir en Postgres, evitando el error

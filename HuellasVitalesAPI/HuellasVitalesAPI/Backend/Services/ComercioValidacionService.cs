@@ -1,0 +1,102 @@
+using HuellitasVitalesAPI.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace HuellitasVitalesAPI.Services
+{
+    /// <summary>
+    /// Reglas de negocio compartidas sobre qué puede publicar un comercio.
+    ///
+    /// Regla: un funcionario solo puede registrar PRODUCTOS en un ALMACÉN
+    /// y SERVICIOS en una CLÍNICA VETERINARIA. Como una misma persona legal
+    /// puede tener ambos comercios (ver ComercioService.CrearSolicitudRegistroAsync),
+    /// la validación es SIEMPRE por comercio, nunca por usuario.
+    /// </summary>
+    public class ComercioValidacionService
+    {
+        // Ids de TIPO_COMERCIO_CAT. Coinciden con los que envía el frontend
+        // en SolicitudComercio.jsx y con los que interpreta Marketplace.jsx.
+        public const byte TIPO_COMERCIO_VETERINARIA = 1;
+        public const byte TIPO_COMERCIO_ALMACEN = 2;
+
+        // ESTADO_SOLICITUD_CAT: 1 = pendiente, 2 = aprobado.
+        private const byte ESTADO_SOLICITUD_APROBADO = 2;
+
+        private readonly ConexionDB _context;
+        private readonly ILogger<ComercioValidacionService> _logger;
+
+        public ComercioValidacionService(ConexionDB context, ILogger<ComercioValidacionService> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
+
+        /// <summary>
+        /// Verifica que el usuario pueda publicar en el comercio indicado y que
+        /// ese comercio sea del tipo requerido para el ítem que intenta crear.
+        /// Codigo = código HTTP sugerido para que el controlador lo retorne.
+        /// </summary>
+        public async Task<(bool Exito, string Mensaje, int Codigo)> ValidarComercioHabilitadoAsync(
+            int idUsuario, int idComercio, byte idTipoComercioRequerido)
+        {
+            // El vínculo usuario→comercio hoy pasa por PERSONA_LEGAL:
+            // USUARIO.IdUsuario → PERSONA_LEGAL.IdUsuario → COMERCIO.IdPersonaLegal.
+            // (COMERCIO_FUNCIONARIO existe en el esquema pero ningún flujo la escribe todavía).
+            var datos = await (from c in _context.Comercios
+                               join p in _context.PersonasLegales
+                                   on c.IdPersonaLegal equals p.IdPersonaLegal
+                               where c.IdComercio == idComercio
+                               select new
+                               {
+                                   c.IdTipoComercio,
+                                   c.IdEstadoSolicitud,
+                                   c.NombreComercial,
+                                   IdUsuarioPropietario = p.IdUsuario
+                               })
+                              .FirstOrDefaultAsync();
+
+            if (datos == null)
+                return (false, "El comercio indicado no existe.", 404);
+
+            // 403 - El usuario no está vinculado a ese comercio.
+            if (datos.IdUsuarioPropietario != idUsuario)
+            {
+                _logger.LogWarning(
+                    "El usuario {Usuario} intentó publicar en el comercio {Comercio}, que no le pertenece.",
+                    idUsuario, idComercio);
+
+                return (false, "No estás vinculado a este comercio.", 403);
+            }
+
+            // 403 - El comercio todavía no fue aprobado por un administrador.
+            if (datos.IdEstadoSolicitud != ESTADO_SOLICITUD_APROBADO)
+                return (false,
+                    $"El comercio '{datos.NombreComercial}' aún no está aprobado. " +
+                    "No podés registrar ítems hasta que un administrador apruebe la solicitud.",
+                    403);
+
+            // 403 - El tipo de comercio no corresponde al ítem que se quiere crear.
+            if (datos.IdTipoComercio != idTipoComercioRequerido)
+            {
+                var itemSolicitado = idTipoComercioRequerido == TIPO_COMERCIO_ALMACEN
+                    ? "productos"
+                    : "servicios";
+
+                return (false,
+                    $"Solo se pueden registrar {itemSolicitado} en un comercio de tipo " +
+                    $"'{NombreTipoComercio(idTipoComercioRequerido)}'. " +
+                    $"'{datos.NombreComercial}' está registrado como " +
+                    $"'{NombreTipoComercio(datos.IdTipoComercio)}'.",
+                    403);
+            }
+
+            return (true, "El comercio está habilitado.", 200);
+        }
+
+        private static string NombreTipoComercio(byte idTipoComercio) => idTipoComercio switch
+        {
+            TIPO_COMERCIO_VETERINARIA => "Clínica Veterinaria",
+            TIPO_COMERCIO_ALMACEN => "Almacén",
+            _ => "Comercio"
+        };
+    }
+}
