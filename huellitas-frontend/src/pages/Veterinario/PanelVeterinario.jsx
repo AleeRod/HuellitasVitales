@@ -11,15 +11,16 @@ import {
   LogOut,
   Bell,
   AlertTriangle,
-  Plus,
   Download,
 } from 'lucide-react';
 import PanelServicios from '../../components/ComercioAdmin/PanelServicios/PanelServicios';
+// Ajusta esta ruta según donde coloques el componente y su .module.css:
+import AgendaDiariaVeterinario from '../../components/Veterinario/AgendaDiariaVeterinario/AgendaDiariaVeterinario';
 // Si el logo está en src/assets descomenta la siguiente línea y cambia el src del img:
 // import logo from '../../assets/logo.png';
 
 const PanelVeterinario = () => {
-  const [vista, setVista] = useState('clinico'); // 'clinico' | 'servicios'
+  const [vista, setVista] = useState('clinico'); // 'clinico' | 'servicios' | 'agenda'
   const [usuario, setUsuario] = useState(null);
 
   useEffect(() => {
@@ -40,6 +41,24 @@ const PanelVeterinario = () => {
     e.preventDefault();
     setVista(destino);
   };
+
+  const tituloVista = {
+    clinico: 'Panel clínico',
+    servicios: 'Gestión de servicios',
+    agenda: 'Agenda diaria',
+  }[vista];
+
+  const heroTituloVista = {
+    clinico: 'Agenda diaria del veterinario',
+    servicios: 'Servicios de la clínica',
+    agenda: 'Agenda diaria del veterinario',
+  }[vista];
+
+  const heroSubVista = {
+    clinico: 'Consulta citas del día, pacientes, expedientes y notas clínicas.',
+    servicios: 'Administrá las consultas, groomings y procedimientos que ofrecés.',
+    agenda: 'Navegá por semana, filtrá por estado y confirmá, completá o cancelá citas.',
+  }[vista];
 
   return (
     <div className={styles.vetShell}>
@@ -63,7 +82,11 @@ const PanelVeterinario = () => {
             <span className={styles.navIcon}><Home size={17} /></span>
             Panel clínico
           </a>
-          <a href="#" className={styles.navLinkVet}>
+          <a
+            href="#"
+            className={`${styles.navLinkVet} ${vista === 'agenda' ? styles.active : ''}`}
+            onClick={irA('agenda')}
+          >
             <span className={styles.navIcon}><CalendarDays size={17} /></span>
             Agenda diaria
           </a>
@@ -116,16 +139,10 @@ const PanelVeterinario = () => {
               <svg width="9" height="9" viewBox="0 0 10 10">
                 <circle cx="5" cy="5" r="5" fill="#52B788" />
               </svg>
-              {vista === 'clinico' ? 'Panel clínico' : 'Gestión de servicios'}
+              {tituloVista}
             </div>
-            <h1 className={styles.heroTitle}>
-              {vista === 'clinico' ? 'Agenda diaria del veterinario' : 'Servicios de la clínica'}
-            </h1>
-            <p className={styles.heroSub}>
-              {vista === 'clinico'
-                ? 'Consulta citas del día, pacientes, expedientes y notas clínicas.'
-                : 'Administrá las consultas, groomings y procedimientos que ofrecés.'}
-            </p>
+            <h1 className={styles.heroTitle}>{heroTituloVista}</h1>
+            <p className={styles.heroSub}>{heroSubVista}</p>
           </div>
 
           <div className={styles.topActions}>
@@ -147,6 +164,12 @@ const PanelVeterinario = () => {
             <div className={styles.tableArea}>
               <PanelServicios />
             </div>
+          </section>
+        )}
+
+        {vista === 'agenda' && (
+          <section className={styles.panelGrid}>
+            <AgendaDiariaVeterinario />
           </section>
         )}
 
@@ -184,105 +207,8 @@ const PanelVeterinario = () => {
             </section>
 
             <section className={styles.panelGrid}>
-              {/* AGENDA DIARIA */}
-              <div className={`${styles.contentCard} ${styles.agendaCard}`}>
-                <div className={styles.cardHead}>
-                  <div>
-                    <h2 className={styles.cardTitle}>Vista de agenda diaria</h2>
-                    <p className={styles.cardSubtitle}>Listado visual de citas, horarios, pacientes y estado de atención.</p>
-                  </div>
-                  <button className={styles.btnMain}>
-                    <Plus size={16} />
-                    Nueva cita
-                  </button>
-                </div>
-
-                <div className={styles.agendaToolbar}>
-                  <div className={styles.datePill}>
-                    <CalendarDays size={15} />
-                    Martes, 06 de julio de 2026
-                  </div>
-                  <div className="d-flex gap-2 flex-wrap">
-                    <select className={styles.filterSelect}>
-                      <option>Todos los estados</option>
-                      <option>En espera</option>
-                      <option>En consulta</option>
-                      <option>Finalizado</option>
-                    </select>
-                    <button className={styles.btnSoft}>Exportar agenda</button>
-                  </div>
-                </div>
-
-                <div className={styles.scheduleList}>
-                  <div className={styles.scheduleItem}>
-                    <div className={styles.timeBox}>
-                      8:00
-                      <span>a.m.</span>
-                    </div>
-
-                    <div className={styles.patientInfo}>
-                      <div className={styles.petIcon}><PawPrint size={20} /></div>
-                      <div>
-                        <div className={styles.patientTitle}>Max — Consulta general</div>
-                        <div className={styles.patientDetail}>Golden Retriever · 4 años · Dueño: Brandon Alfaro</div>
-                      </div>
-                    </div>
-
-                    <span className={`${styles.statusBadge} ${styles.statusDone}`}>Finalizado</span>
-                  </div>
-
-                  <div className={styles.scheduleItem}>
-                    <div className={styles.timeBox}>
-                      9:30
-                      <span>a.m.</span>
-                    </div>
-
-                    <div className={styles.patientInfo}>
-                      <div className={styles.petIcon}><PawPrint size={20} /></div>
-                      <div>
-                        <div className={styles.patientTitle}>Luna — Vacunación</div>
-                        <div className={styles.patientDetail}>Gata Persa · 2 años · Dueña: Laura Pérez</div>
-                      </div>
-                    </div>
-
-                    <span className={`${styles.statusBadge} ${styles.statusReady}`}>En consulta</span>
-                  </div>
-
-                  <div className={styles.scheduleItem}>
-                    <div className={styles.timeBox}>
-                      11:00
-                      <span>a.m.</span>
-                    </div>
-
-                    <div className={styles.patientInfo}>
-                      <div className={styles.petIcon}><PawPrint size={20} /></div>
-                      <div>
-                        <div className={styles.patientTitle}>Rocky — Control dental</div>
-                        <div className={styles.patientDetail}>French Poodle · 6 años · Dueño: José Méndez</div>
-                      </div>
-                    </div>
-
-                    <span className={`${styles.statusBadge} ${styles.statusNext}`}>En espera</span>
-                  </div>
-
-                  <div className={styles.scheduleItem}>
-                    <div className={styles.timeBox}>
-                      1:30
-                      <span>p.m.</span>
-                    </div>
-
-                    <div className={styles.patientInfo}>
-                      <div className={styles.petIcon}><PawPrint size={20} /></div>
-                      <div>
-                        <div className={styles.patientTitle}>Toby — Revisión por dolor</div>
-                        <div className={styles.patientDetail}>Beagle · 5 años · Dueña: Ana Mora</div>
-                      </div>
-                    </div>
-
-                    <span className={`${styles.statusBadge} ${styles.statusUrgent}`}>Urgente</span>
-                  </div>
-                </div>
-              </div>
+              {/* AGENDA DIARIA (componente real, mismo que la vista dedicada) */}
+              <AgendaDiariaVeterinario />
 
               {/* PACIENTES ACTIVOS */}
               <div className={styles.contentCard}>

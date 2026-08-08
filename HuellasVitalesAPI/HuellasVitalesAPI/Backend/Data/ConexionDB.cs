@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using HuellasVitalesAPI.Backend.Models.Entidades; // Aquí irán tus clases de usuario, etc.
+using HuellasVitalesAPI.Backend.Models.Entidades;
 
 namespace HuellitasVitalesAPI.Data
 {
@@ -22,9 +22,6 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<Comercio>().ToTable("COMERCIO");
             modelBuilder.Entity<PersonaLegal>().ToTable("PERSONA_LEGAL");
 
-            // Fuerza que TODOS los DateTime se traten como UTC
-            // al leer/escribir en Postgres, evitando el error
-            // "Cannot write DateTime with Kind=Unspecified..."
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 foreach (var property in entityType.GetProperties())

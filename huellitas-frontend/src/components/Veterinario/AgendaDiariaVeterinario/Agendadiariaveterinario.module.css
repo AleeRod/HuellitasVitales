@@ -1,0 +1,657 @@
+v/* Reutiliza las variables :root definidas en PanelVeterinario.module.css
+   (--pine, --pine-dk, --pine-soft, --mint, --mint-lt, --cream, --amber,
+   --text-dk, --text-md, --text-lt, --line, --white, --danger) */
+
+.contentCard {
+    background:rgba(255,255,255,.9);
+    border:1px solid rgba(221,227,216,.95);
+    border-radius:24px;
+    box-shadow:0 12px 26px rgba(27,67,50,.06);
+    overflow:hidden;
+    animation:slideUp .55s ease both;
+}
+
+.agendaCard {
+    grid-column:1 / -1;
+}
+
+.cardHead {
+    padding:1.15rem 1.2rem;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:1rem;
+}
+
+.cardTitle {
+    font-family:'Playfair Display', serif;
+    color:var(--pine);
+    font-size:1.45rem;
+    margin:0;
+}
+
+.cardSubtitle {
+    color:var(--text-lt);
+    font-size:.84rem;
+    margin-top:.25rem;
+}
+
+.btnMain {
+    border:none;
+    background:linear-gradient(135deg, var(--pine) 0%, var(--pine-soft) 100%);
+    color:#fff;
+    border-radius:14px;
+    padding:.72rem .95rem;
+    font-weight:700;
+    transition:.18s ease;
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    white-space:nowrap;
+    cursor:pointer;
+}
+
+.btnMain:hover {
+    transform:translateY(-2px);
+    box-shadow:0 10px 24px rgba(27,67,50,.28);
+}
+
+.btnSoft {
+    border:1.5px solid var(--line);
+    background:#fff;
+    color:var(--pine);
+    border-radius:14px;
+    padding:.72rem .95rem;
+    font-weight:700;
+    white-space:nowrap;
+    display:inline-flex;
+    align-items:center;
+    gap:.4rem;
+    cursor:pointer;
+}
+
+.btnDanger {
+    border:1.5px solid rgba(220,53,69,.35);
+    background:rgba(220,53,69,.08);
+    color:var(--danger);
+    border-radius:14px;
+    padding:.72rem .95rem;
+    font-weight:700;
+    display:inline-flex;
+    align-items:center;
+    gap:.4rem;
+    cursor:pointer;
+}
+
+.btnDanger:hover {
+    background:rgba(220,53,69,.14);
+}
+
+/* HEADER ACTIONS */
+.headActions {
+    display:flex;
+    align-items:center;
+    gap:.6rem;
+    flex-wrap:wrap;
+}
+
+.viewToggle {
+    display:flex;
+    background:rgba(27,67,50,.07);
+    border-radius:14px;
+    padding:.25rem;
+    gap:.2rem;
+}
+
+.viewToggleBtn {
+    border:none;
+    background:transparent;
+    color:var(--text-md);
+    font-weight:700;
+    font-size:.8rem;
+    padding:.5rem .8rem;
+    border-radius:11px;
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    cursor:pointer;
+    transition:background .2s ease, color .2s ease, box-shadow .2s ease;
+}
+
+.viewToggleBtnActive {
+    background:#fff;
+    color:var(--pine);
+    box-shadow:0 4px 10px rgba(27,67,50,.12);
+}
+
+/* WEEK STRIP */
+.dayStrip {
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+    padding:1rem 1.2rem 0;
+}
+
+.dayStripViewport {
+    flex:1;
+    min-width:0;
+    overflow:hidden;
+}
+
+.dayStripTrack {
+    display:flex;
+    gap:.5rem;
+}
+
+.dayStripTrack[data-dir="1"] {
+    animation:slideInFromRight .32s cubic-bezier(.22,1,.36,1) both;
+}
+
+.dayStripTrack[data-dir="-1"] {
+    animation:slideInFromLeft .32s cubic-bezier(.22,1,.36,1) both;
+}
+
+@keyframes slideInFromRight {
+    from { opacity:0; transform:translateX(26px); }
+    to { opacity:1; transform:translateX(0); }
+}
+
+@keyframes slideInFromLeft {
+    from { opacity:0; transform:translateX(-26px); }
+    to { opacity:1; transform:translateX(0); }
+}
+
+.iconButtonSm {
+    width:34px;
+    height:34px;
+    flex-shrink:0;
+    border:1.5px solid var(--line);
+    background:#fff;
+    color:var(--pine);
+    border-radius:11px;
+    display:grid;
+    place-items:center;
+    cursor:pointer;
+}
+
+.iconButtonSm:hover {
+    background:rgba(82,183,136,.08);
+}
+
+.dayPill {
+    position:relative;
+    flex:1;
+    min-width:64px;
+    border:1.5px solid var(--line);
+    background:#fff;
+    border-radius:14px;
+    padding:.5rem .3rem .6rem;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:.15rem;
+    cursor:pointer;
+    transition:transform .2s cubic-bezier(.22,1,.36,1), border-color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+
+.dayPill:hover {
+    border-color:var(--mint);
+    transform:translateY(-2px);
+}
+
+.dayPillActive {
+    background:linear-gradient(135deg, var(--pine) 0%, var(--pine-soft) 100%);
+    border-color:var(--pine);
+    transform:translateY(-2px);
+    box-shadow:0 8px 18px rgba(27,67,50,.22);
+}
+
+.dayPillActive:hover {
+    transform:translateY(-2px);
+}
+
+.dayTodayDot {
+    position:absolute;
+    bottom:6px;
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:var(--amber);
+}
+
+.dayDow {
+    font-size:.66rem;
+    font-weight:800;
+    letter-spacing:.06em;
+    color:var(--text-lt);
+}
+
+.dayPillActive .dayDow {
+    color:var(--mint-lt);
+}
+
+.dayNum {
+    font-family:'Playfair Display', serif;
+    font-size:1.15rem;
+    font-weight:700;
+    color:var(--text-dk);
+}
+
+.dayPillActive .dayNum {
+    color:#fff;
+}
+
+.dayCount {
+    font-size:.66rem;
+    font-weight:700;
+    color:var(--text-lt);
+}
+
+.dayPillActive .dayCount {
+    color:rgba(255,255,255,.75);
+}
+
+/* MONTH VIEW */
+.monthNav {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:.9rem;
+    padding:1rem 1.2rem 0;
+}
+
+.monthLabel {
+    font-family:'Playfair Display', serif;
+    font-size:1.15rem;
+    font-weight:700;
+    color:var(--pine);
+    min-width:160px;
+    text-align:center;
+    text-transform:capitalize;
+}
+
+.monthViewport {
+    padding:.8rem 1.2rem 0;
+    overflow:hidden;
+}
+
+.monthGrid {
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    gap:.4rem;
+}
+
+.monthGrid[data-dir="1"] {
+    animation:slideInFromRight .32s cubic-bezier(.22,1,.36,1) both;
+}
+
+.monthGrid[data-dir="-1"] {
+    animation:slideInFromLeft .32s cubic-bezier(.22,1,.36,1) both;
+}
+
+.monthDow {
+    text-align:center;
+    font-size:.66rem;
+    font-weight:800;
+    letter-spacing:.06em;
+    color:var(--text-lt);
+    padding-bottom:.35rem;
+}
+
+.monthCell {
+    position:relative;
+    aspect-ratio:1 / 0.82;
+    border:1.5px solid var(--line);
+    background:#fff;
+    border-radius:12px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:.25rem;
+    cursor:pointer;
+    transition:transform .18s cubic-bezier(.22,1,.36,1), border-color .18s ease, background .18s ease;
+}
+
+.monthCell:hover {
+    border-color:var(--mint);
+    transform:translateY(-1px);
+}
+
+.monthCellMuted {
+    opacity:.35;
+}
+
+.monthCellToday {
+    border-color:var(--amber);
+}
+
+.monthCellActive {
+    background:linear-gradient(135deg, var(--pine) 0%, var(--pine-soft) 100%);
+    border-color:var(--pine);
+    box-shadow:0 8px 16px rgba(27,67,50,.2);
+}
+
+.monthCellNum {
+    font-weight:800;
+    font-size:.85rem;
+    color:var(--text-dk);
+}
+
+.monthCellActive .monthCellNum {
+    color:#fff;
+}
+
+.monthCellDots {
+    display:flex;
+    gap:.2rem;
+}
+
+.miniDot {
+    width:6px;
+    height:6px;
+    border-radius:50%;
+}
+
+.miniDot.statusNext { background:#DDA15E; }
+.miniDot.statusReady { background:#52B788; }
+.miniDot.statusDone { background:var(--pine); }
+.miniDot.statusUrgent { background:var(--danger); }
+
+.monthCellActive .miniDot {
+    background:rgba(255,255,255,.85) !important;
+}
+
+/* REPROGRAMAR */
+.reprogramarBox {
+    margin-top:.8rem;
+    padding-top:.8rem;
+    border-top:1px dashed var(--line);
+}
+
+.dateInput {
+    width:100%;
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    padding:.6rem .7rem;
+    font-size:.85rem;
+    color:var(--text-dk);
+    margin-top:.3rem;
+}
+
+.dateInput:focus {
+    border-color:var(--mint);
+    outline:none;
+    box-shadow:0 0 0 3px rgba(82,183,136,.17);
+}
+
+.noSlotsMsg {
+    font-size:.8rem;
+    color:var(--danger);
+    margin-top:.3rem;
+}
+
+/* TOOLBAR */
+.agendaToolbar {
+    padding:1rem 1.2rem;
+    display:flex;
+    justify-content:space-between;
+    gap:.8rem;
+    flex-wrap:wrap;
+    border-bottom:1px solid var(--line);
+}
+
+.datePill {
+    display:inline-flex;
+    align-items:center;
+    gap:.5rem;
+    border:1.5px solid var(--line);
+    background:#fff;
+    color:var(--pine);
+    border-radius:999px;
+    padding:.65rem .9rem;
+    font-weight:800;
+    text-transform:capitalize;
+}
+
+.filterSelect {
+    border:1.5px solid var(--line);
+    background:#fff;
+    color:var(--text-md);
+    border-radius:14px;
+    padding:.65rem .9rem;
+    outline:none;
+}
+
+/* BODY: list + detail panel */
+.agendaBody {
+    display:flex;
+    align-items:stretch;
+}
+
+.scheduleList {
+    flex:1;
+    min-width:0;
+    padding:1rem 1.2rem 1.2rem;
+    display:grid;
+    gap:.85rem;
+}
+
+.emptyState {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:.5rem;
+    padding:2.2rem 0;
+    color:var(--text-lt);
+    font-size:.86rem;
+}
+
+.scheduleItem {
+    display:grid;
+    grid-template-columns:92px 1fr 150px;
+    gap:1rem;
+    align-items:center;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:.95rem;
+    cursor:pointer;
+    transition:.15s ease;
+}
+
+.scheduleItem:hover {
+    border-color:var(--mint);
+    transform:translateY(-1px);
+}
+
+.scheduleItemActive {
+    border-color:var(--pine);
+    box-shadow:0 0 0 2px rgba(27,67,50,.12);
+}
+
+.timeBox {
+    width:82px;
+    height:62px;
+    border-radius:16px;
+    background:rgba(27,67,50,.10);
+    color:var(--pine);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    font-weight:900;
+}
+
+.timeBox span {
+    color:var(--text-lt);
+    font-size:.72rem;
+    font-weight:700;
+}
+
+.patientInfo {
+    display:flex;
+    align-items:center;
+    gap:.85rem;
+    min-width:0;
+}
+
+.petIcon {
+    width:50px;
+    height:50px;
+    border-radius:16px;
+    background:linear-gradient(135deg, rgba(82,183,136,.20), rgba(221,161,94,.18));
+    display:grid;
+    place-items:center;
+    color:var(--pine);
+    flex-shrink:0;
+}
+
+.patientTitle {
+    font-weight:900;
+    color:var(--text-dk);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.patientDetail {
+    color:var(--text-lt);
+    font-size:.8rem;
+    margin-top:.15rem;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.statusBadge {
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.42rem .65rem;
+    border-radius:999px;
+    font-size:.74rem;
+    font-weight:800;
+    white-space:nowrap;
+    justify-self:end;
+}
+
+.statusNext {
+    background:rgba(221,161,94,.18);
+    color:#945d18;
+}
+
+.statusReady {
+    background:rgba(82,183,136,.16);
+    color:#2d6a4f;
+}
+
+.statusDone {
+    background:rgba(27,67,50,.12);
+    color:var(--pine);
+}
+
+.statusUrgent {
+    background:rgba(220,53,69,.12);
+    color:var(--danger);
+}
+
+/* DETAIL PANEL */
+.detailPanel {
+    width:300px;
+    flex-shrink:0;
+    border-left:1px solid var(--line);
+    padding:1.2rem;
+    position:relative;
+    animation:slideUp .3s ease both;
+}
+
+.detailClose {
+    position:absolute;
+    top:1rem;
+    right:1rem;
+    border:none;
+    background:none;
+    color:var(--text-lt);
+    cursor:pointer;
+}
+
+.detailTitle {
+    font-family:'Playfair Display', serif;
+    font-size:1.35rem;
+    color:var(--pine);
+    margin:.6rem 0 0;
+}
+
+.detailSub {
+    color:var(--text-lt);
+    font-size:.82rem;
+}
+
+.detailRow {
+    display:flex;
+    align-items:flex-start;
+    gap:.6rem;
+    font-size:.85rem;
+    color:var(--text-md);
+    margin-top:.9rem;
+}
+
+.detailRow svg {
+    color:var(--mint);
+    flex-shrink:0;
+    margin-top:2px;
+}
+
+.detailLabel {
+    font-size:.68rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--text-lt);
+    font-weight:800;
+    margin-bottom:.15rem;
+}
+
+.detailActions {
+    display:flex;
+    flex-direction:column;
+    gap:.55rem;
+    margin-top:1.3rem;
+}
+
+.detailActions button {
+    justify-content:center;
+    width:100%;
+}
+
+@keyframes slideUp {
+    from { opacity:0; transform:translateY(18px); }
+    to { opacity:1; transform:translateY(0); }
+}
+
+/* RESPONSIVE */
+@media (max-width:900px) {
+    .agendaBody {
+        flex-direction:column;
+    }
+    .detailPanel {
+        width:auto;
+        border-left:none;
+        border-top:1px solid var(--line);
+    }
+}
+
+@media (max-width:640px) {
+    .scheduleItem {
+        grid-template-columns:82px 1fr;
+    }
+    .statusBadge {
+        grid-column:2;
+        justify-self:start;
+    }
+    .dayPill {
+        min-width:52px;
+    }
+}
