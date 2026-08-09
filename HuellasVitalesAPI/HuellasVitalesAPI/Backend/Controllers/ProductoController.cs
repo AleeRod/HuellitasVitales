@@ -73,5 +73,62 @@ namespace HuellitasVitalesAPI.Controllers
                 }
             });
         }
+      [Authorize]
+[HttpPut("{id:int}")]
+public async Task<IActionResult> EditarProducto(
+    int id,
+    [FromBody] EditarProductoRequest request)
+{
+    if (!ModelState.IsValid)
+        return BadRequest(ModelState);
+
+    var subClaim = User.FindFirst("sub")?.Value
+                   ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+    if (!int.TryParse(subClaim, out var idUsuario))
+    {
+        return Unauthorized(new
+        {
+            success = false,
+            mensaje = "Token inválido o sin identificador de usuario."
+        });
     }
+
+    var resultado = await _productoService
+        .EditarProductoAsync(idUsuario, id, request);
+
+    if (!resultado.Exito)
+    {
+        return StatusCode(resultado.Codigo, new
+        {
+            success = false,
+            mensaje = resultado.Mensaje
+        });
+    }
+
+    var producto = resultado.Producto!;
+
+    return Ok(new
+    {
+        success = true,
+        mensaje = resultado.Mensaje,
+        producto = new
+        {
+            producto.IdProducto,
+            producto.IdComercio,
+            producto.IdCategoria,
+            producto.Nombre,
+            producto.Descripcion,
+            producto.Precio,
+            producto.PrecioDescuento,
+            producto.Stock,
+            agotado = (producto.Stock ?? 0) <= 0,
+            producto.ImagenUrl,
+            producto.Activo
+        }
+    });
+}
+
+}
+
 }

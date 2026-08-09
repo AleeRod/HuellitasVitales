@@ -17,8 +17,8 @@ namespace HuellasVitalesAPI.Backend.Models.DTOs
         [StringLength(1000, ErrorMessage = "La descripción no puede superar 1000 caracteres.")]
         public string? Descripcion { get; set; }
 
-        [Range(typeof(decimal), "0.01", "999999999.99",
-            ErrorMessage = "El precio debe ser mayor que 0.")]
+       [Range(0.01,999999999.99,
+        ErrorMessage = "El precio debe ser mayor que 0.")]
         public decimal Precio { get; set; }
 
         [Range(0, int.MaxValue, ErrorMessage = "El stock no puede ser negativo.")]
