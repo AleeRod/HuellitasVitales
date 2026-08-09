@@ -74,6 +74,33 @@ namespace HuellitasVitalesAPI.Controllers
                 // No se filtran detalles internos (stack trace) al cliente.
                 return StatusCode(500, new { success = false, mensaje = "Error al realizar la búsqueda." });
             }
+
+            } 
+
+        // GET api/Comercio/pendientes
+        [HttpGet("pendientes")]
+        public async Task<IActionResult> ObtenerComerciosPendientes()
+        {
+            try
+            {
+                var comercios = await _comercioService.ObtenerComerciosPendientesAsync();
+
+                return Ok(new
+                {
+                    success = true,
+                    cantidad = comercios.Count,
+                    comercios
+                });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    mensaje = "Error al obtener los comercios pendientes."
+                });
+            }
         }
-    }
-}
+
+    } 
+}         

@@ -138,6 +138,26 @@ namespace HuellitasVitalesAPI.Services
                     Telefono = c.Telefono
                 })
                 .ToListAsync();
-        }
+        } // GET - Listar comercios pendientes
+public async Task<List<ComercioPendienteDTO>> ObtenerComerciosPendientesAsync()
+{
+    return await _context.Comercios
+        .AsNoTracking()
+        .Where(c => c.IdEstadoSolicitud == 1)
+        .OrderBy(c => c.FechaSolicitud)
+        .Select(c => new ComercioPendienteDTO
+        {
+            IdComercio = c.IdComercio,
+            IdPersonaLegal = c.IdPersonaLegal,
+            IdTipoComercio = c.IdTipoComercio,
+            NombreComercial = c.NombreComercial,
+            Direccion = c.Direccion,
+            Telefono = c.Telefono,
+            IdEstadoSolicitud = c.IdEstadoSolicitud,
+            Estado = "Pendiente",
+            FechaSolicitud = c.FechaSolicitud
+        })
+        .ToListAsync();
+}
     }
 }
