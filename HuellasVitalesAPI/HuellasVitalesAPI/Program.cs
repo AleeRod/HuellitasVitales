@@ -76,6 +76,7 @@ builder.Services.AddDbContext<ConexionDB>(options =>
 builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<ComercioService>();
 builder.Services.AddScoped<IMarketplaceService, MarketplaceService>();
+builder.Services.AddScoped<AgendaService>();
 
 var app = builder.Build();
 
