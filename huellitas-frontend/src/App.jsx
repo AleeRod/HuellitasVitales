@@ -26,6 +26,7 @@ function App() {
         <Route path="/admin" element={<DashboardAdmin />} />
         <Route path="/veterinario" element={<PanelVeterinario />} />
         <Route path="/cliente" element={<DashboardCliente />} />
+        <Route path="/marketplace" element={<Marketplace />} />
       </Routes>
     </Router>
   );

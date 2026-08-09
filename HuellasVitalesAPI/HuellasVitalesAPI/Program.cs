@@ -75,11 +75,13 @@ builder.Services.AddDbContext<ConexionDB>(options =>
 // 4. Inyección de Dependencias
 builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<ComercioService>();
+builder.Services.AddScoped<IMarketplaceService, MarketplaceService>();
 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
 }

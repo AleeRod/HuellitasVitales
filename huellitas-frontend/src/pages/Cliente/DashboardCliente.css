@@ -4,6 +4,7 @@ html, body {
     width: 100% !important;
     min-height: 100vh !important;
     overflow-x: hidden !important;
+}
 
     #root {
         width: 100% !important;
@@ -686,4 +687,3 @@ html, body {
         .top-actions { display:none; }
         .hero-title { font-size:1.65rem; }
     }
-}
