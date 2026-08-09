@@ -5,9 +5,12 @@ import { API_BASE } from '../../api/config';
 import { 
     Search, ShoppingCart, Package, Stethoscope, 
     AlertCircle, Loader2, CalendarPlus, XCircle, LayoutGrid,
-    ChevronLeft, ChevronRight, DollarSign, Tag, ListFilter // Importé ListFilter para el icono
+    ChevronLeft, ChevronRight, DollarSign, Tag, ListFilter 
 } from 'lucide-react';
 import styles from './Marketplace.module.css';
+
+// IMPORTACIÓN DEL MODAL DE CITAS
+import AgendarCitaModal from '../../components/Cliente/AgendarCitaModal/AgendarCitaModal';
 
 const ESTADO = {
     INACTIVO: 'inactivo',
@@ -103,7 +106,7 @@ const Marketplace = () => {
         precioMax: '',
         categoriasIds: [],
         marcasIds: [],
-        tiposServicioIds: [] // <-- ¡NUEVO ESTADO PARA SERVICIOS!
+        tiposServicioIds: [] 
     });
     
     const [productosBusqueda, setProductosBusqueda] = useState([]);
@@ -112,6 +115,10 @@ const Marketplace = () => {
     
     const [estado, setEstado] = useState(ESTADO.CARGANDO);
     const [reintento, setReintento] = useState(0);
+
+    // NUEVOS ESTADOS PARA EL MODAL DE CITAS
+    const [modalCitaOpen, setModalCitaOpen] = useState(false);
+    const [servicioParaAgendar, setServicioParaAgendar] = useState(null);
 
     const terminoDebounced = useDebounce(termino, 400);
     const abortRef = useRef(null);
@@ -175,11 +182,9 @@ const Marketplace = () => {
         return () => controller.abort();
     }, [terminoDebounced, reintento]);
 
-    // EXTRACCIÓN DE FILTROS ÚNICOS
     const marcasDisponibles = [...new Map(catalogoPorCategoria.flatMap(c => c.productos || []).map(p => [p.idMarca, { id: p.idMarca, nombre: p.nombreMarca }])).values()].filter(m => m.id);
     const categoriasDisponibles = catalogoPorCategoria.map(c => ({ id: c.idCategoriaProducto, nombre: c.nombreCategoria }));
     
-    // <-- ¡NUEVA LÓGICA DE EXTRACCIÓN DE TIPOS DE SERVICIO! -->
     const tiposServicioDisponibles = [...new Map(
         serviciosBusqueda.map(s => [s.idTipoServicio, { id: s.idTipoServicio, nombre: s.tipoServicio }])
     ).values()].filter(t => t.id);
@@ -198,7 +203,6 @@ const Marketplace = () => {
         }));
     };
 
-    // <-- ¡NUEVA FUNCIÓN PARA TOGGLE DEL SERVICIO! -->
     const toggleTipoServicio = (id) => {
         setFiltrosAvanzados(prev => ({
             ...prev,
@@ -207,7 +211,6 @@ const Marketplace = () => {
     };
 
     const limpiarFiltrosAvanzados = () => {
-        // Limpiamos también el nuevo estado
         setFiltrosAvanzados({ precioMin: '', precioMax: '', categoriasIds: [], marcasIds: [], tiposServicioIds: [] });
     };
 
@@ -236,8 +239,16 @@ const Marketplace = () => {
         }
     };
 
-    const agendarServicio = (idServicio) => {
-        alert(`Redirigiendo al agendamiento de cita para el servicio ID: ${idServicio}`);
+    // FUNCIONES DEL MODAL DE CITAS
+    const agendarServicio = (servicioCompleto) => {
+        setServicioParaAgendar(servicioCompleto);
+        setModalCitaOpen(true);
+    };
+
+    const handleConfirmarCita = (datosCita) => {
+        console.log("Cita a enviar al backend:", datosCita);
+        // Aquí luego conectarás el fetch para guardar la cita (Task 185)
+        setModalCitaOpen(false);
     };
 
     const aplicarFiltrosProductos = (listaProductos) => {
@@ -247,8 +258,6 @@ const Marketplace = () => {
             const matchMax = filtrosAvanzados.precioMax === '' || precioEfectivo <= Number(filtrosAvanzados.precioMax);
             const matchCat = filtrosAvanzados.categoriasIds.length === 0 || filtrosAvanzados.categoriasIds.includes(prod.idCategoriaProducto);
             const matchMarca = filtrosAvanzados.marcasIds.length === 0 || filtrosAvanzados.marcasIds.includes(prod.idMarca);
-            
-            // 👇 NUEVO: Si hay algún tipo de servicio marcado, los productos NO deben mostrarse
             const matchTipoServicio = filtrosAvanzados.tiposServicioIds.length === 0;
             
             return matchMin && matchMax && matchCat && matchMarca && matchTipoServicio;
@@ -260,11 +269,8 @@ const Marketplace = () => {
             const precioEfectivo = serv.precio;
             const matchMin = filtrosAvanzados.precioMin === '' || precioEfectivo >= Number(filtrosAvanzados.precioMin);
             const matchMax = filtrosAvanzados.precioMax === '' || precioEfectivo <= Number(filtrosAvanzados.precioMax);
-            
-            // 👇 CORRECCIÓN: Si hay alguna categoría o marca marcada, los servicios NO deben mostrarse
             const matchCat = filtrosAvanzados.categoriasIds.length === 0;
             const matchMarca = filtrosAvanzados.marcasIds.length === 0;
-            
             const matchTipoServicio = filtrosAvanzados.tiposServicioIds.length === 0 || filtrosAvanzados.tiposServicioIds.includes(serv.idTipoServicio);
             
             return matchMin && matchMax && matchCat && matchMarca && matchTipoServicio;
@@ -272,10 +278,7 @@ const Marketplace = () => {
     };
 
     const esModoBusqueda = terminoDebounced.trim() !== '';
-    
-    // Verificamos si hay cualquier filtro activo para cambiar a formato lista vertical
     const tieneFiltrosAplicados = filtrosAvanzados.categoriasIds.length > 0 || filtrosAvanzados.marcasIds.length > 0 || filtrosAvanzados.tiposServicioIds.length > 0 || filtrosAvanzados.precioMin !== '' || filtrosAvanzados.precioMax !== '';
-    
     const mostrarComoGridVertical = esModoBusqueda || tieneFiltrosAplicados;
 
     const productosTotalesFiltrados = aplicarFiltrosProductos(
@@ -405,7 +408,6 @@ const Marketplace = () => {
                                 </div>
                             )}
 
-                            {/* <-- ¡NUEVA SECCIÓN DE UI PARA TIPOS DE SERVICIO! --> */}
                             {tiposServicioDisponibles.length > 0 && (
                                 <div className={styles.filterGroup}>
                                     <label className={styles.filterLabel}><ListFilter size={16}/> Tipos de Servicio</label>
@@ -465,7 +467,8 @@ const Marketplace = () => {
                                                                 <p className={styles.cardPrecio}>₡{serv.precio}</p>
                                                                 <p className={styles.cardMeta}><span>⏱</span> {serv.duracionMinutos} min</p>
                                                             </div>
-                                                            <button className={styles.scheduleBtn} onClick={() => agendarServicio(serv.idServicio)}>
+                                                            {/* BOTÓN ACTUALIZADO PARA PASAR EL OBJETO COMPLETO */}
+                                                            <button className={styles.scheduleBtn} onClick={() => agendarServicio(serv)}>
                                                                 <CalendarPlus size={16} /><span>Agendar Cita</span>
                                                             </button>
                                                         </div>
@@ -525,7 +528,8 @@ const Marketplace = () => {
                                                                 <p className={styles.cardPrecio}>₡{serv.precio}</p>
                                                                 <p className={styles.cardMeta}><span>⏱</span> {serv.duracionMinutos} min</p>
                                                             </div>
-                                                            <button className={styles.scheduleBtn} onClick={() => agendarServicio(serv.idServicio)}>
+                                                            {/* BOTÓN ACTUALIZADO PARA PASAR EL OBJETO COMPLETO */}
+                                                            <button className={styles.scheduleBtn} onClick={() => agendarServicio(serv)}>
                                                                 <CalendarPlus size={16} /><span>Agendar Cita</span>
                                                             </button>
                                                         </div>
@@ -540,6 +544,14 @@ const Marketplace = () => {
                     </div>
                 </div>
             </main>
+
+            {/* SE MONTA EL MODAL AQUÍ */}
+            <AgendarCitaModal 
+                open={modalCitaOpen} 
+                servicioInicial={servicioParaAgendar} 
+                onClose={() => setModalCitaOpen(false)} 
+                onConfirm={handleConfirmarCita}
+            />
         </>
     );
 };
