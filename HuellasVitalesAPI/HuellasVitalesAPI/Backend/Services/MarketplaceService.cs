@@ -1,5 +1,5 @@
 using HuellasVitalesAPI.Backend.Models.DTOs;
-using HuellasVitalesAPI.Backend.Models.Entidades;   // 👈 NUEVO
+using HuellasVitalesAPI.Backend.Models.Entidades;
 using HuellitasVitalesAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -32,46 +32,44 @@ namespace HuellitasVitalesAPI.Services
                     return new { categorias = new List<object>(), servicios = new List<object>() };
                 }
 
-                var listaProductosSegura = _context.Productos != null
-                    ? (IQueryable<Producto>)_context.Productos
-                    : Enumerable.Empty<Producto>().AsQueryable();
-
-                var listaComerciosSegura = _context.Comercios != null
-                    ? (IQueryable<Comercio>)_context.Comercios
-                    : Enumerable.Empty<Comercio>().AsQueryable();
-
+                // Aplicamos el LEFT JOIN para las marcas, así no perdemos los productos genéricos (IdMarca = null)
                 var categoriasConProductos = await _context.CategoriasProductoCat
                     .Select(c => new
                     {
                         IdCategoriaProducto = c.IdCategoria,
                         NombreCategoria = c.Nombre,
-                        Productos = listaProductosSegura
-                            .Where(p => p.IdCategoria == c.IdCategoria && p.Activo == true)
-                            .Join(listaComerciosSegura, p => p.IdComercio, com => com.IdComercio, (p, com) => new { p, com })
-                            .Select(x => new
-                            {
-                                IdProducto = x.p.IdProducto,
-                                NombreProducto = x.p.Nombre,
-                                IdComercio = x.com.IdComercio,
-                                NombreComercio = x.com.NombreComercial,
-                                IdCategoriaProducto = x.p.IdCategoria,
-                                IdMarca = 1,
-                                NombreMarca = x.com.NombreComercial,
-                                Precio = x.p.Precio,
-                                PrecioDescuento = x.p.PrecioDescuento,
-                                ImagenUrl = x.p.ImagenUrl ?? "",
-                                Agotado = false
-                            }).ToList()
+                        Productos = (from p in _context.Productos
+                                     join com in _context.Comercios on p.IdComercio equals com.IdComercio
+                                     // 👇 Left Join con MarcasCat
+                                     join m in _context.MarcasCat on p.IdMarca equals m.IdMarca into marcaGroup
+                                     from m in marcaGroup.DefaultIfEmpty()
+                                     where p.IdCategoria == c.IdCategoria && p.Activo == true
+                                     select new
+                                     {
+                                         IdProducto = p.IdProducto,
+                                         NombreProducto = p.Nombre,
+                                         IdComercio = com.IdComercio,
+                                         NombreComercio = com.NombreComercial,
+                                         IdCategoriaProducto = p.IdCategoria,
+                                         // 👇 Manejo de nulos para la marca
+                                         IdMarca = p.IdMarca ?? 0,
+                                         NombreMarca = m != null ? m.Nombre : "Genérica",
+                                         Precio = p.Precio,
+                                         PrecioDescuento = p.PrecioDescuento,
+                                         ImagenUrl = p.ImagenUrl ?? "",
+                                         Agotado = false
+                                     }).ToList()
                     })
                     .Where(cat => cat.Productos.Any())
                     .ToListAsync();
 
                 List<object> servicios = new List<object>();
-                if (_context.Servicios != null && _context.Comercios != null && _context.TipoServicioCat != null)
+                
+                if (_context.Servicios != null && _context.Comercios != null && _context.TiposServicioCat != null)
                 {
                     servicios = await (from s in _context.Servicios
                                      join com in _context.Comercios on s.IdComercio equals com.IdComercio
-                                     join t in _context.TipoServicioCat on s.IdTipoServicio equals t.IdTipoServicio
+                                     join t in _context.TiposServicioCat on (int)s.IdTipoServicio equals (int)t.IdTipoServicio
                                      where s.Activo == true
                                      select new
                                      {
@@ -103,9 +101,11 @@ namespace HuellitasVitalesAPI.Services
         {
             try
             {
-                string terminoLower = termino.ToLower();
+                // Protegemos contra nulos o espacios en blanco
+                string terminoLower = string.IsNullOrWhiteSpace(termino) ? "" : termino.ToLower();
 
-                var resultados = await (from p in _context.Productos
+                // 1. Buscar coincidencias en PRODUCTOS
+                var resultadosProductos = await (from p in _context.Productos
                                         join c in _context.CategoriasProductoCat on p.IdCategoria equals c.IdCategoria
                                         join com in _context.Comercios on p.IdComercio equals com.IdComercio
                                         where (p.Nombre.ToLower().Contains(terminoLower) || 
@@ -121,10 +121,33 @@ namespace HuellitasVitalesAPI.Services
                                             ImagenUrl = p.ImagenUrl ?? "",
                                             Categoria = c.Nombre,
                                             NombreComercio = com.NombreComercial,
-                                            TipoResultado = p.Nombre.ToLower().Contains(terminoLower) ? "Producto" : "Comercio"
+                                            TipoResultado = "Producto" 
                                         }).ToListAsync();
 
-                return resultados;
+                // 2. Buscar coincidencias en SERVICIOS
+                var resultadosServicios = await (from s in _context.Servicios
+                                        join t in _context.TiposServicioCat on (int)s.IdTipoServicio equals (int)t.IdTipoServicio
+                                        join com in _context.Comercios on s.IdComercio equals com.IdComercio
+                                        where (s.Nombre.ToLower().Contains(terminoLower) || 
+                                               com.NombreComercial.ToLower().Contains(terminoLower)) 
+                                           && s.Activo == true
+                                        select new ResultadoBusquedaDto
+                                        {
+                                            IdProducto = s.IdServicio, 
+                                            NombreProducto = s.Nombre,
+                                            Descripcion = s.Descripcion ?? $"Duración: {s.DuracionMinutos} min", 
+                                            Precio = s.Precio,
+                                            PrecioDescuento = s.Precio, 
+                                            ImagenUrl = "", 
+                                            Categoria = t.Nombre, 
+                                            NombreComercio = com.NombreComercial,
+                                            TipoResultado = "Servicio" 
+                                        }).ToListAsync();
+
+                // 3. Unir las dos listas y devolverlas juntas
+                resultadosProductos.AddRange(resultadosServicios);
+                
+                return resultadosProductos;
             }
             catch (Exception ex)
             {

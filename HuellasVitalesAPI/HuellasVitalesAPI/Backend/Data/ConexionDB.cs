@@ -19,6 +19,7 @@ namespace HuellitasVitalesAPI.Data
         public DbSet<TipoServicioCat> TiposServicioCat { get; set; } = null!;
         public DbSet<Carrito> Carritos { get; set; } = null!;
         public DbSet<CarritoItem> CarritoItems { get; set; } = null!;
+        public DbSet<MarcaCat> MarcasCat { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Usuario>().ToTable("USUARIO");
@@ -32,6 +33,7 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<CarritoItem>().ToTable("CARRITO_ITEM");
             modelBuilder.Entity<TipoServicioCat>().ToTable("TIPO_SERVICIO_CAT");
             modelBuilder.Entity<Servicio>().ToTable("SERVICIO");
+            modelBuilder.Entity<MarcaCat>().ToTable("MARCA_CAT");
         }
     }
 }

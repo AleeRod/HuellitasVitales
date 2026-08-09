@@ -5,7 +5,7 @@ import { API_BASE } from '../../api/config';
 import { 
     Search, ShoppingCart, Package, Stethoscope, 
     AlertCircle, Loader2, CalendarPlus, XCircle, LayoutGrid,
-    ChevronLeft, ChevronRight, DollarSign, Tag
+    ChevronLeft, ChevronRight, DollarSign, Tag, ListFilter // Importé ListFilter para el icono
 } from 'lucide-react';
 import styles from './Marketplace.module.css';
 
@@ -102,7 +102,8 @@ const Marketplace = () => {
         precioMin: '',
         precioMax: '',
         categoriasIds: [],
-        marcasIds: []
+        marcasIds: [],
+        tiposServicioIds: [] // <-- ¡NUEVO ESTADO PARA SERVICIOS!
     });
     
     const [productosBusqueda, setProductosBusqueda] = useState([]);
@@ -115,9 +116,6 @@ const Marketplace = () => {
     const terminoDebounced = useDebounce(termino, 400);
     const abortRef = useRef(null);
 
-    // =========================================================================
-    // CONEXIÓN DIRECTA Y PURA A LA BASE DE DATOS (SIN MOCKS)
-    // =========================================================================
     useEffect(() => {
         const q = terminoDebounced.trim();
 
@@ -148,7 +146,6 @@ const Marketplace = () => {
                     
                     if (!res.ok) {
                         if (res.status === 400) {
-                            // Término muy corto - no es un error real, solo no hay suficientes caracteres aún
                             setEstado(ESTADO.VACIO);
                             setProductosBusqueda([]);
                             setServiciosBusqueda([]);
@@ -178,8 +175,14 @@ const Marketplace = () => {
         return () => controller.abort();
     }, [terminoDebounced, reintento]);
 
+    // EXTRACCIÓN DE FILTROS ÚNICOS
     const marcasDisponibles = [...new Map(catalogoPorCategoria.flatMap(c => c.productos || []).map(p => [p.idMarca, { id: p.idMarca, nombre: p.nombreMarca }])).values()].filter(m => m.id);
     const categoriasDisponibles = catalogoPorCategoria.map(c => ({ id: c.idCategoriaProducto, nombre: c.nombreCategoria }));
+    
+    // <-- ¡NUEVA LÓGICA DE EXTRACCIÓN DE TIPOS DE SERVICIO! -->
+    const tiposServicioDisponibles = [...new Map(
+        serviciosBusqueda.map(s => [s.idTipoServicio, { id: s.idTipoServicio, nombre: s.tipoServicio }])
+    ).values()].filter(t => t.id);
 
     const toggleCategoria = (id) => {
         setFiltrosAvanzados(prev => ({
@@ -195,8 +198,17 @@ const Marketplace = () => {
         }));
     };
 
+    // <-- ¡NUEVA FUNCIÓN PARA TOGGLE DEL SERVICIO! -->
+    const toggleTipoServicio = (id) => {
+        setFiltrosAvanzados(prev => ({
+            ...prev,
+            tiposServicioIds: prev.tiposServicioIds.includes(id) ? prev.tiposServicioIds.filter(t => t !== id) : [...prev.tiposServicioIds, id]
+        }));
+    };
+
     const limpiarFiltrosAvanzados = () => {
-        setFiltrosAvanzados({ precioMin: '', precioMax: '', categoriasIds: [], marcasIds: [] });
+        // Limpiamos también el nuevo estado
+        setFiltrosAvanzados({ precioMin: '', precioMax: '', categoriasIds: [], marcasIds: [], tiposServicioIds: [] });
     };
 
     const limpiarBusqueda = () => {
@@ -235,7 +247,11 @@ const Marketplace = () => {
             const matchMax = filtrosAvanzados.precioMax === '' || precioEfectivo <= Number(filtrosAvanzados.precioMax);
             const matchCat = filtrosAvanzados.categoriasIds.length === 0 || filtrosAvanzados.categoriasIds.includes(prod.idCategoriaProducto);
             const matchMarca = filtrosAvanzados.marcasIds.length === 0 || filtrosAvanzados.marcasIds.includes(prod.idMarca);
-            return matchMin && matchMax && matchCat && matchMarca;
+            
+            // 👇 NUEVO: Si hay algún tipo de servicio marcado, los productos NO deben mostrarse
+            const matchTipoServicio = filtrosAvanzados.tiposServicioIds.length === 0;
+            
+            return matchMin && matchMax && matchCat && matchMarca && matchTipoServicio;
         });
     };
 
@@ -244,14 +260,22 @@ const Marketplace = () => {
             const precioEfectivo = serv.precio;
             const matchMin = filtrosAvanzados.precioMin === '' || precioEfectivo >= Number(filtrosAvanzados.precioMin);
             const matchMax = filtrosAvanzados.precioMax === '' || precioEfectivo <= Number(filtrosAvanzados.precioMax);
+            
+            // 👇 CORRECCIÓN: Si hay alguna categoría o marca marcada, los servicios NO deben mostrarse
             const matchCat = filtrosAvanzados.categoriasIds.length === 0;
             const matchMarca = filtrosAvanzados.marcasIds.length === 0;
-            return matchMin && matchMax && matchCat && matchMarca;
+            
+            const matchTipoServicio = filtrosAvanzados.tiposServicioIds.length === 0 || filtrosAvanzados.tiposServicioIds.includes(serv.idTipoServicio);
+            
+            return matchMin && matchMax && matchCat && matchMarca && matchTipoServicio;
         });
     };
 
     const esModoBusqueda = terminoDebounced.trim() !== '';
-    const tieneFiltrosAplicados = filtrosAvanzados.categoriasIds.length > 0 || filtrosAvanzados.marcasIds.length > 0 || filtrosAvanzados.precioMin !== '' || filtrosAvanzados.precioMax !== '';
+    
+    // Verificamos si hay cualquier filtro activo para cambiar a formato lista vertical
+    const tieneFiltrosAplicados = filtrosAvanzados.categoriasIds.length > 0 || filtrosAvanzados.marcasIds.length > 0 || filtrosAvanzados.tiposServicioIds.length > 0 || filtrosAvanzados.precioMin !== '' || filtrosAvanzados.precioMax !== '';
+    
     const mostrarComoGridVertical = esModoBusqueda || tieneFiltrosAplicados;
 
     const productosTotalesFiltrados = aplicarFiltrosProductos(
@@ -375,6 +399,25 @@ const Marketplace = () => {
                                                     onChange={() => toggleMarca(marca.id)}
                                                 />
                                                 <span>{marca.nombre}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* <-- ¡NUEVA SECCIÓN DE UI PARA TIPOS DE SERVICIO! --> */}
+                            {tiposServicioDisponibles.length > 0 && (
+                                <div className={styles.filterGroup}>
+                                    <label className={styles.filterLabel}><ListFilter size={16}/> Tipos de Servicio</label>
+                                    <div className={styles.checkboxList}>
+                                        {tiposServicioDisponibles.map(tipo => (
+                                            <label key={tipo.id} className={styles.checkboxItem}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={filtrosAvanzados.tiposServicioIds.includes(tipo.id)}
+                                                    onChange={() => toggleTipoServicio(tipo.id)}
+                                                />
+                                                <span>{tipo.nombre}</span>
                                             </label>
                                         ))}
                                     </div>
