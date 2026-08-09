@@ -2,5 +2,6 @@
 [Bb]in/
 [Oo]bj/
 *.user
-.vercel
-.env*
+.vercel/
+huellitas-frontend/.vercel/
+.env.local
