@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
-<<<<<<< HEAD
-import { X, User, Mail, Phone, ArrowRight, Info } from 'lucide-react';
-=======
 import { X, User, Mail, Phone, ArrowRight, Info, AlertCircle } from 'lucide-react';
 import { API_BASE } from '../../api/config'; // 👈 Asegúrate de que la ruta sea correcta según tu estructura
->>>>>>> feature-GestionCarrito
 import styles from './ModalRegistroRapido.module.css';
 
 const ModalRegistroRapido = ({ isOpen, onClose, onRegistroExitoso }) => {
@@ -24,14 +20,9 @@ const ModalRegistroRapido = ({ isOpen, onClose, onRegistroExitoso }) => {
       [e.target.name]: e.target.value
     });
     
-<<<<<<< HEAD
-    if (errores[e.target.name]) {
-      setErrores({ ...errores, [e.target.name]: null });
-=======
     // Limpiar errores al escribir
     if (errores[e.target.name] || errores.general) {
       setErrores({ ...errores, [e.target.name]: null, general: null });
->>>>>>> feature-GestionCarrito
     }
   };
 
@@ -54,15 +45,6 @@ const ModalRegistroRapido = ({ isOpen, onClose, onRegistroExitoso }) => {
     if (!validarFormulario()) return;
 
     setCargando(true);
-<<<<<<< HEAD
-    
-    // MOCK: Llamada al endpoint para registrar usuario sin contraseña y avanzar al pago
-    setTimeout(() => {
-      console.log('Datos enviados para checkout rápido:', form);
-      setCargando(false);
-      if (onRegistroExitoso) onRegistroExitoso();
-    }, 1500);
-=======
     setErrores({});
     
     try {
@@ -96,7 +78,6 @@ const ModalRegistroRapido = ({ isOpen, onClose, onRegistroExitoso }) => {
     } finally {
       setCargando(false);
     }
->>>>>>> feature-GestionCarrito
   };
 
   return (
@@ -167,8 +148,6 @@ const ModalRegistroRapido = ({ isOpen, onClose, onRegistroExitoso }) => {
             </p>
           </div>
 
-<<<<<<< HEAD
-=======
           {/* 👈 Mensaje de error general del backend (ej: correo ya registrado) */}
           {errores.general && (
             <div style={{ color: '#d90429', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px' }}>
@@ -177,7 +156,6 @@ const ModalRegistroRapido = ({ isOpen, onClose, onRegistroExitoso }) => {
             </div>
           )}
 
->>>>>>> feature-GestionCarrito
           <button type="submit" className={styles.btnSubmit} disabled={cargando}>
             {cargando ? 'Procesando...' : 'Continuar con el pago'}
             {!cargando && <ArrowRight size={18} />}

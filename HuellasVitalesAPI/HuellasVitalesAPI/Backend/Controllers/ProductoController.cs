@@ -17,7 +17,6 @@ namespace HuellitasVitalesAPI.Controllers
             _productoService = productoService;
         }
 
-<<<<<<< HEAD
         // POST api/producto
         [Authorize]
         [HttpPost]
@@ -133,29 +132,3 @@ public async Task<IActionResult> EditarProducto(
 }
 
 }
-=======
-        // ─── Registrar un producto (solo en comercios de tipo Almacén) ───
-        // POST api/producto
-        [HttpPost]
-        [Authorize] // Requiere JWT válido
-        public async Task<IActionResult> CrearProducto([FromBody] CrearProductoRequest request)
-        {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            // ID del funcionario que registra (claim "sub" = IdUsuario)
-            var subClaim = User.FindFirst("sub")?.Value
-                           ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(subClaim, out var idUsuario))
-                return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
-
-            var resultado = await _productoService.CrearAsync(idUsuario, request);
-
-            if (!resultado.Exito)
-                return StatusCode(resultado.Codigo, new { success = false, mensaje = resultado.Mensaje });
-
-            return StatusCode(StatusCodes.Status201Created,
-                new { success = true, mensaje = resultado.Mensaje, idProducto = resultado.IdProducto });
-        }
-    }
-}
->>>>>>> feature-GestionCarrito

@@ -4,29 +4,6 @@ namespace HuellasVitalesAPI.Backend.Models.DTOs
 {
     public class CrearProductoRequest
     {
-<<<<<<< HEAD
-        [Required(ErrorMessage = "El comercio es obligatorio.")]
-        public int IdComercio { get; set; }
-
-        [Required(ErrorMessage = "La categoría es obligatoria.")]
-        public byte IdCategoria { get; set; }
-
-        [Required(ErrorMessage = "El nombre es obligatorio.")]
-        [StringLength(150, ErrorMessage = "El nombre no puede superar 150 caracteres.")]
-        public string Nombre { get; set; } = string.Empty;
-
-        [StringLength(1000, ErrorMessage = "La descripción no puede superar 1000 caracteres.")]
-        public string? Descripcion { get; set; }
-
-       [Range(0.01,999999999.99,
-        ErrorMessage = "El precio debe ser mayor que 0.")]
-        public decimal Precio { get; set; }
-
-        [Range(0, int.MaxValue, ErrorMessage = "El stock no puede ser negativo.")]
-        public int Stock { get; set; }
-
-        [Url(ErrorMessage = "La imagen debe ser una URL válida.")]
-=======
         // Comercio (almacén) donde se publicará el producto.
         // No se toma del token: un mismo usuario puede tener veterinaria y almacén,
         // por lo que debe indicar explícitamente en cuál está trabajando.
@@ -63,7 +40,6 @@ namespace HuellasVitalesAPI.Backend.Models.DTOs
         [Range(0, int.MaxValue, ErrorMessage = "El stock no puede ser negativo.")]
         public int? Stock { get; set; }
 
->>>>>>> feature-GestionCarrito
         public string? ImagenUrl { get; set; }
     }
 }

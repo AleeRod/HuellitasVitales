@@ -68,11 +68,11 @@ namespace HuellitasVitalesAPI.Services
 
                 List<object> servicios = new List<object>();
                 
-                if (_context.Servicios != null && _context.Comercios != null && _context.TiposServicioCat != null)
+                if (_context.Servicios != null && _context.Comercios != null && _context.TipoServicioCat != null)
                 {
                     servicios = await (from s in _context.Servicios
                                      join com in _context.Comercios on s.IdComercio equals com.IdComercio
-                                     join t in _context.TiposServicioCat on (int)s.IdTipoServicio equals (int)t.IdTipoServicio
+                                     join t in _context.TipoServicioCat on (int)s.IdTipoServicio equals (int)t.IdTipoServicio
                                      where s.Activo == true
                                      select new
                                      {
@@ -129,7 +129,7 @@ namespace HuellitasVitalesAPI.Services
 
                 // 2. Buscar coincidencias en SERVICIOS
                 var resultadosServicios = await (from s in _context.Servicios
-                                        join t in _context.TiposServicioCat on (int)s.IdTipoServicio equals (int)t.IdTipoServicio
+                                        join t in _context.TipoServicioCat on (int)s.IdTipoServicio equals (int)t.IdTipoServicio
                                         join com in _context.Comercios on s.IdComercio equals com.IdComercio
                                         where (s.Nombre.ToLower().Contains(terminoLower) || 
                                                com.NombreComercial.ToLower().Contains(terminoLower)) 
