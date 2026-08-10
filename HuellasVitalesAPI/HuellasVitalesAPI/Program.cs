@@ -98,6 +98,7 @@ builder.Services.AddScoped<IMarketplaceService, MarketplaceService>();
 builder.Services.AddScoped<ComercioValidacionService>();
 builder.Services.AddScoped<ProductoService>();
 builder.Services.AddScoped<ServicioService>();
+builder.Services.AddScoped<CarritoService>();
 
 var app = builder.Build();
 
