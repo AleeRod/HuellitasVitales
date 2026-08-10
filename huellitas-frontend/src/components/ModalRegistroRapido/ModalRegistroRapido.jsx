@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, User, Mail, Phone, ArrowRight, Info } from 'lucide-react';
+import { X, User, Mail, Phone, ArrowRight, Info, AlertCircle } from 'lucide-react';
+import { API_BASE } from '../../api/config'; // 👈 Asegúrate de que la ruta sea correcta según tu estructura
 import styles from './ModalRegistroRapido.module.css';
 
 const ModalRegistroRapido = ({ isOpen, onClose, onRegistroExitoso }) => {
@@ -19,8 +20,9 @@ const ModalRegistroRapido = ({ isOpen, onClose, onRegistroExitoso }) => {
       [e.target.name]: e.target.value
     });
     
-    if (errores[e.target.name]) {
-      setErrores({ ...errores, [e.target.name]: null });
+    // Limpiar errores al escribir
+    if (errores[e.target.name] || errores.general) {
+      setErrores({ ...errores, [e.target.name]: null, general: null });
     }
   };
 
@@ -43,13 +45,39 @@ const ModalRegistroRapido = ({ isOpen, onClose, onRegistroExitoso }) => {
     if (!validarFormulario()) return;
 
     setCargando(true);
+    setErrores({});
     
-    // MOCK: Llamada al endpoint para registrar usuario sin contraseña y avanzar al pago
-    setTimeout(() => {
-      console.log('Datos enviados para checkout rápido:', form);
-      setCargando(false);
+    try {
+      // 👈 Pegándole al backend real
+      const response = await fetch(`${API_BASE}/usuario/registro-rapido`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          NombreCompleto: form.nombre, 
+          Correo: form.correo,
+          Telefono: form.telefono
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.mensaje || 'Error al procesar el registro rápido.');
+      }
+
+      // 👈 Guardar el token para que el usuario quede "logeado"
+      localStorage.setItem('token_huellitas', data.token);
+      
+      // 👈 Continuar con el checkout en el Carrito
       if (onRegistroExitoso) onRegistroExitoso();
-    }, 1500);
+
+    } catch (error) {
+      setErrores({ general: error.message });
+    } finally {
+      setCargando(false);
+    }
   };
 
   return (
@@ -119,6 +147,14 @@ const ModalRegistroRapido = ({ isOpen, onClose, onRegistroExitoso }) => {
               Podrás habilitar esta cuenta más tarde vinculando tus redes sociales o utilizando la opción de recuperar contraseña.
             </p>
           </div>
+
+          {/* 👈 Mensaje de error general del backend (ej: correo ya registrado) */}
+          {errores.general && (
+            <div style={{ color: '#d90429', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px' }}>
+              <AlertCircle size={16} />
+              <span>{errores.general}</span>
+            </div>
+          )}
 
           <button type="submit" className={styles.btnSubmit} disabled={cargando}>
             {cargando ? 'Procesando...' : 'Continuar con el pago'}

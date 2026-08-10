@@ -254,6 +254,46 @@ namespace HuellitasVitalesAPI.Services
                 return null;
             }
         }
+
+        // ─── NUEVO: REGISTRO RÁPIDO PARA CHECKOUT ───
+        public async Task<string> RegistrarUsuarioRapidoAsync(RegistroRapidoDTO request)
+        {
+            // 1. Validar si el correo ya existe
+            var usuarioExistente = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.Correo.ToLower() == request.Correo.ToLower());
+
+            if (usuarioExistente != null)
+            {
+                throw new Exception("El correo ya está registrado. Por favor, inicia sesión.");
+            }
+
+            // 2. Separar el "Nombre Completo" en Nombre y Apellidos (porque la BD pide ambos)
+            var partesNombre = request.NombreCompleto.Trim().Split(' ', 2);
+            string nombre = partesNombre[0];
+            string apellidos = partesNombre.Length > 1 ? partesNombre[1] : "N/A"; // Por si solo pone un nombre
+
+            // 3. Crear la entidad
+            var nuevoUsuario = new Usuario
+            {
+                Nombre = nombre,
+                Apellidos = apellidos,
+                Correo = request.Correo,
+                Telefono = request.Telefono,
+                PasswordHash = null, // Fundamental: Queda null para el flujo de "Recuperar contraseña"
+                Proveedor_Auth = "Local",
+                IdEstadoCuenta = 1, // 1 = ACTIVA 
+                IdRol = 3, // 👈 3 = Cliente (mismo ID que utilizas en RegistrarNuevoUsuario)
+                FechaRegistro = DateTime.UtcNow
+            };
+
+            _context.Usuarios.Add(nuevoUsuario);
+            await _context.SaveChangesAsync();
+
+            // 4. Generar y retornar el token JWT
+            var token = GenerarTokenJWT(nuevoUsuario); 
+            
+            return token;
+        }
     }
 
     public class FacebookTokenResponse

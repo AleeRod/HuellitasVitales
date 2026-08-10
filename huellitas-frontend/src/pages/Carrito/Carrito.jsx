@@ -5,6 +5,7 @@ import { useCarrito } from '../../hooks/useCarrito';
 import { ToastContainer } from '../../components/Toast/Toast';
 import useToast from '../../components/Toast/useToast';
 import FilaCarrito from '../../components/Carrito/FilaCarrito';
+import ModalRegistroRapido from '../../components/ModalRegistroRapido/ModalRegistroRapido'; // Ajusta la ruta si difiere en tu carpeta
 import { crearOrden } from '../../api/ordenes';
 import styles from './Carrito.module.css';
 
@@ -23,9 +24,10 @@ const Carrito = () => {
     const { toasts, showToast, removeToast } = useToast();
     const navigate = useNavigate();
     const [pagando, setPagando] = useState(false);
+    
+    // Estado para controlar la visibilidad del modal de registro rápido
+    const [modalRegistroAbierto, setModalRegistroAbierto] = useState(false);
 
-    // Los avisos del carrito (tope de existencias, fallos al guardar) se
-    // muestran con el mismo componente de notificaciones del resto del sitio.
     useEffect(() => {
         if (!mensajeError) return;
         showToast(mensajeError, 'warning');
@@ -39,23 +41,13 @@ const Carrito = () => {
     };
 
     /**
-     * Único momento en que hace falta tener cuenta. Si ya hay sesión, la compra
-     * sigue de largo; si no, se manda a iniciar sesión y se vuelve al carrito,
-     * que sigue guardado en el navegador.
+     * Función principal para procesar la orden tras validar token o tras registro rápido.
      */
-    const pagar = async () => {
-        const token = localStorage.getItem('token_huellitas');
-
-        if (!token) {
-            showToast('Iniciá sesión para completar tu compra. Tu carrito te espera acá.', 'info');
-            navigate('/login', { state: { volverA: '/carrito' } });
-            return;
-        }
-
+    const procesarCompra = async (tokenUsuario) => {
         setPagando(true);
 
         try {
-            const respuesta = await crearOrden(items, token);
+            const respuesta = await crearOrden(items, tokenUsuario);
             vaciar();
             showToast(
                 `Listo, tu compra quedó registrada con el número ${respuesta?.orden?.idOrden ?? ''}.`.trim(),
@@ -68,11 +60,41 @@ const Carrito = () => {
         }
     };
 
+    /**
+     * Al dar clic en 'Completar compra': Si no hay token, abre el modal de registro rápido.
+     */
+    const pagar = () => {
+        const token = localStorage.getItem('token_huellitas');
+
+        if (!token) {
+            setModalRegistroAbierto(true);
+            return;
+        }
+
+        procesarCompra(token);
+    };
+
+    /**
+     * Callback invocado por ModalRegistroRapido cuando el registro es exitoso.
+     */
+    const alCompletarRegistroRapido = () => {
+        setModalRegistroAbierto(false);
+        const nuevoToken = localStorage.getItem('token_huellitas');
+        procesarCompra(nuevoToken);
+    };
+
     const vacio = items.length === 0;
 
     return (
         <div className={styles.pagina}>
             <ToastContainer toasts={toasts} removeToast={removeToast} />
+
+            {/* Modal de Registro Rápido */}
+            <ModalRegistroRapido
+                isOpen={modalRegistroAbierto}
+                onClose={() => setModalRegistroAbierto(false)}
+                onRegistroExitoso={alCompletarRegistroRapido}
+            />
 
             <div className={styles.contenedor}>
                 <header className={styles.encabezado}>

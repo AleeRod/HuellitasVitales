@@ -75,5 +75,23 @@ namespace HuellitasVitalesAPI.Controllers
                 return StatusCode(500, new { success = false, mensaje = "Ocurrió un error interno al intentar actualizar el perfil." });
             }
         }
+
+        // ─── NUEVO: Registro Rápido ───
+        [HttpPost("registro-rapido")]
+        public async Task<IActionResult> RegistroRapido([FromBody] RegistroRapidoDTO request)
+        {
+            try
+            {
+                // Usamos _usuarioService, que ya está inyectado
+                var token = await _usuarioService.RegistrarUsuarioRapidoAsync(request);
+                
+                // Devolvemos el token para que el frontend lo guarde y pase al checkout
+                return Ok(new { token, mensaje = "Registro rápido exitoso" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+        }
     }
 }
