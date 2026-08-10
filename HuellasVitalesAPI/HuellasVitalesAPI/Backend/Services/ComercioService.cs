@@ -84,35 +84,60 @@ namespace HuellitasVitalesAPI.Services
 
         // ─── APROBAR UN COMERCIO (habilita su acceso al marketplace) ───
         // Codigo = código HTTP sugerido para que el controlador lo retorne.
-        public async Task<(bool Exito, string Mensaje, int Codigo)> AprobarComercioAsync(int idComercio, int idAdmin)
+    public async Task<(bool Exito, string Mensaje, int Codigo)> AprobarComercioAsync(int idComercio, int idAdmin)
+    {
+        try
         {
-            try
+        var comercio = await _context.Comercios.FirstOrDefaultAsync(c => c.IdComercio == idComercio);
+
+        // 404 - No existe
+        if (comercio == null)
+            return (false, "El comercio indicado no existe.", 404);
+
+        // 409 - Ya estaba aprobado (operación idempotente, no se repite la resolución)
+        if (comercio.IdEstadoSolicitud == 2)
+            return (false, "Este comercio ya se encuentra aprobado.", 409);
+
+        comercio.IdEstadoSolicitud = 2;              // 2 = APROBADO
+        comercio.FechaResolucion = DateTime.UtcNow; // Fecha de resolución
+        comercio.IdUsuarioResolvio = idAdmin;
+
+        // ─── Ascender al dueño de Cliente a Funcionario ───
+        // Solo si sigue siendo Cliente (3); no se toca si ya es Admin (1) o Profesional (2).
+        const byte ROL_CLIENTE = 3;
+        const byte ROL_FUNCIONARIO = 4;
+
+        var personaLegal = await _context.PersonasLegales
+            .FirstOrDefaultAsync(p => p.IdPersonaLegal == comercio.IdPersonaLegal);
+
+            if (personaLegal != null)
+        {
+            var duenio = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.IdUsuario == personaLegal.IdUsuario);
+
+            Console.WriteLine($"[DEBUG ROL] personaLegal.IdUsuario={personaLegal.IdUsuario} | duenio existe={duenio != null} | duenio.IdRol={duenio?.IdRol}");
+
+            if (duenio != null && duenio.IdRol == ROL_CLIENTE)
             {
-                var comercio = await _context.Comercios.FirstOrDefaultAsync(c => c.IdComercio == idComercio);
-
-                // 404 - No existe
-                if (comercio == null)
-                    return (false, "El comercio indicado no existe.", 404);
-
-                // 409 - Ya estaba aprobado (operación idempotente, no se repite la resolución)
-                if (comercio.IdEstadoSolicitud == 2)
-                    return (false, "Este comercio ya se encuentra aprobado.", 409);
-
-                comercio.IdEstadoSolicitud = 2;              // 2 = APROBADO
-                comercio.FechaResolucion = DateTime.UtcNow; // Fecha de resolución
-                comercio.IdUsuarioResolvio = idAdmin;
-
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Comercio {Id} aprobado por el administrador {Admin}", idComercio, idAdmin);
-                return (true, "Comercio aprobado. Ya tiene acceso al marketplace.", 200);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al aprobar el comercio {Id}", idComercio);
-                return (false, "Ocurrió un error interno al aprobar el comercio.", 500);
+                duenio.IdRol = ROL_FUNCIONARIO;
+                Console.WriteLine("[DEBUG ROL] Se ejecutó el cambio a FUNCIONARIO");
+                _logger.LogInformation(
+                    "Usuario {Usuario} ascendido de Cliente a Funcionario al aprobarse el comercio {Comercio}",
+                    duenio.IdUsuario, idComercio);
             }
         }
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Comercio {Id} aprobado por el administrador {Admin}", idComercio, idAdmin);
+        return (true, "Comercio aprobado. Ya tiene acceso al marketplace.", 200);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error al aprobar el comercio {Id}", idComercio);
+        return (false, "Ocurrió un error interno al aprobar el comercio.", 500);
+    }
+}
 
         // ─── BÚSQUEDA DINÁMICA DE COMERCIOS APROBADOS (marketplace) ───
         public async Task<List<ComercioBusquedaDTO>> BuscarComerciosAprobadosAsync(string termino)

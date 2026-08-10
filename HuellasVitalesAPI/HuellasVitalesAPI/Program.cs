@@ -59,32 +59,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             NameClaimType = System.Security.Claims.ClaimTypes.NameIdentifier
         };
-
-        // 🔥 ESTO TE DICE LA RAZÓN REAL SI EL TOKEN FALLA
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                var authHeader = context.Request.Headers["Authorization"].ToString();
-                Console.WriteLine("🔍 AUTHORIZATION HEADER CRUDO: [" + authHeader + "]");
-                return Task.CompletedTask;
-            },
-            OnAuthenticationFailed = context =>
-            {
-                Console.WriteLine("❌ JWT FALLÓ: " + context.Exception.GetType().Name + " - " + context.Exception.Message);
-                return Task.CompletedTask;
-            },
-            OnChallenge = context =>
-            {
-                Console.WriteLine("⚠️ CHALLENGE: " + context.Error + " | " + context.ErrorDescription);
-                return Task.CompletedTask;
-            },
-            OnTokenValidated = context =>
-            {
-                Console.WriteLine("✅ TOKEN OK. Claims: " + context.Principal?.Claims.Count());
-                return Task.CompletedTask;
-            }
-        };
     });
 
 // 3. Configurar Base de Datos

@@ -6,6 +6,7 @@ import { ToastContainer } from '../../components/Toast/Toast';
 import { API_BASE } from '../../api/config';
 import styles from './Perfil.module.css';
 import { User, Contact, Mail, Phone, Lock, Calendar, Edit2, AlertTriangle, KeyRound } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 
 const ROLES = { 1: 'Administrador', 2: 'Veterinario', 3: 'Cliente' };
 const ESTADOS_CUENTA = {
@@ -154,6 +155,68 @@ const Perfil = () => {
             addToast("Ocurrió un problema al guardar los cambios.", "error");
         } finally {
             setGuardando(false);
+        }
+    };
+
+        const handleVincularGoogle = async (response) => {
+        try {
+            const tokenHuellitas = localStorage.getItem('token_huellitas');
+
+            if (!tokenHuellitas) {
+                addToast(
+                    "Debes iniciar sesión antes de vincular Google.",
+                    "warning"
+                );
+                return;
+            }
+
+            if (!response?.credential) {
+                addToast(
+                    "No se pudo obtener la credencial de Google.",
+                    "error"
+                );
+                return;
+            }
+
+            const res = await fetch(`${API_BASE}/login/vincular-google`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${tokenHuellitas}`
+                },
+                body: JSON.stringify({
+                    token: response.credential
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                addToast(
+                    data.mensaje || "Cuenta de Google vinculada correctamente.",
+                    "success"
+                );
+
+                // Recargar el perfil para mostrar el nuevo proveedor
+                const perfilRes = await fetch(`${API_BASE}/usuario/${idUsuario}`);
+
+                if (perfilRes.ok) {
+                    const perfilActualizado = await perfilRes.json();
+                    setPerfil(perfilActualizado);
+                }
+            } else {
+                addToast(
+                    data.mensaje || "No fue posible vincular la cuenta de Google.",
+                    "error"
+                );
+            }
+        } catch (error) {
+            console.error("Error al vincular Google:", error);
+
+            addToast(
+                "Ocurrió un error al intentar vincular Google.",
+                "error"
+            );
         }
     };
 
@@ -312,6 +375,38 @@ const Perfil = () => {
                                     </div>
                                 </div>
                             )}
+
+                                <div className={styles.securityAction}>
+                                    <div className={styles.securityText}>
+                                        <strong>Cuenta de Google</strong>
+                                        <p>
+                                            Vincula tu cuenta de Google para poder iniciar sesión
+                                            utilizando Google.
+                                        </p>
+                                    </div>
+
+                                    {perfil?.proveedor === 'Google' ? (
+                                        <span style={{ color: '#52B788', fontWeight: '600' }}>
+                                            ✓ Cuenta vinculada
+                                        </span>
+                                    ) : (
+                                        <GoogleLogin
+                                            onSuccess={handleVincularGoogle}
+                                            onError={() => {
+                                                addToast(
+                                                    "No fue posible autenticar con Google.",
+                                                    "error"
+                                                );
+                                            }}
+                                            useOneTap={false}
+                                            type="standard"
+                                            theme="outline"
+                                            size="large"
+                                            shape="rectangular"
+                                        />
+                                    )}
+                                </div>
+
                         </section>
                     )}
                 </div>

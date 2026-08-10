@@ -22,9 +22,10 @@ namespace HuellitasVitalesAPI.Data
         public DbSet<MarcaCat> MarcasCat { get; set; } = null!;
         public DbSet<TipoComercioCat> TiposComercioCat { get; set; } = null!;
         public DbSet<Orden> Ordenes { get; set; } = null!;
-        public DbSet<OrdenDetalle> OrdenesDetalle { get; set; } = null!;
+        public DbSet<OrdenDetalle> OrdenDetalles { get; set; } = null!;
         public DbSet<CargoCat> CargosCat { get; set; } = null!;
         public DbSet<ComercioFuncionario> ComerciosFuncionarios { get; set; } = null!;
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Usuario>().ToTable("USUARIO");
@@ -39,6 +40,7 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<TipoServicioCat>().ToTable("TIPO_SERVICIO_CAT");
             modelBuilder.Entity<Servicio>().ToTable("SERVICIO");
             modelBuilder.Entity<MarcaCat>().ToTable("MARCA_CAT");
+            modelBuilder.Entity<PasswordResetToken>().ToTable("PASSWORD_RESET_TOKEN");
             modelBuilder.Entity<Orden>().ToTable("ORDEN");
             modelBuilder.Entity<OrdenDetalle>().ToTable("ORDEN_DETALLE");
             modelBuilder.Entity<TipoComercioCat>().ToTable("TIPO_COMERCIO_CAT");

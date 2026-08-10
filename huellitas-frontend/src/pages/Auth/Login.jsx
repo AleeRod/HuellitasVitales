@@ -101,6 +101,49 @@ function Login() {
         }
     };
 
+        const handleVincularGoogle = async (response) => {
+        try {
+            const tokenHuellitas = localStorage.getItem('token_huellitas');
+
+            if (!tokenHuellitas) {
+                triggerNotification(
+                    "Debes iniciar sesión antes de vincular Google."
+                );
+                return;
+            }
+
+            const res = await fetch(
+                `${API_BASE}/login/vincular-google`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${tokenHuellitas}`
+                    },
+                    body: JSON.stringify({
+                        token: response.credential
+                    })
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                triggerNotification(data.mensaje, 'success');
+            } else {
+                triggerNotification(
+                    data.mensaje || "No fue posible vincular Google."
+                );
+            }
+        } catch (error) {
+            console.error(error);
+
+            triggerNotification(
+                "No fue posible conectar con el servidor."
+            );
+        }
+    };
+
     const loginWithFacebook = () => {
         if (!window.FB) {
             triggerNotification("Facebook aún se está cargando, espera un segundo.");

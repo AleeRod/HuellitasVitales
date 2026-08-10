@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Security.Cryptography;
 
 namespace HuellitasVitalesAPI.Services
 {
@@ -135,13 +136,24 @@ namespace HuellitasVitalesAPI.Services
                 }
                 else
                 {
-                    if (usuario.Proveedor_Auth != "Google")
-                    {
-                        usuario.Proveedor_Auth = "Google";
-                        usuario.Proveedor_Id = payload.Subject;
+                    // La cuenta ya existe.
+                    // NO vinculamos Google automáticamente.
 
-                        _context.Usuarios.Update(usuario);
-                        await _context.SaveChangesAsync();
+                    if (usuario.Proveedor_Auth == "Google")
+                    {
+                        // Google ya está vinculado a esta cuenta.
+                        // Verificamos que sea el mismo Google.
+                        if (usuario.Proveedor_Id != payload.Subject)
+                        {
+                            return null;
+                        }
+                    }
+                    else
+                    {
+                        // La cuenta existe, pero es Local u otro proveedor.
+                        // La vinculación debe hacerse mediante el endpoint
+                        // /api/Login/vincular-google.
+                        return null;
                     }
                 }
                 return usuario;
@@ -294,6 +306,225 @@ namespace HuellitasVitalesAPI.Services
             
             return token;
         }
+
+        public async Task<string?> GenerarTokenRecuperacionAsync(string correo)
+        {
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.Correo == correo);
+
+            if (usuario == null)
+                return null;
+
+            // Generar token seguro
+            var tokenBytes = RandomNumberGenerator.GetBytes(32);
+
+            // Convertir a Base64 URL-safe
+            var token = Convert.ToBase64String(tokenBytes)
+                .Replace("+", "-")
+                .Replace("/", "_")
+                .Replace("=", "");
+
+            // Guardamos solamente el hash del token
+            using var sha256 = SHA256.Create();
+
+            var hashBytes = sha256.ComputeHash(
+                Encoding.UTF8.GetBytes(token)
+            );
+
+            var tokenHash = Convert.ToHexString(hashBytes);
+
+            // Invalidar tokens anteriores del mismo usuario
+            var tokensAnteriores = await _context.PasswordResetTokens
+                .Where(x => x.IdUsuario == usuario.IdUsuario && !x.Usado)
+                .ToListAsync();
+
+            foreach (var tokenAnterior in tokensAnteriores)
+            {
+                tokenAnterior.Usado = true;
+            }
+
+            var nuevoToken = new PasswordResetToken
+            {
+                IdUsuario = usuario.IdUsuario,
+                TokenHash = tokenHash,
+                FechaExpiracion = DateTime.UtcNow.AddMinutes(30),
+                Usado = false
+            };
+
+            _context.PasswordResetTokens.Add(nuevoToken);
+
+            await _context.SaveChangesAsync();
+
+            return token;
+        }
+
+        public async Task<(bool Exito, string Mensaje)> RestablecerPasswordAsync(
+            RestablecerPasswordDTO dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Token))
+            {
+                return (false, "El token de recuperación es obligatorio.");
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.NuevaPassword))
+            {
+                return (false, "La nueva contraseña es obligatoria.");
+            }
+
+            if (dto.NuevaPassword.Length < 8)
+            {
+                return (false, "La contraseña debe tener al menos 8 caracteres.");
+            }
+
+            // Calcular hash del token recibido
+            using var sha256 = SHA256.Create();
+
+            var hashBytes = sha256.ComputeHash(
+                Encoding.UTF8.GetBytes(dto.Token)
+            );
+
+            var tokenHash = Convert.ToHexString(hashBytes);
+
+            // Buscar token válido
+            var resetToken = await _context.PasswordResetTokens
+                .FirstOrDefaultAsync(x =>
+                    x.TokenHash == tokenHash &&
+                    !x.Usado &&
+                    x.FechaExpiracion > DateTime.UtcNow
+                );
+
+            if (resetToken == null)
+            {
+                return (
+                    false,
+                    "El enlace de recuperación no es válido o ha expirado."
+                );
+            }
+
+            // Buscar usuario
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(u =>
+                    u.IdUsuario == resetToken.IdUsuario
+                );
+
+            if (usuario == null)
+            {
+                return (false, "El usuario no existe.");
+            }
+
+            // Si enviamos correo en el DTO, verificarlo
+            if (!string.IsNullOrWhiteSpace(dto.Correo) &&
+                !string.Equals(
+                    usuario.Correo,
+                    dto.Correo,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return (false, "El correo no corresponde a la cuenta.");
+            }
+
+            // Generar nueva contraseña
+            usuario.PasswordHash =
+                BCrypt.Net.BCrypt.HashPassword(dto.NuevaPassword);
+
+            // Marcar token como utilizado
+            resetToken.Usado = true;
+
+            await _context.SaveChangesAsync();
+
+            return (
+                true,
+                "La contraseña fue actualizada correctamente."
+            );
+        }
+
+        public async Task<(bool Exito, string Mensaje)> VincularGoogleAsync(
+    int idUsuario,
+    string googleToken)
+{
+    try
+    {
+        var usuario = await _context.Usuarios
+            .FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
+
+        if (usuario == null)
+        {
+            return (false, "El usuario no existe.");
+        }
+
+        if (usuario.IdEstadoCuenta != 1)
+        {
+            return (false, "La cuenta no se encuentra activa.");
+        }
+
+        var settings = new GoogleJsonWebSignature.ValidationSettings
+        {
+            Audience = new List<string>
+            {
+                "345969836543-cmegbuqmfc6dv7l0abo6cjj4u2fpdlqi.apps.googleusercontent.com"
+            }
+        };
+
+        var payload = await GoogleJsonWebSignature.ValidateAsync(
+            googleToken,
+            settings
+        );
+
+        if (payload == null)
+        {
+            return (false, "El token de Google no es válido.");
+        }
+
+        // El correo de Google debe ser el mismo de la cuenta
+        if (!string.Equals(
+            usuario.Correo,
+            payload.Email,
+            StringComparison.OrdinalIgnoreCase))
+        {
+            return (
+                false,
+                "El correo de Google no coincide con el correo de la cuenta."
+            );
+        }
+
+        // Verificar si ese Google ya está vinculado a OTRA cuenta
+        var googleYaVinculado = await _context.Usuarios
+            .FirstOrDefaultAsync(u =>
+                u.Proveedor_Auth == "Google" &&
+                u.Proveedor_Id == payload.Subject &&
+                u.IdUsuario != idUsuario
+            );
+
+        if (googleYaVinculado != null)
+        {
+            return (
+                false,
+                "Esta cuenta de Google ya está vinculada a otro usuario."
+            );
+        }
+
+        // Vincular Google
+        usuario.Proveedor_Auth = "Google";
+        usuario.Proveedor_Id = payload.Subject;
+
+        await _context.SaveChangesAsync();
+
+        return (
+            true,
+            "La cuenta de Google fue vinculada correctamente."
+        );
+    }
+catch (Exception ex)
+{
+    Console.WriteLine("=== ERROR AL VINCULAR GOOGLE ===");
+    Console.WriteLine(ex.ToString());
+
+    return (
+        false,
+        "No fue posible vincular la cuenta de Google."
+    );
+}
+}
+
     }
 
     public class FacebookTokenResponse
@@ -310,4 +541,7 @@ namespace HuellitasVitalesAPI.Services
         [JsonPropertyName("email")]
         public string? Email { get; set; }
     }
+
+
+    
 }
