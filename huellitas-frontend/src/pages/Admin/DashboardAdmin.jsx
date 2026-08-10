@@ -19,9 +19,11 @@ import {
   Plus,
   Tags,
   Package,
+  ClipboardCheck,
 } from 'lucide-react';
 import PanelServicios from '../../components/ComercioAdmin/PanelServicios/PanelServicios';
 import PanelProductos from '../../components/ComercioAdmin/PanelProductos/PanelProductos';
+import PanelSolicitudesPendientes from '../../components/Admin/PanelSolicitudes/PanelSolicitudesPendientes';
 import styles from './DashboardAdmin.module.css';
 
 const DashboardAdmin = () => {
@@ -114,6 +116,14 @@ const DashboardAdmin = () => {
             >
               <Package size={18} className={styles.navIcon} />
               Productos
+            </button>
+
+            <button
+              className={`${styles.navLinkAdmin} ${seccionActiva === 'solicitudesComercio' ? styles.active : ''}`}
+              onClick={() => setSeccionActiva('solicitudesComercio')}
+            >
+              <ClipboardCheck size={18} className={styles.navIcon} />
+              Solicitudes
             </button>
 
             <a href="#roles" className={styles.navLinkAdmin} onClick={(e) => e.preventDefault()}>
@@ -376,6 +386,12 @@ const DashboardAdmin = () => {
           {seccionActiva === 'PanelProductos' && (
             <div style={{ width: '100%' }}>
               <PanelProductos />
+            </div>
+          )}
+
+          {seccionActiva === 'solicitudesComercio' && (
+            <div style={{ width: '100%' }}>
+              <PanelSolicitudesPendientes />
             </div>
           )}
 

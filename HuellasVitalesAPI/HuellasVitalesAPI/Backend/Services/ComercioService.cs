@@ -139,5 +139,64 @@ namespace HuellitasVitalesAPI.Services
                 })
                 .ToListAsync();
         }
+
+        //  LISTAR SOLICITUDES PENDIENTES (para el panel del administrador) 
+        public async Task<List<ComercioPendienteDTO>> ListarPendientesAsync()
+        {
+            var pendientes = await (
+                from c in _context.Comercios
+                where c.IdEstadoSolicitud == 1
+                join pl in _context.PersonasLegales on c.IdPersonaLegal equals pl.IdPersonaLegal
+                join tc in _context.TiposComercioCat on c.IdTipoComercio equals tc.IdTipoComercio into tcGroup
+                from tc in tcGroup.DefaultIfEmpty()
+                join u in _context.Usuarios on pl.IdUsuario equals u.IdUsuario into uGroup
+                from u in uGroup.DefaultIfEmpty()
+                orderby c.FechaSolicitud
+                select new ComercioPendienteDTO
+                {
+                    IdComercio = c.IdComercio,
+                    NombreComercial = c.NombreComercial,
+                    TipoComercio = tc != null ? tc.Nombre : "Sin definir",
+                    NombrePersonaLegal = pl.IdTipoPersona == 2
+                        ? (pl.RazonSocial ?? "")
+                        : (u != null ? $"{u.Nombre} {u.Apellidos}" : ""),
+                    Direccion = c.Direccion,
+                    Telefono = c.Telefono,
+                    FechaSolicitud = c.FechaSolicitud
+                }
+            ).ToListAsync();
+
+            return pendientes;
+        }
+
+        // RECHAZAR UN COMERCIO
+        public async Task<(bool Exito, string Mensaje, int Codigo)> RechazarComercioAsync(int idComercio, int idAdmin)
+        {
+            try
+            {
+                var comercio = await _context.Comercios.FirstOrDefaultAsync(c => c.IdComercio == idComercio);
+
+                if (comercio == null)
+                    return (false, "El comercio indicado no existe.", 404);
+
+                if (comercio.IdEstadoSolicitud != 1)
+                    return (false, "Esta solicitud ya fue resuelta anteriormente.", 409);
+
+                comercio.IdEstadoSolicitud = 3;              // 3 = RECHAZADO
+                comercio.FechaResolucion = DateTime.UtcNow;
+                comercio.IdUsuarioResolvio = idAdmin;
+
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Comercio {Id} rechazado por el administrador {Admin}", idComercio, idAdmin);
+                return (true, "Solicitud rechazada correctamente.", 200);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al rechazar el comercio {Id}", idComercio);
+                return (false, "Ocurrió un error interno al rechazar la solicitud.", 500);
+            }
+        }
+
     }
 }
