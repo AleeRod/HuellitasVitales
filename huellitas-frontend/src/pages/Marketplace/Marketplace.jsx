@@ -6,10 +6,11 @@ import { ToastContainer } from '../../components/Toast/Toast';
 import useToast from '../../components/Toast/useToast';
 import CarritoIcono from '../../components/CarritoIcono/CarritoIcono';
 import { API_BASE } from '../../api/config';
+import ModalRegistroRapido from '../../components/ModalRegistroRapido/ModalRegistroRapido'; // 👈 Asegúrate de ajustar la ruta según donde guardaste el modal
 import { 
     Search, ShoppingCart, Package, Stethoscope, 
     AlertCircle, Loader2, CalendarPlus, XCircle, LayoutGrid,
-    ChevronLeft, ChevronRight, DollarSign, Tag, ListFilter // Importé ListFilter para el icono
+    ChevronLeft, ChevronRight, DollarSign, Tag, ListFilter, CreditCard // Importé ListFilter para el icono
 } from 'lucide-react';
 import styles from './Marketplace.module.css';
 
@@ -101,6 +102,9 @@ const CategoriaCarrusel = ({ categoriaItem, agregarAlCarrito }) => {
 const Marketplace = () => {
     const [termino, setTermino] = useState('');
     const [filtroActivo, setFiltroActivo] = useState('todos');
+    
+    // Estado para controlar la visibilidad del Modal de Registro Rápido (Checkout)
+    const [modalCheckoutAbierto, setModalCheckoutAbierto] = useState(false);
     
     const [filtrosAvanzados, setFiltrosAvanzados] = useState({
         precioMin: '',
@@ -320,8 +324,36 @@ const Marketplace = () => {
                             {/* Acceso al carrito desde la misma pantalla donde se agrega. */}
                             <CarritoIcono />
                         </div>
-                        <h1 className={styles.title}>Explora productos y servicios</h1>
-                        <p className={styles.subtitle}>Todo lo que tu mascota necesita, centralizado en un solo lugar.</p>
+                        
+                        {/* CONTENEDOR DE TÍTULO Y BOTÓN TEMPORAL DE CHECKOUT */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                            <div>
+                                <h1 className={styles.title}>Explora productos y servicios</h1>
+                                <p className={styles.subtitle}>Todo lo que tu mascota necesita, centralizado en un solo lugar.</p>
+                            </div>
+                            
+                            {/* BOTÓN TEMPORAL PARA PROBAR EL FLUJO DE CHECKOUT / REGISTRO RÁPIDO */}
+                            <button 
+                                onClick={() => setModalCheckoutAbierto(true)}
+                                style={{
+                                    background: 'linear-gradient(135deg, #1B4332 0%, #2d6a4f 100%)',
+                                    color: '#fff',
+                                    border: 'none',
+                                    padding: '0.75rem 1.25rem',
+                                    borderRadius: '14px',
+                                    fontWeight: '700',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 12px rgba(27,67,50,0.15)',
+                                    transition: 'transform 0.2s'
+                                }}
+                            >
+                                <CreditCard size={18} />
+                                Simular Ir a Pagar (Checkout)
+                            </button>
+                        </div>
                     </header>
 
                     <div className={styles.searchContainer}>
@@ -552,6 +584,16 @@ const Marketplace = () => {
                     </div>
                 </div>
             </main>
+
+            {/* MODAL DE REGISTRO RÁPIDO INTEGRADO */}
+            <ModalRegistroRapido 
+                isOpen={modalCheckoutAbierto}
+                onClose={() => setModalCheckoutAbierto(false)}
+                onRegistroExitoso={() => {
+                    setModalCheckoutAbierto(false);
+                    alert("¡Datos de contacto guardados correctamente! Aquí el sistema pasaría a la pasarela de pago.");
+                }}
+            />
         </>
     );
 };
