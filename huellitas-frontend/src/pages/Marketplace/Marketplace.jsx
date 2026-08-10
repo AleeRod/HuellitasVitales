@@ -9,7 +9,7 @@ import { API_BASE } from '../../api/config';
 import { 
     Search, ShoppingCart, Package, Stethoscope, 
     AlertCircle, Loader2, CalendarPlus, XCircle, LayoutGrid,
-    ChevronLeft, ChevronRight, DollarSign, Tag, ListFilter // Importé ListFilter para el icono
+    ChevronLeft, ChevronRight, DollarSign, Tag, ListFilter
 } from 'lucide-react';
 import styles from './Marketplace.module.css';
 
@@ -107,7 +107,7 @@ const Marketplace = () => {
         precioMax: '',
         categoriasIds: [],
         marcasIds: [],
-        tiposServicioIds: [] // <-- ¡NUEVO ESTADO PARA SERVICIOS!
+        tiposServicioIds: []
     });
     
     const [productosBusqueda, setProductosBusqueda] = useState([]);
@@ -186,7 +186,6 @@ const Marketplace = () => {
     const marcasDisponibles = [...new Map(catalogoPorCategoria.flatMap(c => c.productos || []).map(p => [p.idMarca, { id: p.idMarca, nombre: p.nombreMarca }])).values()].filter(m => m.id);
     const categoriasDisponibles = catalogoPorCategoria.map(c => ({ id: c.idCategoriaProducto, nombre: c.nombreCategoria }));
     
-    // <-- ¡NUEVA LÓGICA DE EXTRACCIÓN DE TIPOS DE SERVICIO! -->
     const tiposServicioDisponibles = [...new Map(
         serviciosBusqueda.map(s => [s.idTipoServicio, { id: s.idTipoServicio, nombre: s.tipoServicio }])
     ).values()].filter(t => t.id);
@@ -205,7 +204,6 @@ const Marketplace = () => {
         }));
     };
 
-    // <-- ¡NUEVA FUNCIÓN PARA TOGGLE DEL SERVICIO! -->
     const toggleTipoServicio = (id) => {
         setFiltrosAvanzados(prev => ({
             ...prev,
@@ -214,7 +212,6 @@ const Marketplace = () => {
     };
 
     const limpiarFiltrosAvanzados = () => {
-        // Limpiamos también el nuevo estado
         setFiltrosAvanzados({ precioMin: '', precioMax: '', categoriasIds: [], marcasIds: [], tiposServicioIds: [] });
     };
 
@@ -224,8 +221,6 @@ const Marketplace = () => {
         limpiarFiltrosAvanzados();
     };
 
-    // El carrito se guarda en el navegador, así que no hace falta tener sesión
-    // para armarlo. La cuenta se pide recién al momento de pagar.
     const agregarAlCarrito = (prod) => {
         const resultado = agregar({
             idProducto: prod.idProducto,
@@ -256,8 +251,6 @@ const Marketplace = () => {
             const matchMax = filtrosAvanzados.precioMax === '' || precioEfectivo <= Number(filtrosAvanzados.precioMax);
             const matchCat = filtrosAvanzados.categoriasIds.length === 0 || filtrosAvanzados.categoriasIds.includes(prod.idCategoriaProducto);
             const matchMarca = filtrosAvanzados.marcasIds.length === 0 || filtrosAvanzados.marcasIds.includes(prod.idMarca);
-            
-            // 👇 NUEVO: Si hay algún tipo de servicio marcado, los productos NO deben mostrarse
             const matchTipoServicio = filtrosAvanzados.tiposServicioIds.length === 0;
             
             return matchMin && matchMax && matchCat && matchMarca && matchTipoServicio;
@@ -269,11 +262,8 @@ const Marketplace = () => {
             const precioEfectivo = serv.precio;
             const matchMin = filtrosAvanzados.precioMin === '' || precioEfectivo >= Number(filtrosAvanzados.precioMin);
             const matchMax = filtrosAvanzados.precioMax === '' || precioEfectivo <= Number(filtrosAvanzados.precioMax);
-            
-            // 👇 CORRECCIÓN: Si hay alguna categoría o marca marcada, los servicios NO deben mostrarse
             const matchCat = filtrosAvanzados.categoriasIds.length === 0;
             const matchMarca = filtrosAvanzados.marcasIds.length === 0;
-            
             const matchTipoServicio = filtrosAvanzados.tiposServicioIds.length === 0 || filtrosAvanzados.tiposServicioIds.includes(serv.idTipoServicio);
             
             return matchMin && matchMax && matchCat && matchMarca && matchTipoServicio;
@@ -281,8 +271,6 @@ const Marketplace = () => {
     };
 
     const esModoBusqueda = terminoDebounced.trim() !== '';
-    
-    // Verificamos si hay cualquier filtro activo para cambiar a formato lista vertical
     const tieneFiltrosAplicados = filtrosAvanzados.categoriasIds.length > 0 || filtrosAvanzados.marcasIds.length > 0 || filtrosAvanzados.tiposServicioIds.length > 0 || filtrosAvanzados.precioMin !== '' || filtrosAvanzados.precioMax !== '';
     
     const mostrarComoGridVertical = esModoBusqueda || tieneFiltrosAplicados;
@@ -317,11 +305,13 @@ const Marketplace = () => {
                         <div className={styles.badgeContainer}>
                             <ShoppingCart className={styles.badgeIcon} size={18} />
                             <span className={styles.badge}>Marketplace</span>
-                            {/* Acceso al carrito desde la misma pantalla donde se agrega. */}
                             <CarritoIcono />
                         </div>
-                        <h1 className={styles.title}>Explora productos y servicios</h1>
-                        <p className={styles.subtitle}>Todo lo que tu mascota necesita, centralizado en un solo lugar.</p>
+                        
+                        <div>
+                            <h1 className={styles.title}>Explora productos y servicios</h1>
+                            <p className={styles.subtitle}>Todo lo que tu mascota necesita, centralizado en un solo lugar.</p>
+                        </div>
                     </header>
 
                     <div className={styles.searchContainer}>
@@ -417,7 +407,6 @@ const Marketplace = () => {
                                 </div>
                             )}
 
-                            {/* <-- ¡NUEVA SECCIÓN DE UI PARA TIPOS DE SERVICIO! --> */}
                             {tiposServicioDisponibles.length > 0 && (
                                 <div className={styles.filterGroup}>
                                     <label className={styles.filterLabel}><ListFilter size={16}/> Tipos de Servicio</label>

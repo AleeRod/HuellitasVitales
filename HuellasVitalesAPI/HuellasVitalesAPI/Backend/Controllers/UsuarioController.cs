@@ -76,6 +76,24 @@ namespace HuellitasVitalesAPI.Controllers
             }
         }
 
+        // ─── NUEVO: Registro Rápido ───
+        [HttpPost("registro-rapido")]
+        public async Task<IActionResult> RegistroRapido([FromBody] RegistroRapidoDTO request)
+        {
+            try
+            {
+                // Usamos _usuarioService, que ya está inyectado
+                var token = await _usuarioService.RegistrarUsuarioRapidoAsync(request);
+                
+                // Devolvemos el token para que el frontend lo guarde y pase al checkout
+                return Ok(new { token, mensaje = "Registro rápido exitoso" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+        }
+
         [Authorize]
         [HttpPost("vincular-google")]
         public async Task<IActionResult> VincularGoogle(

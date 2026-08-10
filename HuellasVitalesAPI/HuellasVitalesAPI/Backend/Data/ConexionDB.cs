@@ -45,6 +45,8 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<PasswordResetToken>().ToTable("PASSWORD_RESET_TOKEN");
             modelBuilder.Entity<Orden>().ToTable("ORDEN");
             modelBuilder.Entity<OrdenDetalle>().ToTable("ORDEN_DETALLE");
+            modelBuilder.Entity<TipoComercioCat>().ToTable("TIPO_COMERCIO_CAT");
+            modelBuilder.Entity<CargoCat>().ToTable("CARGO_CAT");
 
             // Fuerza que TODOS los DateTime se traten como UTC
             // al leer/escribir en Postgres, evitando el error
