@@ -4,7 +4,7 @@ import DogNav from '../../components/DogNav/DogNav';
 import { ToastContainer } from '../../components/Toast/Toast'; 
 import { API_BASE } from '../../api/config';
 import styles from './Perfil.module.css';
-import { User, Contact, Mail, Phone, Lock, Calendar, Edit2, AlertTriangle, KeyRound } from 'lucide-react';
+import {User,Contact,Mail,Phone,Lock,Calendar,Edit2,AlertTriangle,KeyRound,Link2,Link2Off} from 'lucide-react';
 
 const ROLES = { 1: 'Administrador', 2: 'Veterinario', 3: 'Cliente' };
 const ESTADOS_CUENTA = {
@@ -34,6 +34,12 @@ const Perfil = () => {
     
     const [erroresForm, setErroresForm] = useState({});
 
+     // --- CUENTAS CONECTADAS ---
+const [cuentasConectadas, setCuentasConectadas] = useState({
+    google: false,
+    facebook: false
+});
+
     // --- ESTADO Y FUNCIONES PARA LOS TOASTS ---
     const [toasts, setToasts] = useState([]);
 
@@ -45,6 +51,40 @@ const Perfil = () => {
     const removeToast = (id) => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
     };
+
+    // --- TASK 137: VINCULAR / DESVINCULAR CUENTAS ---
+
+const vincularCuenta = (proveedor) => {
+    setCuentasConectadas((prev) => ({
+        ...prev,
+        [proveedor]: true
+    }));
+
+    const nombreProveedor =
+        proveedor === 'google' ? 'Google' : 'Facebook';
+
+    addToast(
+        `Cuenta de ${nombreProveedor} vinculada correctamente.`,
+        'success'
+    );
+};
+
+const desvincularCuenta = (proveedor) => {
+    setCuentasConectadas((prev) => ({
+        ...prev,
+        [proveedor]: false
+    }));
+
+    const nombreProveedor =
+        proveedor === 'google' ? 'Google' : 'Facebook';
+
+    addToast(
+        `Cuenta de ${nombreProveedor} desvinculada correctamente.`,
+        'info'
+    );
+};
+
+// -------------------------------------------------
     // ------------------------------------------
 
     useEffect(() => {
@@ -74,6 +114,15 @@ const Perfil = () => {
                 const data = await res.json();
                 if (activo) {
                     setPerfil(data);
+                    const proveedor = (data.proveedor || '').toLowerCase();
+
+                    setCuentasConectadas({
+                    google: proveedor.includes('google'),
+                    facebook: proveedor.includes('facebook')
+                    });
+
+
+
                     setFormData({
                         nombre: data.nombre || '',
                         apellidos: data.apellidos || '',
@@ -307,6 +356,123 @@ const Perfil = () => {
                                     <Campo etiqueta="Miembro desde" valor={perfil ? new Date(perfil.fechaRegistro).toLocaleDateString('es-CR', { year: 'numeric', month: 'long', day: 'numeric' }) : ''} cargando={cargando} icono={<Calendar size={20} />} />
                                 </div>
                             )}
+
+                            {/* CUENTAS CONECTADAS */}
+                            {!cargando && !editando && (
+                            <div className={styles.connectedAccountsSection}>
+                            <div className={styles.connectedAccountsHeader}>
+                         <div>
+                         <h2 className={styles.sectionTitle}>
+                        Cuentas conectadas
+                          </h2>
+
+                         <p className={styles.connectedAccountsDescription}>
+                    Vincula tus cuentas externas para acceder de forma más rápida y segura.
+                        </p>
+                        </div>
+
+                        <Link2 size={22} />
+                     </div>
+
+        <div className={styles.accountsList}>
+
+            {/* GOOGLE */}
+            <div className={styles.accountItem}>
+                <div className={styles.accountInfo}>
+                    <div className={`${styles.accountLogo} ${styles.googleLogo}`}>
+                        G
+                    </div>
+
+                    <div>
+                        <strong>Google</strong>
+
+                        <div className={styles.connectionStatus}>
+                            <span
+                                className={
+                                    cuentasConectadas.google
+                                        ? styles.statusConnected
+                                        : styles.statusDisconnected
+                                }
+                            />
+
+                            {cuentasConectadas.google
+                                ? 'Conectada'
+                                : 'No conectada'}
+                        </div>
+                    </div>
+                </div>
+
+                {cuentasConectadas.google ? (
+                    <button
+                        type="button"
+                        className={styles.unlinkBtn}
+                        onClick={() => desvincularCuenta('google')}
+                    >
+                        <Link2Off size={15} />
+                        Desvincular
+                    </button>
+                ) : (
+                    <button
+                        type="button"
+                        className={styles.linkBtn}
+                        onClick={() => vincularCuenta('google')}
+                    >
+                        <Link2 size={15} />
+                        Vincular
+                    </button>
+                )}
+            </div>
+
+            {/* FACEBOOK */}
+            <div className={styles.accountItem}>
+                <div className={styles.accountInfo}>
+                    <div className={`${styles.accountLogo} ${styles.facebookLogo}`}>
+                        f
+                    </div>
+
+                    <div>
+                        <strong>Facebook</strong>
+
+                        <div className={styles.connectionStatus}>
+                            <span
+                                className={
+                                    cuentasConectadas.facebook
+                                        ? styles.statusConnected
+                                        : styles.statusDisconnected
+                                }
+                            />
+
+                            {cuentasConectadas.facebook
+                                ? 'Conectada'
+                                : 'No conectada'}
+                        </div>
+                    </div>
+                </div>
+
+                {cuentasConectadas.facebook ? (
+                    <button
+                        type="button"
+                        className={styles.unlinkBtn}
+                        onClick={() => desvincularCuenta('facebook')}
+                    >
+                        <Link2Off size={15} />
+                        Desvincular
+                    </button>
+                ) : (
+                    <button
+                        type="button"
+                        className={styles.linkBtn}
+                        onClick={() => vincularCuenta('facebook')}
+                    >
+                        <Link2 size={15} />
+                        Vincular
+                    </button>
+                )}
+            </div>
+
+        </div>
+    </div>
+)}
 
                             {!cargando && !editando && (
                                 <div className={styles.securitySection}>

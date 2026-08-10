@@ -30,6 +30,18 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<Producto>().ToTable("PRODUCTO");
             modelBuilder.Entity<Carrito>().ToTable("CARRITO");
             modelBuilder.Entity<CarritoItem>().ToTable("CARRITO_ITEM");
+            modelBuilder.Entity<Producto>().ToTable("PRODUCTO");
+            modelBuilder.Entity<Carrito>().ToTable("CARRITO");
+            modelBuilder.Entity<CarritoItem>().ToTable("CARRITO_ITEM");
+
+         // Relación Carrito -> CarritoItem
+            modelBuilder.Entity<Carrito>()
+            .HasMany(c => c.Items)
+            .WithOne()
+            .HasForeignKey(i => i.IdCarrito);
+
+            modelBuilder.Entity<TipoServicioCat>().ToTable("TIPO_SERVICIO_CAT");
+            modelBuilder.Entity<Servicio>().ToTable("SERVICIO");
             modelBuilder.Entity<TipoServicioCat>().ToTable("TIPO_SERVICIO_CAT");
             modelBuilder.Entity<Servicio>().ToTable("SERVICIO");
 

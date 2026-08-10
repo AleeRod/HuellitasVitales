@@ -73,8 +73,10 @@ builder.Services.AddDbContext<ConexionDB>(options =>
 // 4. Inyección de Dependencias
 builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<ComercioService>();
+builder.Services.AddScoped<CarritoService>();
 builder.Services.AddScoped<IMarketplaceService, MarketplaceService>();
 builder.Services.AddScoped<ProductoService>();
+
 
 var app = builder.Build();
 
