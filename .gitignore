@@ -5,3 +5,5 @@
 .vercel/
 huellitas-frontend/.vercel/
 .env.local
+node_modules/
+.env
