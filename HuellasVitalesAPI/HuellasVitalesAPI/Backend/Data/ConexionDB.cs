@@ -9,6 +9,7 @@ namespace HuellitasVitalesAPI.Data
 
         // MAPEAR TABLAS DE DATOS
         public DbSet<Usuario> Usuarios { get; set; } = null!;
+        public DbSet<UsuarioProveedorAuth> UsuariosProveedoresAuth { get; set; } = null!;
         public DbSet<Rol> Roles { get; set; } = null!;
         public DbSet<Veterinario> Veterinarios { get; set; } = null!;
         public DbSet<Comercio> Comercios { get; set; } = null!;
@@ -19,9 +20,17 @@ namespace HuellitasVitalesAPI.Data
         public DbSet<TipoServicioCat> TipoServicioCat { get; set; } = null!;
         public DbSet<Carrito> Carritos { get; set; } = null!;
         public DbSet<CarritoItem> CarritoItems { get; set; } = null!;
+        public DbSet<MarcaCat> MarcasCat { get; set; } = null!;
+        public DbSet<TipoComercioCat> TiposComercioCat { get; set; } = null!;
+        public DbSet<Orden> Ordenes { get; set; } = null!;
+        public DbSet<OrdenDetalle> OrdenDetalles { get; set; } = null!;
+        public DbSet<CargoCat> CargosCat { get; set; } = null!;
+        public DbSet<ComercioFuncionario> ComerciosFuncionarios { get; set; } = null!;
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Usuario>().ToTable("USUARIO");
+            modelBuilder.Entity<UsuarioProveedorAuth>().ToTable("USUARIO_PROVEEDOR_AUTH");
             modelBuilder.Entity<Rol>().ToTable("ROL");
             modelBuilder.Entity<Veterinario>().ToTable("VETERINARIO");
             modelBuilder.Entity<Comercio>().ToTable("COMERCIO");
@@ -30,20 +39,14 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<Producto>().ToTable("PRODUCTO");
             modelBuilder.Entity<Carrito>().ToTable("CARRITO");
             modelBuilder.Entity<CarritoItem>().ToTable("CARRITO_ITEM");
-            modelBuilder.Entity<Producto>().ToTable("PRODUCTO");
-            modelBuilder.Entity<Carrito>().ToTable("CARRITO");
-            modelBuilder.Entity<CarritoItem>().ToTable("CARRITO_ITEM");
-
-         // Relación Carrito -> CarritoItem
-            modelBuilder.Entity<Carrito>()
-            .HasMany(c => c.Items)
-            .WithOne()
-            .HasForeignKey(i => i.IdCarrito);
-
             modelBuilder.Entity<TipoServicioCat>().ToTable("TIPO_SERVICIO_CAT");
             modelBuilder.Entity<Servicio>().ToTable("SERVICIO");
-            modelBuilder.Entity<TipoServicioCat>().ToTable("TIPO_SERVICIO_CAT");
-            modelBuilder.Entity<Servicio>().ToTable("SERVICIO");
+            modelBuilder.Entity<MarcaCat>().ToTable("MARCA_CAT");
+            modelBuilder.Entity<PasswordResetToken>().ToTable("PASSWORD_RESET_TOKEN");
+            modelBuilder.Entity<Orden>().ToTable("ORDEN");
+            modelBuilder.Entity<OrdenDetalle>().ToTable("ORDEN_DETALLE");
+            modelBuilder.Entity<TipoComercioCat>().ToTable("TIPO_COMERCIO_CAT");
+            modelBuilder.Entity<CargoCat>().ToTable("CARGO_CAT");
 
             // Fuerza que TODOS los DateTime se traten como UTC
             // al leer/escribir en Postgres, evitando el error

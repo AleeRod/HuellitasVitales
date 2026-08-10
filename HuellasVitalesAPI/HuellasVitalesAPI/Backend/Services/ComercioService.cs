@@ -84,35 +84,60 @@ namespace HuellitasVitalesAPI.Services
 
         // ─── APROBAR UN COMERCIO (habilita su acceso al marketplace) ───
         // Codigo = código HTTP sugerido para que el controlador lo retorne.
-        public async Task<(bool Exito, string Mensaje, int Codigo)> AprobarComercioAsync(int idComercio, int idAdmin)
+    public async Task<(bool Exito, string Mensaje, int Codigo)> AprobarComercioAsync(int idComercio, int idAdmin)
+    {
+        try
         {
-            try
+        var comercio = await _context.Comercios.FirstOrDefaultAsync(c => c.IdComercio == idComercio);
+
+        // 404 - No existe
+        if (comercio == null)
+            return (false, "El comercio indicado no existe.", 404);
+
+        // 409 - Ya estaba aprobado (operación idempotente, no se repite la resolución)
+        if (comercio.IdEstadoSolicitud == 2)
+            return (false, "Este comercio ya se encuentra aprobado.", 409);
+
+        comercio.IdEstadoSolicitud = 2;              // 2 = APROBADO
+        comercio.FechaResolucion = DateTime.UtcNow; // Fecha de resolución
+        comercio.IdUsuarioResolvio = idAdmin;
+
+        // ─── Ascender al dueño de Cliente a Funcionario ───
+        // Solo si sigue siendo Cliente (3); no se toca si ya es Admin (1) o Profesional (2).
+        const byte ROL_CLIENTE = 3;
+        const byte ROL_FUNCIONARIO = 4;
+
+        var personaLegal = await _context.PersonasLegales
+            .FirstOrDefaultAsync(p => p.IdPersonaLegal == comercio.IdPersonaLegal);
+
+            if (personaLegal != null)
+        {
+            var duenio = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.IdUsuario == personaLegal.IdUsuario);
+
+            Console.WriteLine($"[DEBUG ROL] personaLegal.IdUsuario={personaLegal.IdUsuario} | duenio existe={duenio != null} | duenio.IdRol={duenio?.IdRol}");
+
+            if (duenio != null && duenio.IdRol == ROL_CLIENTE)
             {
-                var comercio = await _context.Comercios.FirstOrDefaultAsync(c => c.IdComercio == idComercio);
-
-                // 404 - No existe
-                if (comercio == null)
-                    return (false, "El comercio indicado no existe.", 404);
-
-                // 409 - Ya estaba aprobado (operación idempotente, no se repite la resolución)
-                if (comercio.IdEstadoSolicitud == 2)
-                    return (false, "Este comercio ya se encuentra aprobado.", 409);
-
-                comercio.IdEstadoSolicitud = 2;              // 2 = APROBADO
-                comercio.FechaResolucion = DateTime.UtcNow; // Fecha de resolución
-                comercio.IdUsuarioResolvio = idAdmin;
-
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Comercio {Id} aprobado por el administrador {Admin}", idComercio, idAdmin);
-                return (true, "Comercio aprobado. Ya tiene acceso al marketplace.", 200);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al aprobar el comercio {Id}", idComercio);
-                return (false, "Ocurrió un error interno al aprobar el comercio.", 500);
+                duenio.IdRol = ROL_FUNCIONARIO;
+                Console.WriteLine("[DEBUG ROL] Se ejecutó el cambio a FUNCIONARIO");
+                _logger.LogInformation(
+                    "Usuario {Usuario} ascendido de Cliente a Funcionario al aprobarse el comercio {Comercio}",
+                    duenio.IdUsuario, idComercio);
             }
         }
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Comercio {Id} aprobado por el administrador {Admin}", idComercio, idAdmin);
+        return (true, "Comercio aprobado. Ya tiene acceso al marketplace.", 200);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error al aprobar el comercio {Id}", idComercio);
+        return (false, "Ocurrió un error interno al aprobar el comercio.", 500);
+    }
+}
 
         // ─── BÚSQUEDA DINÁMICA DE COMERCIOS APROBADOS (marketplace) ───
         public async Task<List<ComercioBusquedaDTO>> BuscarComerciosAprobadosAsync(string termino)
@@ -138,26 +163,85 @@ namespace HuellitasVitalesAPI.Services
                     Telefono = c.Telefono
                 })
                 .ToListAsync();
-        } // GET - Listar comercios pendientes
-public async Task<List<ComercioPendienteDTO>> ObtenerComerciosPendientesAsync()
-{
-    return await _context.Comercios
-        .AsNoTracking()
-        .Where(c => c.IdEstadoSolicitud == 1)
-        .OrderBy(c => c.FechaSolicitud)
-        .Select(c => new ComercioPendienteDTO
+        }
+
+        //  LISTAR SOLICITUDES PENDIENTES (para el panel del administrador) 
+        public async Task<List<ComercioPendienteDTO>> ListarPendientesAsync()
         {
-            IdComercio = c.IdComercio,
-            IdPersonaLegal = c.IdPersonaLegal,
-            IdTipoComercio = c.IdTipoComercio,
-            NombreComercial = c.NombreComercial,
-            Direccion = c.Direccion,
-            Telefono = c.Telefono,
-            IdEstadoSolicitud = c.IdEstadoSolicitud,
-            Estado = "Pendiente",
-            FechaSolicitud = c.FechaSolicitud
-        })
-        .ToListAsync();
-}
+            var pendientes = await (
+                from c in _context.Comercios
+                where c.IdEstadoSolicitud == 1
+                join pl in _context.PersonasLegales on c.IdPersonaLegal equals pl.IdPersonaLegal
+                join tc in _context.TiposComercioCat on c.IdTipoComercio equals tc.IdTipoComercio into tcGroup
+                from tc in tcGroup.DefaultIfEmpty()
+                join u in _context.Usuarios on pl.IdUsuario equals u.IdUsuario into uGroup
+                from u in uGroup.DefaultIfEmpty()
+                orderby c.FechaSolicitud
+                select new ComercioPendienteDTO
+                {
+                    IdComercio = c.IdComercio,
+                    NombreComercial = c.NombreComercial,
+                    TipoComercio = tc != null ? tc.Nombre : "Sin definir",
+                    NombrePersonaLegal = pl.IdTipoPersona == 2
+                        ? (pl.RazonSocial ?? "")
+                        : (u != null ? $"{u.Nombre} {u.Apellidos}" : ""),
+                    Direccion = c.Direccion,
+                    Telefono = c.Telefono,
+                    FechaSolicitud = c.FechaSolicitud
+                }
+            ).ToListAsync();
+
+            return pendientes;
+        }
+
+        // RECHAZAR UN COMERCIO
+        public async Task<(bool Exito, string Mensaje, int Codigo)> RechazarComercioAsync(int idComercio, int idAdmin)
+        {
+            try
+            {
+                var comercio = await _context.Comercios.FirstOrDefaultAsync(c => c.IdComercio == idComercio);
+
+                if (comercio == null)
+                    return (false, "El comercio indicado no existe.", 404);
+
+                if (comercio.IdEstadoSolicitud != 1)
+                    return (false, "Esta solicitud ya fue resuelta anteriormente.", 409);
+
+                comercio.IdEstadoSolicitud = 3;              // 3 = RECHAZADO
+                comercio.FechaResolucion = DateTime.UtcNow;
+                comercio.IdUsuarioResolvio = idAdmin;
+
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Comercio {Id} rechazado por el administrador {Admin}", idComercio, idAdmin);
+                return (true, "Solicitud rechazada correctamente.", 200);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al rechazar el comercio {Id}", idComercio);
+                return (false, "Ocurrió un error interno al rechazar la solicitud.", 500);
+            }
+        }
+
+            public async Task<List<ComercioResumenDTO>> ListarMiosAsync(int idUsuario)
+        {
+            const byte ESTADO_APROBADO = 2;
+
+            return await (
+                from c in _context.Comercios
+                join p in _context.PersonasLegales on c.IdPersonaLegal equals p.IdPersonaLegal
+                join tc in _context.TiposComercioCat on c.IdTipoComercio equals tc.IdTipoComercio into tcGroup
+                from tc in tcGroup.DefaultIfEmpty()
+                where p.IdUsuario == idUsuario && c.IdEstadoSolicitud == ESTADO_APROBADO
+                select new ComercioResumenDTO
+                {
+                    IdComercio = c.IdComercio,
+                    NombreComercial = c.NombreComercial,
+                    IdTipoComercio = c.IdTipoComercio,
+                    TipoComercio = tc != null ? tc.Nombre : "Desconocido"
+                }
+            ).ToListAsync();
+        }
+
     }
 }

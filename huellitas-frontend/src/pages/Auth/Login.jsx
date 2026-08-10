@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
 import { API_BASE } from '../../api/config.js';
 
@@ -14,6 +14,11 @@ function Login() {
     const [notification, setNotification] = useState({ message: '', type: '' });
     
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Si llegaste acá desde el carrito, al entrar volvés ahí para terminar
+    // la compra. Si entraste directo, seguís a la página principal.
+    const destinoTrasIngresar = location.state?.volverA || '/';
 
     const triggerNotification = (message, type = 'error') => {
         setNotification({ message, type });
@@ -62,7 +67,7 @@ function Login() {
                 localStorage.setItem('usuario_huellitas', JSON.stringify(data.usuario));
                 
                 // Redirige a la Landing Page
-                navigate('/');
+                navigate(destinoTrasIngresar);
             } else {
                 triggerNotification(data.mensaje || "Error al iniciar sesión.");
             }
@@ -87,12 +92,55 @@ function Login() {
                 localStorage.setItem('usuario_huellitas', JSON.stringify(data.usuario));
                 
                 // Redirige a la Landing Page
-                navigate('/');
+                navigate(destinoTrasIngresar);
             } else {
                 triggerNotification("Error al autenticar: " + (data.mensaje || "Desconocido"));
             }
         } catch (err) {
             triggerNotification("Problemas conectando con el servidor de Google.");
+        }
+    };
+
+        const handleVincularGoogle = async (response) => {
+        try {
+            const tokenHuellitas = localStorage.getItem('token_huellitas');
+
+            if (!tokenHuellitas) {
+                triggerNotification(
+                    "Debes iniciar sesión antes de vincular Google."
+                );
+                return;
+            }
+
+            const res = await fetch(
+                `${API_BASE}/login/vincular-google`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${tokenHuellitas}`
+                    },
+                    body: JSON.stringify({
+                        token: response.credential
+                    })
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                triggerNotification(data.mensaje, 'success');
+            } else {
+                triggerNotification(
+                    data.mensaje || "No fue posible vincular Google."
+                );
+            }
+        } catch (error) {
+            console.error(error);
+
+            triggerNotification(
+                "No fue posible conectar con el servidor."
+            );
         }
     };
 
@@ -122,7 +170,7 @@ function Login() {
                 localStorage.setItem('usuario_huellitas', JSON.stringify(data.usuario));
                 
                 // Redirige a la Landing Page
-                navigate('/');
+                navigate(destinoTrasIngresar);
             } else {
                 triggerNotification("Error al autenticar con Facebook: " + (data.mensaje || "Desconocido"));
             }

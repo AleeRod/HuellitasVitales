@@ -1,12 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import DogNav from '../../components/DogNav/DogNav';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useCarrito } from '../../hooks/useCarrito';
+import { ToastContainer } from '../../components/Toast/Toast';
+import useToast from '../../components/Toast/useToast';
+import CarritoIcono from '../../components/CarritoIcono/CarritoIcono';
 import { API_BASE } from '../../api/config';
 import ModalRegistroRapido from '../../components/ModalRegistroRapido/ModalRegistroRapido'; // 👈 Asegúrate de ajustar la ruta según donde guardaste el modal
 import { 
     Search, ShoppingCart, Package, Stethoscope, 
     AlertCircle, Loader2, CalendarPlus, XCircle, LayoutGrid,
-    ChevronLeft, ChevronRight, DollarSign, Tag, CreditCard
+    ChevronLeft, ChevronRight, DollarSign, Tag, ListFilter
 } from 'lucide-react';
 import styles from './Marketplace.module.css';
 
@@ -68,7 +72,7 @@ const CategoriaCarrusel = ({ categoriaItem, agregarAlCarrito }) => {
                                     ) : (
                                         <button
                                             className={styles.addBtn}
-                                            onClick={() => agregarAlCarrito(prod.idProducto)}
+                                            onClick={() => agregarAlCarrito(prod)}
                                             title="Agregar al carrito"
                                         >
                                             <ShoppingCart size={16} />
@@ -106,7 +110,8 @@ const Marketplace = () => {
         precioMin: '',
         precioMax: '',
         categoriasIds: [],
-        marcasIds: []
+        marcasIds: [],
+        tiposServicioIds: []
     });
     
     const [productosBusqueda, setProductosBusqueda] = useState([]);
@@ -119,9 +124,9 @@ const Marketplace = () => {
     const terminoDebounced = useDebounce(termino, 400);
     const abortRef = useRef(null);
 
-    // =========================================================================
-    // CONEXIÓN DIRECTA Y PURA A LA BASE DE DATOS (SIN MOCKS)
-    // =========================================================================
+    const { agregar } = useCarrito();
+    const { toasts, showToast, removeToast } = useToast();
+
     useEffect(() => {
         const q = terminoDebounced.trim();
 
@@ -152,7 +157,6 @@ const Marketplace = () => {
                     
                     if (!res.ok) {
                         if (res.status === 400) {
-                            // Término muy corto - no es un error real, solo no hay suficientes caracteres aún
                             setEstado(ESTADO.VACIO);
                             setProductosBusqueda([]);
                             setServiciosBusqueda([]);
@@ -182,8 +186,13 @@ const Marketplace = () => {
         return () => controller.abort();
     }, [terminoDebounced, reintento]);
 
+    // EXTRACCIÓN DE FILTROS ÚNICOS
     const marcasDisponibles = [...new Map(catalogoPorCategoria.flatMap(c => c.productos || []).map(p => [p.idMarca, { id: p.idMarca, nombre: p.nombreMarca }])).values()].filter(m => m.id);
     const categoriasDisponibles = catalogoPorCategoria.map(c => ({ id: c.idCategoriaProducto, nombre: c.nombreCategoria }));
+    
+    const tiposServicioDisponibles = [...new Map(
+        serviciosBusqueda.map(s => [s.idTipoServicio, { id: s.idTipoServicio, nombre: s.tipoServicio }])
+    ).values()].filter(t => t.id);
 
     const toggleCategoria = (id) => {
         setFiltrosAvanzados(prev => ({
@@ -199,8 +208,15 @@ const Marketplace = () => {
         }));
     };
 
+    const toggleTipoServicio = (id) => {
+        setFiltrosAvanzados(prev => ({
+            ...prev,
+            tiposServicioIds: prev.tiposServicioIds.includes(id) ? prev.tiposServicioIds.filter(t => t !== id) : [...prev.tiposServicioIds, id]
+        }));
+    };
+
     const limpiarFiltrosAvanzados = () => {
-        setFiltrosAvanzados({ precioMin: '', precioMax: '', categoriasIds: [], marcasIds: [] });
+        setFiltrosAvanzados({ precioMin: '', precioMax: '', categoriasIds: [], marcasIds: [], tiposServicioIds: [] });
     };
 
     const limpiarBusqueda = () => {
@@ -209,22 +225,22 @@ const Marketplace = () => {
         limpiarFiltrosAvanzados();
     };
 
-    const agregarAlCarrito = async (idProducto) => {
-        const token = localStorage.getItem('token_huellitas');
-        if (!token) {
-            alert('Debes iniciar sesión para agregar productos al carrito.');
-            return;
-        }
-        try {
-            const res = await fetch(`${API_BASE}/carrito/agregar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ idProducto, cantidad: 1 })
-            });
-            if (!res.ok) throw new Error('No se pudo agregar al carrito');
-            alert('Producto agregado al carrito exitosamente.');
-        } catch {
-            alert('Ocurrió un error al agregar el producto al carrito.');
+    const agregarAlCarrito = (prod) => {
+        const resultado = agregar({
+            idProducto: prod.idProducto,
+            nombre: prod.nombreProducto ?? prod.nombre,
+            precio: prod.precio,
+            precioDescuento: prod.precioDescuento ?? null,
+            imagenUrl: prod.imagenUrl || null,
+            stock: prod.stock ?? null,
+            idComercio: prod.idComercio ?? null,
+            nombreComercio: prod.nombreComercio ?? ''
+        });
+
+        if (resultado.ok) {
+            showToast(`Agregamos ${prod.nombreProducto ?? 'el producto'} a tu carrito.`, 'success');
+        } else {
+            showToast(resultado.mensaje ?? 'No pudimos agregar el producto.', 'warning');
         }
     };
 
@@ -239,7 +255,9 @@ const Marketplace = () => {
             const matchMax = filtrosAvanzados.precioMax === '' || precioEfectivo <= Number(filtrosAvanzados.precioMax);
             const matchCat = filtrosAvanzados.categoriasIds.length === 0 || filtrosAvanzados.categoriasIds.includes(prod.idCategoriaProducto);
             const matchMarca = filtrosAvanzados.marcasIds.length === 0 || filtrosAvanzados.marcasIds.includes(prod.idMarca);
-            return matchMin && matchMax && matchCat && matchMarca;
+            const matchTipoServicio = filtrosAvanzados.tiposServicioIds.length === 0;
+            
+            return matchMin && matchMax && matchCat && matchMarca && matchTipoServicio;
         });
     };
 
@@ -250,12 +268,15 @@ const Marketplace = () => {
             const matchMax = filtrosAvanzados.precioMax === '' || precioEfectivo <= Number(filtrosAvanzados.precioMax);
             const matchCat = filtrosAvanzados.categoriasIds.length === 0;
             const matchMarca = filtrosAvanzados.marcasIds.length === 0;
-            return matchMin && matchMax && matchCat && matchMarca;
+            const matchTipoServicio = filtrosAvanzados.tiposServicioIds.length === 0 || filtrosAvanzados.tiposServicioIds.includes(serv.idTipoServicio);
+            
+            return matchMin && matchMax && matchCat && matchMarca && matchTipoServicio;
         });
     };
 
     const esModoBusqueda = terminoDebounced.trim() !== '';
-    const tieneFiltrosAplicados = filtrosAvanzados.categoriasIds.length > 0 || filtrosAvanzados.marcasIds.length > 0 || filtrosAvanzados.precioMin !== '' || filtrosAvanzados.precioMax !== '';
+    const tieneFiltrosAplicados = filtrosAvanzados.categoriasIds.length > 0 || filtrosAvanzados.marcasIds.length > 0 || filtrosAvanzados.tiposServicioIds.length > 0 || filtrosAvanzados.precioMin !== '' || filtrosAvanzados.precioMax !== '';
+    
     const mostrarComoGridVertical = esModoBusqueda || tieneFiltrosAplicados;
 
     const productosTotalesFiltrados = aplicarFiltrosProductos(
@@ -281,42 +302,19 @@ const Marketplace = () => {
     return (
         <>
             <DogNav />
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
             <main className={styles.layout}>
                 <div className={styles.container}>
                     <header className={styles.head}>
                         <div className={styles.badgeContainer}>
                             <ShoppingCart className={styles.badgeIcon} size={18} />
                             <span className={styles.badge}>Marketplace</span>
+                            <CarritoIcono />
                         </div>
                         
-                        {/* CONTENEDOR DE TÍTULO Y BOTÓN TEMPORAL DE CHECKOUT */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-                            <div>
-                                <h1 className={styles.title}>Explora productos y servicios</h1>
-                                <p className={styles.subtitle}>Todo lo que tu mascota necesita, centralizado en un solo lugar.</p>
-                            </div>
-                            
-                            {/* BOTÓN TEMPORAL PARA PROBAR EL FLUJO DE CHECKOUT / REGISTRO RÁPIDO */}
-                            <button 
-                                onClick={() => setModalCheckoutAbierto(true)}
-                                style={{
-                                    background: 'linear-gradient(135deg, #1B4332 0%, #2d6a4f 100%)',
-                                    color: '#fff',
-                                    border: 'none',
-                                    padding: '0.75rem 1.25rem',
-                                    borderRadius: '14px',
-                                    fontWeight: '700',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 12px rgba(27,67,50,0.15)',
-                                    transition: 'transform 0.2s'
-                                }}
-                            >
-                                <CreditCard size={18} />
-                                Simular Ir a Pagar (Checkout)
-                            </button>
+                        <div>
+                            <h1 className={styles.title}>Explora productos y servicios</h1>
+                            <p className={styles.subtitle}>Todo lo que tu mascota necesita, centralizado en un solo lugar.</p>
                         </div>
                     </header>
 
@@ -412,6 +410,24 @@ const Marketplace = () => {
                                     </div>
                                 </div>
                             )}
+
+                            {tiposServicioDisponibles.length > 0 && (
+                                <div className={styles.filterGroup}>
+                                    <label className={styles.filterLabel}><ListFilter size={16}/> Tipos de Servicio</label>
+                                    <div className={styles.checkboxList}>
+                                        {tiposServicioDisponibles.map(tipo => (
+                                            <label key={tipo.id} className={styles.checkboxItem}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={filtrosAvanzados.tiposServicioIds.includes(tipo.id)}
+                                                    onChange={() => toggleTipoServicio(tipo.id)}
+                                                />
+                                                <span>{tipo.nombre}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </aside>
 
                         <section className={styles.resultsArea} aria-live="polite">
@@ -486,7 +502,7 @@ const Marketplace = () => {
                                                                 {prod.agotado ? (
                                                                     <span className={styles.agotado}>Agotado</span>
                                                                 ) : (
-                                                                    <button className={styles.addBtn} onClick={() => agregarAlCarrito(prod.idProducto)}>
+                                                                    <button className={styles.addBtn} onClick={() => agregarAlCarrito(prod)}>
                                                                         <ShoppingCart size={16} /><span>Agregar</span>
                                                                     </button>
                                                                 )}

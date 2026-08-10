@@ -409,141 +409,91 @@
 .passwordBtn:hover {
     background: rgba(82, 183, 136, 0.1);
 }
-/* ==========================================
-   TASK 137 - CUENTAS CONECTADAS
-   ========================================== */
 
-.connectedAccountsSection {
-    margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
+/* ================================
+   CUENTAS VINCULADAS
+================================ */
 
-.connectedAccountsHeader {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
-}
-
-.connectedAccountsDescription {
-    margin: 0.4rem 0 0;
-    font-size: 0.9rem;
-    opacity: 0.7;
-    line-height: 1.5;
-}
-
-.accountsList {
+.linkedAccounts {
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
+    gap: 12px;
+    margin-top: 1rem;
 }
 
-.accountItem {
+.linkedAccount {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 1rem 1.1rem;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.03);
+    padding: 16px 18px;
+    border: 1px solid #e8ecea;
+    border-radius: 12px;
+    background: #fff;
+    transition: all 0.2s ease;
 }
 
-.accountInfo {
+.linkedAccount:hover {
+    border-color: #b7dfcf;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+}
+
+.linkedAccountInfo {
     display: flex;
     align-items: center;
-    gap: 0.9rem;
+    gap: 14px;
 }
 
-.accountLogo {
+.linkedAccountInfo strong {
+    display: block;
+    color: #26332e;
+    font-size: 15px;
+    margin-bottom: 3px;
+}
+
+.linkedAccountInfo p {
+    margin: 0;
+    color: #89948f;
+    font-size: 13px;
+}
+
+.socialIcon {
     width: 42px;
     height: 42px;
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    border-radius: 10px;
+    font-size: 20px;
     font-weight: 700;
-    background: rgba(255, 255, 255, 0.08);
+    background: #f1f7f4;
+    color: #52b788;
 }
 
-.googleLogo {
-    color: #ffffff;
-}
-
-.facebookLogo {
-    color: #ffffff;
-    font-family: Arial, sans-serif;
-}
-
-.connectionStatus {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-top: 0.3rem;
-    font-size: 0.82rem;
-    opacity: 0.75;
-}
-
-.statusConnected,
-.statusDisconnected {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-}
-
-.statusConnected {
-    background: #39d98a;
-}
-
-.statusDisconnected {
-    background: #8b949e;
-}
-
-.linkBtn,
-.unlinkBtn {
+.linkedCheck {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    padding: 0.6rem 0.9rem;
-    border-radius: 9px;
+    gap: 5px;
+    padding: 7px 12px;
+    border-radius: 20px;
+    background: #e8f7ef;
+    color: #2d9b67;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.linkAccountBtn {
+    border: 1px solid #52b788;
+    background: #fff;
+    color: #39966c;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: 0.2s ease;
+    transition: all 0.2s ease;
 }
 
-.linkBtn {
-    border: none;
-    background: var(--mint);
-    color: #10251e;
-}
-
-.linkBtn:hover {
-    transform: translateY(-1px);
-    opacity: 0.9;
-}
-
-.unlinkBtn {
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    background: transparent;
-    color: inherit;
-}
-
-.unlinkBtn:hover {
-    background: rgba(255, 255, 255, 0.06);
-}
-
-@media (max-width: 600px) {
-    .accountItem {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .linkBtn,
-    .unlinkBtn {
-        width: 100%;
-    }
+.linkAccountBtn:hover {
+    background: #52b788;
+    color: #fff;
 }

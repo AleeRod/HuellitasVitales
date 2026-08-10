@@ -3,7 +3,6 @@ using HuellitasVitalesAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-
 namespace HuellitasVitalesAPI.Controllers
 {
     [Route("api/[controller]")]
@@ -47,7 +46,7 @@ namespace HuellitasVitalesAPI.Controllers
 
             // ID del administrador que resuelve (claim "sub" = IdUsuario)
             var subClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                           ?? User.FindFirst("sub")?.Value;
+                        ?? User.FindFirst("sub")?.Value;
             if (!int.TryParse(subClaim, out var idAdmin))
                 return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
 
@@ -74,33 +73,59 @@ namespace HuellitasVitalesAPI.Controllers
                 // No se filtran detalles internos (stack trace) al cliente.
                 return StatusCode(500, new { success = false, mensaje = "Error al realizar la búsqueda." });
             }
-
-            } 
-
-        // GET api/Comercio/pendientes
-        [HttpGet("pendientes")]
-        public async Task<IActionResult> ObtenerComerciosPendientes()
-        {
-            try
-            {
-                var comercios = await _comercioService.ObtenerComerciosPendientesAsync();
-
-                return Ok(new
-                {
-                    success = true,
-                    cantidad = comercios.Count,
-                    comercios
-                });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new
-                {
-                    success = false,
-                    mensaje = "Error al obtener los comercios pendientes."
-                });
-            }
         }
 
-    } 
-}         
+                // Rechazar un comercio (solo administradores) 
+        // PUT api/comercio/{id}/rechazar
+        [HttpPut("{id:int}/rechazar")]
+        [Authorize]
+        public async Task<IActionResult> RechazarComercio(int id)
+        {
+            var rolClaim = User.FindFirst("rol")?.Value;
+            if (rolClaim != "1")
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new { success = false, mensaje = "No tienes permisos para realizar esta acción." });
+
+            var subClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                        ?? User.FindFirst("sub")?.Value;
+            if (!int.TryParse(subClaim, out var idAdmin))
+                return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
+
+            var resultado = await _comercioService.RechazarComercioAsync(id, idAdmin);
+
+            if (!resultado.Exito)
+                return StatusCode(resultado.Codigo, new { success = false, mensaje = resultado.Mensaje });
+
+            return Ok(new { success = true, mensaje = resultado.Mensaje });
+        }
+
+        //  Listar solicitudes pendientes (panel del administrador)
+        // GET api/comercio/pendientes
+        [HttpGet("pendientes")]
+        [Authorize]
+        public async Task<IActionResult> ListarPendientes()
+        {
+            var rolClaim = User.FindFirst("rol")?.Value;
+            if (rolClaim != "1")
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new { success = false, mensaje = "No tienes permisos para realizar esta acción." });
+
+            var pendientes = await _comercioService.ListarPendientesAsync();
+            return Ok(pendientes);
+        }
+
+                // ─── Listar los comercios aprobados que le pertenecen al usuario logueado ───
+        // GET api/comercio/mios
+        [HttpGet("mios")]
+        [Authorize]
+        public async Task<IActionResult> MisComercios()
+        {
+            var subClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(subClaim, out var idUsuario))
+                return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
+
+            var comercios = await _comercioService.ListarMiosAsync(idUsuario);
+            return Ok(comercios);
+        }
+    }
+}

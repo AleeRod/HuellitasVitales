@@ -4,7 +4,8 @@ import DogNav from '../../components/DogNav/DogNav';
 import { ToastContainer } from '../../components/Toast/Toast'; 
 import { API_BASE } from '../../api/config';
 import styles from './Perfil.module.css';
-import {User,Contact,Mail,Phone,Lock,Calendar,Edit2,AlertTriangle,KeyRound,Link2,Link2Off} from 'lucide-react';
+import { User, Contact, Mail, Phone, Lock, Calendar, Edit2, AlertTriangle, KeyRound } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 
 const ROLES = { 1: 'Administrador', 2: 'Veterinario', 3: 'Cliente' };
 const ESTADOS_CUENTA = {
@@ -33,12 +34,7 @@ const Perfil = () => {
     });
     
     const [erroresForm, setErroresForm] = useState({});
-
-     // --- CUENTAS CONECTADAS ---
-const [cuentasConectadas, setCuentasConectadas] = useState({
-    google: false,
-    facebook: false
-});
+    const [proveedoresVinculados, setProveedoresVinculados] = useState({google: false,facebook: false});
 
     // --- ESTADO Y FUNCIONES PARA LOS TOASTS ---
     const [toasts, setToasts] = useState([]);
@@ -52,39 +48,43 @@ const [cuentasConectadas, setCuentasConectadas] = useState({
         setToasts((prev) => prev.filter((t) => t.id !== id));
     };
 
-    // --- TASK 137: VINCULAR / DESVINCULAR CUENTAS ---
+    const cargarProveedoresVinculados = async () => {
+    try {
+        const token =
+            localStorage.getItem('jwt') ||
+            localStorage.getItem('token_huellitas');
 
-const vincularCuenta = (proveedor) => {
-    setCuentasConectadas((prev) => ({
-        ...prev,
-        [proveedor]: true
-    }));
+        if (!token) return;
 
-    const nombreProveedor =
-        proveedor === 'google' ? 'Google' : 'Facebook';
+        const res = await fetch(
+            `${API_BASE}/usuario/proveedores-vinculados`,
+            {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
 
-    addToast(
-        `Cuenta de ${nombreProveedor} vinculada correctamente.`,
-        'success'
-    );
+        if (!res.ok) {
+            throw new Error('No se pudieron obtener las vinculaciones.');
+        }
+
+        const data = await res.json();
+
+        if (data.success) {
+            setProveedoresVinculados({
+                google: data.google,
+                facebook: data.facebook
+            });
+        }
+    } catch (error) {
+        console.error(
+            'Error al cargar proveedores vinculados:',
+            error
+        );
+    }
 };
-
-const desvincularCuenta = (proveedor) => {
-    setCuentasConectadas((prev) => ({
-        ...prev,
-        [proveedor]: false
-    }));
-
-    const nombreProveedor =
-        proveedor === 'google' ? 'Google' : 'Facebook';
-
-    addToast(
-        `Cuenta de ${nombreProveedor} desvinculada correctamente.`,
-        'info'
-    );
-};
-
-// -------------------------------------------------
     // ------------------------------------------
 
     useEffect(() => {
@@ -140,7 +140,69 @@ const desvincularCuenta = (proveedor) => {
 
         cargarPerfil();
         return () => { activo = false; };
-    }, [idParam]);
+    }, [idUsuario]);
+
+useEffect(() => {
+    cargarProveedoresVinculados();
+
+    if (window.FB) {
+        return;
+    }
+
+    window.fbAsyncInit = function () {
+        window.FB.init({
+            appId: '4263441943966367',
+            cookie: true,
+            xfbml: true,
+            version: 'v13.0'
+        });
+
+        console.log("Facebook SDK cargado correctamente");
+    };
+
+    if (!document.getElementById('facebook-jssdk')) {
+        const js = document.createElement('script');
+
+        js.id = 'facebook-jssdk';
+        js.src = 'https://connect.facebook.net/es_LA/sdk.js';
+        js.async = true;
+        js.defer = true;
+
+        document.body.appendChild(js);
+    }
+}, []);
+    
+
+useEffect(() => {
+    cargarProveedoresVinculados();
+
+    if (window.FB) {
+        return;
+    }
+
+    window.fbAsyncInit = function () {
+        window.FB.init({
+            appId: '4263441943966367',
+            cookie: true,
+            xfbml: true,
+            version: 'v13.0'
+        });
+
+        console.log("Facebook SDK cargado correctamente");
+    };
+
+    if (!document.getElementById('facebook-jssdk')) {
+        const js = document.createElement('script');
+
+        js.id = 'facebook-jssdk';
+        js.src = 'https://connect.facebook.net/es_LA/sdk.js';
+        js.async = true;
+        js.defer = true;
+
+        document.body.appendChild(js);
+    }
+}, []);
+    
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -148,6 +210,8 @@ const desvincularCuenta = (proveedor) => {
             setErroresForm({ ...erroresForm, [e.target.name]: '' });
         }
     };
+
+    
 
     const validarFormulario = () => {
         const errores = {};
@@ -216,6 +280,173 @@ const desvincularCuenta = (proveedor) => {
             setGuardando(false);
         }
     };
+
+        const handleVincularGoogle = async (response) => {
+        try {
+            const tokenHuellitas = localStorage.getItem('token_huellitas');
+
+            if (!tokenHuellitas) {
+                addToast(
+                    "Debes iniciar sesión antes de vincular Google.",
+                    "warning"
+                );
+                return;
+            }
+
+            if (!response?.credential) {
+                addToast(
+                    "No se pudo obtener la credencial de Google.",
+                    "error"
+                );
+                return;
+            }
+
+            const res = await fetch(`${API_BASE}/login/vincular-google`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${tokenHuellitas}`
+                },
+                body: JSON.stringify({
+                    token: response.credential
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                addToast(
+                    data.mensaje || "Cuenta de Google vinculada correctamente.",
+                    "success"
+                );
+
+                // Recargar el perfil para mostrar el nuevo proveedor
+                if (res.ok && data.success) {
+                    addToast(
+                        data.mensaje || "Cuenta de Google vinculada correctamente.",
+                        "success"
+                    );
+
+                    await cargarProveedoresVinculados();
+                }
+                if (perfilRes.ok) {
+                    const perfilActualizado = await perfilRes.json();
+                    setPerfil(perfilActualizado);
+                }
+            } else {
+                addToast(
+                    data.mensaje || "No fue posible vincular la cuenta de Google.",
+                    "error"
+                );
+            }
+        } catch (error) {
+            console.error("Error al vincular Google:", error);
+
+            addToast(
+                "Ocurrió un error al intentar vincular Google.",
+                "error"
+            );
+        }
+    };
+
+const handleVincularFacebook = () => {
+    console.log("Botón Facebook presionado");
+
+    const tokenHuellitas = localStorage.getItem('token_huellitas');
+
+    if (!tokenHuellitas) {
+        addToast(
+            "Debes iniciar sesión antes de vincular Facebook.",
+            "warning"
+        );
+        return;
+    }
+
+    if (!window.FB) {
+        console.error("Facebook SDK no está disponible.");
+
+        addToast(
+            "Facebook todavía se está cargando. Espera unos segundos e inténtalo nuevamente.",
+            "warning"
+        );
+
+        return;
+    }
+
+    console.log("Facebook SDK disponible, abriendo login...");
+
+    window.FB.login(
+        async (response) => {
+
+            console.log("Respuesta de Facebook:", response);
+
+            if (!response.authResponse) {
+                addToast(
+                    "No se completó la autorización de Facebook.",
+                    "warning"
+                );
+                return;
+            }
+
+            const accessToken =
+                response.authResponse.accessToken;
+
+            try {
+                const res = await fetch(
+                    `${API_BASE}/usuario/vincular-facebook`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${tokenHuellitas}`
+                        },
+                        body: JSON.stringify({
+                            token: accessToken
+                        })
+                    }
+                );
+
+                const data = await res.json();
+
+                console.log("Respuesta API Facebook:", data);
+
+                if (res.ok && data.success) {
+
+                    addToast(
+                        data.mensaje ||
+                        "Cuenta de Facebook vinculada correctamente.",
+                        "success"
+                    );
+
+                    await cargarProveedoresVinculados();
+
+                } else {
+
+                    addToast(
+                        data.mensaje ||
+                        "No fue posible vincular Facebook.",
+                        "error"
+                    );
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Error al vincular Facebook:",
+                    error
+                );
+
+                addToast(
+                    "Ocurrió un error al vincular Facebook.",
+                    "error"
+                );
+            }
+        },
+        {
+            scope: 'public_profile,email'
+        }
+    );
+};
 
     const estado = perfil ? (ESTADOS_CUENTA[perfil.idEstadoCuenta] || ESTADOS_CUENTA[1]) : null;
 
@@ -488,6 +719,88 @@ const desvincularCuenta = (proveedor) => {
                                     </div>
                                 </div>
                             )}
+
+                        <div className={styles.securitySection}>
+                        <h2 className={styles.sectionTitle} style={{ marginTop: '2rem' }}>
+                            Cuentas vinculadas
+                        </h2>
+
+                        <div className={styles.linkedAccounts}>
+
+                            {/* GOOGLE */}
+                            <div className={styles.linkedAccount}>
+                                <div className={styles.linkedAccountInfo}>
+                                    <div className={styles.socialIcon}>
+                                        G
+                                    </div>
+
+                                    <div>
+                                        <strong>Google</strong>
+                                        <p>
+                                            {proveedoresVinculados.google
+                                                ? 'Cuenta vinculada'
+                                                : 'No vinculada'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {proveedoresVinculados.google ? (
+                                    <span className={styles.linkedCheck}>
+                                        ✓ Vinculado
+                                    </span>
+                                ) : (
+                                    <GoogleLogin
+                                        onSuccess={handleVincularGoogle}
+                                        onError={() => {
+                                            addToast(
+                                                "No fue posible autenticar con Google.",
+                                                "error"
+                                            );
+                                        }}
+                                        useOneTap={false}
+                                        type="standard"
+                                        theme="outline"
+                                        size="medium"
+                                        shape="rectangular"
+                                        text="continue_with"
+                                    />
+                                )}
+                            </div>
+
+                            {/* FACEBOOK */}
+                            <div className={styles.linkedAccount}>
+                                <div className={styles.linkedAccountInfo}>
+                                    <div className={styles.socialIcon}>
+                                        f
+                                    </div>
+
+                                    <div>
+                                        <strong>Facebook</strong>
+                                        <p>
+                                            {proveedoresVinculados.facebook
+                                                ? 'Cuenta vinculada'
+                                                : 'No vinculada'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {proveedoresVinculados.facebook ? (
+                                    <span className={styles.linkedCheck}>
+                                        ✓ Vinculado
+                                    </span>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        className={styles.linkAccountBtn}
+                                        onClick={handleVincularFacebook}
+                                    >
+                                        Vincular
+                                    </button>
+                                )}
+                            </div>
+
+                        </div>
+                    </div>
                         </section>
                     )}
                 </div>

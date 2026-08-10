@@ -2,6 +2,8 @@
 using HuellasVitalesAPI.Backend.Models.DTOs;
 using HuellitasVitalesAPI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace HuellitasVitalesAPI.Controllers
 {
@@ -115,5 +117,66 @@ namespace HuellitasVitalesAPI.Controllers
                 return StatusCode(500, new { success = false, mensaje = "Error interno: " + ex.Message });
             }
         }
+
+        [Authorize]
+        [HttpPost("vincular-google")]
+        public async Task<IActionResult> VincularGoogle(
+            [FromBody] LoginSocialRequest request)
+        {
+            try
+            {
+                if (request == null || string.IsNullOrWhiteSpace(request.Token))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        mensaje = "El token de Google es requerido."
+                    });
+                }
+
+                var userIdClaim =
+                    User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (!int.TryParse(userIdClaim, out int idUsuario))
+                {
+                    return Unauthorized(new
+                    {
+                        success = false,
+                        mensaje = "Token JWT inválido."
+                    });
+                }
+
+                var resultado = await _usuarioService.VincularGoogleAsync(
+                    idUsuario,
+                    request.Token
+                );
+
+                if (!resultado.Exito)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        mensaje = resultado.Mensaje
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    mensaje = resultado.Mensaje
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    mensaje = "Error interno al vincular Google."
+                });
+            }
+        }
+
     }
+    
 }

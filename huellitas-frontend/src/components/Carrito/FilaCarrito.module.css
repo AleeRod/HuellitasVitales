@@ -1,0 +1,180 @@
+/* Una línea del carrito con sus controles de cantidad. */
+
+.fila {
+    display: grid;
+    grid-template-columns: 84px 1fr auto auto auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    background: var(--white, #ffffff);
+    border: 1px solid rgba(27, 67, 50, 0.12);
+    border-radius: 14px;
+    list-style: none;
+    transition: opacity 0.2s ease;
+}
+
+/* Solo esta fila se atenúa mientras guarda; el resto del panel sigue vivo. */
+.fila[aria-busy='true'] {
+    opacity: 0.6;
+}
+
+.imagenCaja {
+    width: 84px;
+    height: 84px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(64, 192, 136, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.imagen {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.sinImagen {
+    font-size: 30px;
+}
+
+.datos {
+    min-width: 0;
+}
+
+.nombre {
+    margin: 0 0 0.2rem;
+    font-weight: 700;
+    color: var(--text-dk, #12251c);
+    font-size: 1rem;
+}
+
+.comercio {
+    margin: 0 0 0.2rem;
+    font-size: 0.82rem;
+    color: var(--text-lt, #627a6f);
+}
+
+.precioUnitario {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--text-md, #3d5248);
+}
+
+.aviso {
+    margin: 0.3rem 0 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--amber, #e69d45);
+}
+
+.controles {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.botonCantidad {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(27, 67, 50, 0.2);
+    border-radius: 9px;
+    background: var(--white, #ffffff);
+    color: var(--pine, #1B4332);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.botonCantidad:hover:not(:disabled) {
+    background: rgba(64, 192, 136, 0.15);
+    border-color: var(--mint, #40c088);
+}
+
+.botonCantidad:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.campoCantidad {
+    width: 52px;
+    height: 34px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--text-dk, #12251c);
+    border: 1px solid rgba(27, 67, 50, 0.2);
+    border-radius: 9px;
+    background: var(--white, #ffffff);
+}
+
+.campoCantidad:disabled {
+    opacity: 0.5;
+}
+
+.botonCantidad:focus-visible,
+.campoCantidad:focus-visible,
+.botonEliminar:focus-visible {
+    outline: 3px solid var(--mint, #40c088);
+    outline-offset: 2px;
+}
+
+.subtotal {
+    margin: 0;
+    min-width: 110px;
+    text-align: right;
+    font-weight: 800;
+    color: var(--pine, #1B4332);
+}
+
+.botonEliminar {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: transparent;
+    color: #c0392b;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.botonEliminar:hover:not(:disabled) {
+    background: rgba(192, 57, 43, 0.12);
+}
+
+.botonEliminar:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+    .fila {
+        grid-template-columns: 64px 1fr auto;
+        row-gap: 0.75rem;
+    }
+
+    .imagenCaja {
+        width: 64px;
+        height: 64px;
+    }
+
+    .controles {
+        grid-column: 2;
+    }
+
+    .subtotal {
+        grid-column: 3;
+        min-width: 0;
+    }
+
+    .botonEliminar {
+        grid-row: 1;
+        grid-column: 3;
+        justify-self: end;
+    }
+}
