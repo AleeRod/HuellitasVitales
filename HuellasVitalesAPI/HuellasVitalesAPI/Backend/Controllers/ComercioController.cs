@@ -113,5 +113,19 @@ namespace HuellitasVitalesAPI.Controllers
             var pendientes = await _comercioService.ListarPendientesAsync();
             return Ok(pendientes);
         }
+
+                // ─── Listar los comercios aprobados que le pertenecen al usuario logueado ───
+        // GET api/comercio/mios
+        [HttpGet("mios")]
+        [Authorize]
+        public async Task<IActionResult> MisComercios()
+        {
+            var subClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(subClaim, out var idUsuario))
+                return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
+
+            var comercios = await _comercioService.ListarMiosAsync(idUsuario);
+            return Ok(comercios);
+        }
     }
 }

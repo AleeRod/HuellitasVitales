@@ -21,8 +21,6 @@ namespace HuellitasVitalesAPI.Data
         public DbSet<CarritoItem> CarritoItems { get; set; } = null!;
         public DbSet<MarcaCat> MarcasCat { get; set; } = null!;
         public DbSet<TipoComercioCat> TiposComercioCat { get; set; } = null!;
-        public DbSet<Orden> Ordenes { get; set; } = null!;
-        public DbSet<OrdenDetalle> OrdenDetalles { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Usuario>().ToTable("USUARIO");
