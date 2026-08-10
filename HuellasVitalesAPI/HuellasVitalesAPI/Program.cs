@@ -3,6 +3,7 @@ using HuellitasVitalesAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,7 +12,25 @@ builder.Services.AddControllers();
 
 // Cambiamos AddOpenApi por SwaggerGen
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    // Habilita el botón "Authorize" de Swagger UI para probar
+    // los endpoints marcados con [Authorize] sin salir del navegador.
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Pegá únicamente el token JWT, sin escribir 'Bearer' adelante."
+    });
+
+    options.AddSecurityRequirement(documento => new OpenApiSecurityRequirement
+    {
+        { new OpenApiSecuritySchemeReference("Bearer", documento), new List<string>() }
+    });
+});
 
 // 1. Configurar CORS
 builder.Services.AddCors(options =>
@@ -76,6 +95,9 @@ builder.Services.AddDbContext<ConexionDB>(options =>
 builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<ComercioService>();
 builder.Services.AddScoped<IMarketplaceService, MarketplaceService>();
+builder.Services.AddScoped<ComercioValidacionService>();
+builder.Services.AddScoped<ProductoService>();
+builder.Services.AddScoped<ServicioService>();
 
 var app = builder.Build();
 
