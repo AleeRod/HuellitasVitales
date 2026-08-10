@@ -42,17 +42,17 @@ namespace HuellitasVitalesAPI.Services
             // USUARIO.IdUsuario → PERSONA_LEGAL.IdUsuario → COMERCIO.IdPersonaLegal.
             // (COMERCIO_FUNCIONARIO existe en el esquema pero ningún flujo la escribe todavía).
             var datos = await (from c in _context.Comercios
-                               join p in _context.PersonasLegales
-                                   on c.IdPersonaLegal equals p.IdPersonaLegal
-                               where c.IdComercio == idComercio
-                               select new
-                               {
-                                   c.IdTipoComercio,
-                                   c.IdEstadoSolicitud,
-                                   c.NombreComercial,
-                                   IdUsuarioPropietario = p.IdUsuario
-                               })
-                              .FirstOrDefaultAsync();
+                            join p in _context.PersonasLegales
+                                on c.IdPersonaLegal equals p.IdPersonaLegal
+                            where c.IdComercio == idComercio
+                            select new
+                            {
+                                c.IdTipoComercio,
+                                c.IdEstadoSolicitud,
+                                c.NombreComercial,
+                            IdUsuarioPropietario = p.IdUsuario
+                            })
+                            .FirstOrDefaultAsync();
 
             if (datos == null)
                 return (false, "El comercio indicado no existe.", 404);
@@ -98,5 +98,38 @@ namespace HuellitasVitalesAPI.Services
             TIPO_COMERCIO_ALMACEN => "Almacén",
             _ => "Comercio"
         };
+
+                    /// <summary>
+            /// Igual que ValidarComercioHabilitadoAsync pero sin exigir un tipo de comercio
+            /// específico — para funcionalidades que aplican a cualquier comercio (ej. empleados).
+            /// </summary>
+        public async Task<(bool Exito, string Mensaje, int Codigo)> ValidarPropietarioComercioAsync(
+            int idUsuario, int idComercio)
+        {
+            var datos = await (from c in _context.Comercios
+                            join p in _context.PersonasLegales
+                                on c.IdPersonaLegal equals p.IdPersonaLegal
+                            where c.IdComercio == idComercio
+                            select new
+                            {
+                                c.IdEstadoSolicitud,
+                                c.NombreComercial,
+                                IdUsuarioPropietario = p.IdUsuario
+                            })
+                            .FirstOrDefaultAsync();
+
+            if (datos == null)
+                return (false, "El comercio indicado no existe.", 404);
+
+            if (datos.IdUsuarioPropietario != idUsuario)
+                return (false, "No estás vinculado a este comercio.", 403);
+
+            if (datos.IdEstadoSolicitud != ESTADO_SOLICITUD_APROBADO)
+                return (false,
+                    $"El comercio '{datos.NombreComercial}' aún no está aprobado.",
+                    403);
+
+            return (true, "El comercio está habilitado.", 200);
+        }
     }
 }

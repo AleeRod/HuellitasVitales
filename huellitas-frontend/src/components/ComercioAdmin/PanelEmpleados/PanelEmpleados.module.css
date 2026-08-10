@@ -1,0 +1,336 @@
+    .panel {
+    width: 100%;
+    font-family: inherit;
+    }
+
+    .headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    }
+
+    .titulo {
+    margin: 0 0 0.25rem;
+    color: #1b4332;
+    font-size: 1.4rem;
+    font-weight: 700;
+    }
+
+    .subtitulo {
+    margin: 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+    }
+
+    .btnNuevo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #52B788;
+    color: #fff;
+    border: none;
+    padding: 0.65rem 1.1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    }
+
+    .btnNuevo:hover {
+    background: #40916c;
+    }
+
+    .toolbar {
+    margin-bottom: 1rem;
+    }
+
+    .selectorComercio {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0.5rem 0.85rem;
+    color: #1b4332;
+    }
+
+    .selectorComercio select {
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    color: #1b4332;
+    outline: none;
+    }
+
+    .estadoBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+    padding: 2.5rem 1.5rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    color: #495057;
+    }
+
+    .estadoBox h3 {
+    margin: 0.25rem 0 0;
+    color: #1b4332;
+    }
+
+    .linkBtn {
+    background: none;
+    border: none;
+    color: #52B788;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+    }
+
+    .tableWrap {
+    overflow-x: auto;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    }
+
+    .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    }
+
+    .table th,
+    .table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+    }
+
+    .table th {
+    background: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    }
+
+    .table tbody tr:hover {
+    background: #fafbfa;
+    }
+
+    .nombreEmpleado {
+    font-weight: 600;
+    color: #1b4332;
+    }
+
+    .metaCell {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #495057;
+    }
+
+    .cargoBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    }
+
+    .estadoOk {
+    color: #2e7d32;
+    font-weight: 600;
+    }
+
+    .estadoOff {
+    color: #c62828;
+    font-weight: 600;
+    }
+
+    .iconBtn,
+    .iconBtnDanger {
+    border: none;
+    background: #f1f3f5;
+    color: #495057;
+    padding: 0.4rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    }
+
+    .iconBtn:hover {
+    background: #e8f5e9;
+    color: #2e7d32;
+    }
+
+    .iconBtnDanger:hover {
+    background: #ffebee;
+    color: #c62828;
+    }
+
+    /* ── Modal ── */
+    .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+    }
+
+    .modal {
+    background: #fff;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 460px;
+    max-height: 90vh;
+    overflow-y: auto;
+    }
+
+    .modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.1rem 1.25rem;
+    border-bottom: 1px solid #e9ecef;
+    }
+
+    .modalHeader h3 {
+    margin: 0;
+    color: #1b4332;
+    font-size: 1.1rem;
+    }
+
+    .closeBtn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #6c757d;
+    }
+
+    .modalBody {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    }
+
+    .ayudaModal {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #6c757d;
+    background: #f8f9fa;
+    padding: 0.65rem 0.85rem;
+    border-radius: 8px;
+    }
+
+    .busquedaForm {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-end;
+    }
+
+    .campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    color: #495057;
+    font-weight: 600;
+    }
+
+    .campo input,
+    .campo select {
+    padding: 0.55rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: #212529;
+    }
+
+    .usuarioEncontrado {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: #e8f5e9;
+    border: 1px solid #c8e6c9;
+    border-radius: 10px;
+    padding: 0.7rem 0.9rem;
+    }
+
+    .usuarioNombre {
+    font-weight: 700;
+    color: #1b4332;
+    }
+
+    .usuarioCorreo {
+    font-size: 0.82rem;
+    color: #495057;
+    }
+
+    .errorMsg {
+    color: #c62828;
+    font-size: 0.85rem;
+    margin: 0;
+    }
+
+    .modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid #e9ecef;
+    }
+
+    .btnPrimario {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #52B788;
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1.1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    }
+
+    .btnPrimario:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    }
+
+    .btnSecundario {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #f1f3f5;
+    color: #495057;
+    border: 1px solid #ced4da;
+    padding: 0.6rem 1.1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    }
+
+    .btnSecundario:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    }

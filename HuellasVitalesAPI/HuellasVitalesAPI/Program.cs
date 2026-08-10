@@ -40,7 +40,7 @@ builder.Services.AddCors(options =>
         policy.SetIsOriginAllowed(origin =>
                 origin == "http://localhost:5173" ||
                 (origin.StartsWith("https://huellitas-vitales") && origin.EndsWith(".vercel.app"))
-              )
+            )
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -99,6 +99,7 @@ builder.Services.AddScoped<ComercioValidacionService>();
 builder.Services.AddScoped<ProductoService>();
 builder.Services.AddScoped<ServicioService>();
 builder.Services.AddScoped<CarritoService>();
+builder.Services.AddScoped<ComercioFuncionarioService>();
 
 var app = builder.Build();
 

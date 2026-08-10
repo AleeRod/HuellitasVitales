@@ -198,5 +198,25 @@ namespace HuellitasVitalesAPI.Services
             }
         }
 
+            public async Task<List<ComercioResumenDTO>> ListarMiosAsync(int idUsuario)
+        {
+            const byte ESTADO_APROBADO = 2;
+
+            return await (
+                from c in _context.Comercios
+                join p in _context.PersonasLegales on c.IdPersonaLegal equals p.IdPersonaLegal
+                join tc in _context.TiposComercioCat on c.IdTipoComercio equals tc.IdTipoComercio into tcGroup
+                from tc in tcGroup.DefaultIfEmpty()
+                where p.IdUsuario == idUsuario && c.IdEstadoSolicitud == ESTADO_APROBADO
+                select new ComercioResumenDTO
+                {
+                    IdComercio = c.IdComercio,
+                    NombreComercial = c.NombreComercial,
+                    IdTipoComercio = c.IdTipoComercio,
+                    TipoComercio = tc != null ? tc.Nombre : "Desconocido"
+                }
+            ).ToListAsync();
+        }
+
     }
 }

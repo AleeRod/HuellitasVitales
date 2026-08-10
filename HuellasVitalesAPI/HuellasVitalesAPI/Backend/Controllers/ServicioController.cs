@@ -27,7 +27,7 @@ namespace HuellitasVitalesAPI.Controllers
 
             // ID del funcionario que registra (claim "sub" = IdUsuario)
             var subClaim = User.FindFirst("sub")?.Value
-                           ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                        ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(subClaim, out var idUsuario))
                 return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
 
