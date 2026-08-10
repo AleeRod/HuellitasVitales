@@ -73,6 +73,7 @@ builder.Services.AddScoped<ComercioValidacionService>();
 builder.Services.AddScoped<ProductoService>();
 builder.Services.AddScoped<ServicioService>();
 builder.Services.AddScoped<CarritoService>();
+builder.Services.AddScoped<OrdenService>();
 builder.Services.AddScoped<ComercioFuncionarioService>();
 
 var app = builder.Build();

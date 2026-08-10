@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import DogNav from '../../components/DogNav/DogNav';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useCarrito } from '../../hooks/useCarrito';
+import { ToastContainer } from '../../components/Toast/Toast';
+import useToast from '../../components/Toast/useToast';
+import CarritoIcono from '../../components/CarritoIcono/CarritoIcono';
 import { API_BASE } from '../../api/config';
 import { 
     Search, ShoppingCart, Package, Stethoscope, 
@@ -67,7 +71,7 @@ const CategoriaCarrusel = ({ categoriaItem, agregarAlCarrito }) => {
                                     ) : (
                                         <button
                                             className={styles.addBtn}
-                                            onClick={() => agregarAlCarrito(prod.idProducto)}
+                                            onClick={() => agregarAlCarrito(prod)}
                                             title="Agregar al carrito"
                                         >
                                             <ShoppingCart size={16} />
@@ -115,6 +119,9 @@ const Marketplace = () => {
 
     const terminoDebounced = useDebounce(termino, 400);
     const abortRef = useRef(null);
+
+    const { agregar } = useCarrito();
+    const { toasts, showToast, removeToast } = useToast();
 
     useEffect(() => {
         const q = terminoDebounced.trim();
@@ -217,22 +224,24 @@ const Marketplace = () => {
         limpiarFiltrosAvanzados();
     };
 
-    const agregarAlCarrito = async (idProducto) => {
-        const token = localStorage.getItem('token_huellitas');
-        if (!token) {
-            alert('Debes iniciar sesión para agregar productos al carrito.');
-            return;
-        }
-        try {
-            const res = await fetch(`${API_BASE}/carrito/agregar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ idProducto, cantidad: 1 })
-            });
-            if (!res.ok) throw new Error('No se pudo agregar al carrito');
-            alert('Producto agregado al carrito exitosamente.');
-        } catch {
-            alert('Ocurrió un error al agregar el producto al carrito.');
+    // El carrito se guarda en el navegador, así que no hace falta tener sesión
+    // para armarlo. La cuenta se pide recién al momento de pagar.
+    const agregarAlCarrito = (prod) => {
+        const resultado = agregar({
+            idProducto: prod.idProducto,
+            nombre: prod.nombreProducto ?? prod.nombre,
+            precio: prod.precio,
+            precioDescuento: prod.precioDescuento ?? null,
+            imagenUrl: prod.imagenUrl || null,
+            stock: prod.stock ?? null,
+            idComercio: prod.idComercio ?? null,
+            nombreComercio: prod.nombreComercio ?? ''
+        });
+
+        if (resultado.ok) {
+            showToast(`Agregamos ${prod.nombreProducto ?? 'el producto'} a tu carrito.`, 'success');
+        } else {
+            showToast(resultado.mensaje ?? 'No pudimos agregar el producto.', 'warning');
         }
     };
 
@@ -301,12 +310,15 @@ const Marketplace = () => {
     return (
         <>
             <DogNav />
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
             <main className={styles.layout}>
                 <div className={styles.container}>
                     <header className={styles.head}>
                         <div className={styles.badgeContainer}>
                             <ShoppingCart className={styles.badgeIcon} size={18} />
                             <span className={styles.badge}>Marketplace</span>
+                            {/* Acceso al carrito desde la misma pantalla donde se agrega. */}
+                            <CarritoIcono />
                         </div>
                         <h1 className={styles.title}>Explora productos y servicios</h1>
                         <p className={styles.subtitle}>Todo lo que tu mascota necesita, centralizado en un solo lugar.</p>
@@ -497,7 +509,7 @@ const Marketplace = () => {
                                                                 {prod.agotado ? (
                                                                     <span className={styles.agotado}>Agotado</span>
                                                                 ) : (
-                                                                    <button className={styles.addBtn} onClick={() => agregarAlCarrito(prod.idProducto)}>
+                                                                    <button className={styles.addBtn} onClick={() => agregarAlCarrito(prod)}>
                                                                         <ShoppingCart size={16} /><span>Agregar</span>
                                                                     </button>
                                                                 )}
