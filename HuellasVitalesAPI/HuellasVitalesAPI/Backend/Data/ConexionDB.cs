@@ -23,6 +23,7 @@ namespace HuellitasVitalesAPI.Data
         public DbSet<TipoComercioCat> TiposComercioCat { get; set; } = null!;
         public DbSet<CargoCat> CargosCat { get; set; } = null!;
         public DbSet<ComercioFuncionario> ComerciosFuncionarios { get; set; } = null!;
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Usuario>().ToTable("USUARIO");
@@ -37,6 +38,7 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<TipoServicioCat>().ToTable("TIPO_SERVICIO_CAT");
             modelBuilder.Entity<Servicio>().ToTable("SERVICIO");
             modelBuilder.Entity<MarcaCat>().ToTable("MARCA_CAT");
+            modelBuilder.Entity<PasswordResetToken>().ToTable("PASSWORD_RESET_TOKEN");
 
             // Fuerza que TODOS los DateTime se traten como UTC
             // al leer/escribir en Postgres, evitando el error

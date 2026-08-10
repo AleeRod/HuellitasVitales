@@ -52,7 +52,7 @@ namespace HuellitasVitalesAPI.Controllers
             {
                 // Extraer el ID del usuario directamente del token JWT
                 var userIdClaim = User.FindFirst("sub")?.Value 
-                               ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
                 if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idUsuario))
                 {
