@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import CarritoIcono from './CarritoIcono/CarritoIcono';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -64,6 +65,9 @@ const Navbar = () => {
       </div>
       
       <div className="landing-nav-links" ref={dropdownRef}>
+        {/* Visible siempre: el carrito se puede armar sin iniciar sesión. */}
+        <CarritoIcono />
+
         {usuario ? (
           // 🟢 CONTENEDOR DEL DROPDOWN DE USUARIO
           <div className="user-dropdown-container" style={{ position: 'relative' }}>

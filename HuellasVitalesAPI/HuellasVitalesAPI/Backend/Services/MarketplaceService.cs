@@ -57,7 +57,10 @@ namespace HuellitasVitalesAPI.Services
                                          Precio = p.Precio,
                                          PrecioDescuento = p.PrecioDescuento,
                                          ImagenUrl = p.ImagenUrl ?? "",
-                                         Agotado = false
+                                         // El carrito necesita las existencias para no dejar que
+                                         // se pidan más unidades de las que hay.
+                                         Stock = p.Stock,
+                                         Agotado = p.Stock.HasValue && p.Stock.Value <= 0
                                      }).ToList()
                     })
                     .Where(cat => cat.Productos.Any())

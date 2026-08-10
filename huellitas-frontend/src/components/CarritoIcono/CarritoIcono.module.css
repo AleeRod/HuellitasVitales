@@ -1,0 +1,60 @@
+/* Ícono del carrito con contador, pensado para montarse en cualquier barra. */
+
+.enlace {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    color: var(--pine, #1B4332);
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.enlace:hover {
+    background: rgba(64, 192, 136, 0.15);
+    color: var(--pine-soft, #2d6a4f);
+}
+
+/* Contorno visible al llegar con el teclado. */
+.enlace:focus-visible {
+    outline: 3px solid var(--mint, #40c088);
+    outline-offset: 2px;
+}
+
+.contador {
+    position: absolute;
+    top: 3px;
+    right: 1px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    background: var(--amber, #e69d45);
+    color: var(--white, #ffffff);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Separa el número del ícono cuando quedan encima. */
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+
+/* Texto que solo leen los lectores de pantalla. */
+.soloLectores {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

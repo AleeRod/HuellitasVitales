@@ -1,0 +1,205 @@
+/* Panel del carrito de compras. */
+
+.pagina {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #f4faf6 0%, #ffffff 100%);
+    padding: 2.5rem 1rem 4rem;
+}
+
+.contenedor {
+    max-width: 1080px;
+    margin: 0 auto;
+}
+
+.encabezado {
+    margin-bottom: 1.75rem;
+}
+
+.volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--pine-soft, #2d6a4f);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.volver:hover {
+    text-decoration: underline;
+}
+
+.volver:focus-visible,
+.vacioBoton:focus-visible {
+    outline: 3px solid var(--mint, #40c088);
+    outline-offset: 2px;
+}
+
+.titulo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: var(--pine, #1B4332);
+}
+
+.resumenCantidad {
+    margin: 0.35rem 0 0;
+    color: var(--text-lt, #627a6f);
+    font-size: 0.92rem;
+}
+
+.cuerpo {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin: 0;
+    padding: 0;
+}
+
+.resumen {
+    position: sticky;
+    top: 1.5rem;
+    background: var(--white, #ffffff);
+    border: 1px solid rgba(27, 67, 50, 0.12);
+    border-radius: 16px;
+    padding: 1.35rem;
+}
+
+.resumenTitulo {
+    margin: 0 0 1rem;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--pine, #1B4332);
+}
+
+.resumenLinea {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.45rem 0;
+    color: var(--text-md, #3d5248);
+    font-size: 0.92rem;
+}
+
+.resumenTotal {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 0.75rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid rgba(27, 67, 50, 0.12);
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--pine, #1B4332);
+}
+
+.botonPagar {
+    width: 100%;
+    margin-top: 1.1rem;
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: none;
+    border-radius: 30px;
+    background: var(--mint, #40c088);
+    color: var(--white, #ffffff);
+    font-weight: 700;
+    font-size: 0.98rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.botonPagar:hover:not(:disabled) {
+    background: var(--pine-soft, #2d6a4f);
+}
+
+.botonPagar:disabled {
+    opacity: 0.7;
+    cursor: progress;
+}
+
+.botonPagar:focus-visible {
+    outline: 3px solid var(--pine, #1B4332);
+    outline-offset: 2px;
+}
+
+.girando {
+    animation: girar 1s linear infinite;
+}
+
+@keyframes girar {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.resumenNota {
+    margin: 1rem 0 0;
+    font-size: 0.8rem;
+    color: var(--text-lt, #627a6f);
+    text-align: center;
+}
+
+/* ---- Carrito sin productos ---- */
+.vacio {
+    background: var(--white, #ffffff);
+    border: 1px dashed rgba(27, 67, 50, 0.25);
+    border-radius: 18px;
+    padding: 3.5rem 1.5rem;
+    text-align: center;
+}
+
+.vacioIcono {
+    font-size: 52px;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.vacioTitulo {
+    margin: 0 0 0.4rem;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--pine, #1B4332);
+}
+
+.vacioTexto {
+    margin: 0 0 1.5rem;
+    color: var(--text-md, #3d5248);
+}
+
+.vacioBoton {
+    display: inline-block;
+    padding: 0.75rem 1.6rem;
+    border-radius: 30px;
+    background: var(--mint, #40c088);
+    color: var(--white, #ffffff);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.vacioBoton:hover {
+    background: var(--pine-soft, #2d6a4f);
+}
+
+@media (max-width: 880px) {
+    .cuerpo {
+        grid-template-columns: 1fr;
+    }
+
+    .resumen {
+        position: static;
+    }
+}
