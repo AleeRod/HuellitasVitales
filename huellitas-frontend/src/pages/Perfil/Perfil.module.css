@@ -409,3 +409,91 @@
 .passwordBtn:hover {
     background: rgba(82, 183, 136, 0.1);
 }
+
+/* ================================
+   CUENTAS VINCULADAS
+================================ */
+
+.linkedAccounts {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 1rem;
+}
+
+.linkedAccount {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border: 1px solid #e8ecea;
+    border-radius: 12px;
+    background: #fff;
+    transition: all 0.2s ease;
+}
+
+.linkedAccount:hover {
+    border-color: #b7dfcf;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+}
+
+.linkedAccountInfo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.linkedAccountInfo strong {
+    display: block;
+    color: #26332e;
+    font-size: 15px;
+    margin-bottom: 3px;
+}
+
+.linkedAccountInfo p {
+    margin: 0;
+    color: #89948f;
+    font-size: 13px;
+}
+
+.socialIcon {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 20px;
+    font-weight: 700;
+    background: #f1f7f4;
+    color: #52b788;
+}
+
+.linkedCheck {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 12px;
+    border-radius: 20px;
+    background: #e8f7ef;
+    color: #2d9b67;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.linkAccountBtn {
+    border: 1px solid #52b788;
+    background: #fff;
+    color: #39966c;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.linkAccountBtn:hover {
+    background: #52b788;
+    color: #fff;
+}

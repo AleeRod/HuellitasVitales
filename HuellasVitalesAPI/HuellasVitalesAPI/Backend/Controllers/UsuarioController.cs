@@ -75,5 +75,188 @@ namespace HuellitasVitalesAPI.Controllers
                 return StatusCode(500, new { success = false, mensaje = "Ocurrió un error interno al intentar actualizar el perfil." });
             }
         }
+
+        [Authorize]
+        [HttpPost("vincular-google")]
+        public async Task<IActionResult> VincularGoogle(
+            [FromBody] LoginSocialRequest request)
+        {
+            try
+            {
+                var userIdClaim =
+                    User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) ||
+                    !int.TryParse(userIdClaim, out int idUsuario))
+                {
+                    return Unauthorized(new
+                    {
+                        success = false,
+                        mensaje = "Token inválido o no proporcionado."
+                    });
+                }
+
+                if (request == null || string.IsNullOrEmpty(request.Token))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        mensaje = "El token de Google es obligatorio."
+                    });
+                }
+
+                var resultado = await _usuarioService.VincularGoogleAsync(
+                    idUsuario,
+                    request.Token
+                );
+
+                if (!resultado.Exito)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        mensaje = resultado.Mensaje
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    mensaje = resultado.Mensaje
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error al vincular Google con el usuario."
+                );
+
+                return StatusCode(500, new
+                {
+                    success = false,
+                    mensaje = "Ocurrió un error al vincular la cuenta de Google."
+                });
+            }
+        }
+
+        [Authorize]
+        [HttpPost("vincular-facebook")]
+        public async Task<IActionResult> VincularFacebook(
+            [FromBody] LoginSocialRequest request)
+        {
+            try
+            {
+                var userIdClaim =
+                    User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) ||
+                    !int.TryParse(userIdClaim, out int idUsuario))
+                {
+                    return Unauthorized(new
+                    {
+                        success = false,
+                        mensaje = "Token inválido o no proporcionado."
+                    });
+                }
+
+                if (request == null || string.IsNullOrEmpty(request.Token))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        mensaje = "El token de Facebook es obligatorio."
+                    });
+                }
+
+                var resultado =
+                    await _usuarioService.VincularFacebookAsync(
+                        idUsuario,
+                        request.Token);
+
+                if (!resultado.Exito)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        mensaje = resultado.Mensaje
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    mensaje = resultado.Mensaje
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error al vincular Facebook con el usuario."
+                );
+
+                return StatusCode(500, new
+                {
+                    success = false,
+                    mensaje = "Ocurrió un error al vincular la cuenta de Facebook."
+                });
+            }
+        }
+
+        [Authorize]
+        [HttpGet("proveedores-vinculados")]
+        public async Task<IActionResult> ObtenerProveedoresVinculados()
+        {
+            try
+            {
+                var userIdClaim =
+                    User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) ||
+                    !int.TryParse(userIdClaim, out int idUsuario))
+                {
+                    return Unauthorized(new
+                    {
+                        success = false,
+                        mensaje = "Token inválido o no proporcionado."
+                    });
+                }
+
+                var proveedores =
+                    await _usuarioService.ObtenerProveedoresVinculadosAsync(idUsuario);
+
+                return Ok(new
+                {
+                    success = true,
+                    google = proveedores.Any(p =>
+                        p.Equals("Google", StringComparison.OrdinalIgnoreCase)),
+                    facebook = proveedores.Any(p =>
+                        p.Equals("Facebook", StringComparison.OrdinalIgnoreCase))
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error al obtener las cuentas vinculadas del usuario."
+                );
+
+                return StatusCode(500, new
+                {
+                    success = false,
+                    mensaje = "No fue posible obtener las cuentas vinculadas."
+                });
+            }
+        }
+
+
+
+
+
+
     }
 }

@@ -9,6 +9,7 @@ namespace HuellitasVitalesAPI.Data
 
         // MAPEAR TABLAS DE DATOS
         public DbSet<Usuario> Usuarios { get; set; } = null!;
+        public DbSet<UsuarioProveedorAuth> UsuariosProveedoresAuth { get; set; } = null!;
         public DbSet<Rol> Roles { get; set; } = null!;
         public DbSet<Veterinario> Veterinarios { get; set; } = null!;
         public DbSet<Comercio> Comercios { get; set; } = null!;
@@ -25,10 +26,11 @@ namespace HuellitasVitalesAPI.Data
         public DbSet<OrdenDetalle> OrdenDetalles { get; set; } = null!;
         public DbSet<CargoCat> CargosCat { get; set; } = null!;
         public DbSet<ComercioFuncionario> ComerciosFuncionarios { get; set; } = null!;
-        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Usuario>().ToTable("USUARIO");
+            modelBuilder.Entity<UsuarioProveedorAuth>().ToTable("USUARIO_PROVEEDOR_AUTH");
             modelBuilder.Entity<Rol>().ToTable("ROL");
             modelBuilder.Entity<Veterinario>().ToTable("VETERINARIO");
             modelBuilder.Entity<Comercio>().ToTable("COMERCIO");

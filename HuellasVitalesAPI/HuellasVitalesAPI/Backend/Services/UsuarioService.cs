@@ -462,9 +462,29 @@ namespace HuellitasVitalesAPI.Services
             );
         }
 
-        // Vincular Google
-        usuario.Proveedor_Auth = "Google";
-        usuario.Proveedor_Id = payload.Subject;
+        // Verificar si este usuario ya tiene Google vinculado
+        var vinculacionExistente = await _context.UsuariosProveedoresAuth
+            .FirstOrDefaultAsync(x =>
+                x.IdUsuario == idUsuario &&
+                x.Proveedor == "Google");
+
+        if (vinculacionExistente != null)
+        {
+            return (
+                true,
+                "Tu cuenta de Google ya está vinculada."
+            );
+        }
+
+        // Crear la vinculación
+        var nuevaVinculacion = new UsuarioProveedorAuth
+        {
+            IdUsuario = idUsuario,
+            Proveedor = "Google",
+            ProveedorId = payload.Subject
+        };
+
+        _context.UsuariosProveedoresAuth.Add(nuevaVinculacion);
 
         await _context.SaveChangesAsync();
 
@@ -472,20 +492,158 @@ namespace HuellitasVitalesAPI.Services
             true,
             "La cuenta de Google fue vinculada correctamente."
         );
-    }
-catch (Exception ex)
-{
-    Console.WriteLine("=== ERROR AL VINCULAR GOOGLE ===");
-    Console.WriteLine(ex.ToString());
 
-    return (
-        false,
-        "No fue posible vincular la cuenta de Google."
-    );
-}
-}
-
+        return (
+            true,
+            "La cuenta de Google fue vinculada correctamente."
+        );
     }
+    catch (Exception ex)
+    {
+        Console.WriteLine("=== ERROR AL VINCULAR GOOGLE ===");
+        Console.WriteLine(ex.ToString());
+
+        return (
+            false,
+            "No fue posible vincular la cuenta de Google."
+        );
+    }
+    }
+            public async Task<(bool Exito, string Mensaje)> VincularFacebookAsync(
+            int idUsuario,
+            string facebookToken)
+        {
+            try
+            {
+                var usuario = await _context.Usuarios
+                    .FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
+
+                if (usuario == null)
+                {
+                    return (false, "El usuario no existe.");
+                }
+
+                if (usuario.IdEstadoCuenta != 1)
+                {
+                    return (false, "La cuenta no se encuentra activa.");
+                }
+
+                using var httpClient = new HttpClient();
+
+                var verifyTokenUrl =
+                    $"https://graph.facebook.com/me" +
+                    $"?fields=first_name,last_name,email,id" +
+                    $"&access_token={facebookToken}";
+
+                var response = await httpClient.GetAsync(verifyTokenUrl);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return (false, "El token de Facebook no es válido.");
+                }
+
+                var jsonResult = await response.Content.ReadAsStringAsync();
+
+                var fbUser =
+                    System.Text.Json.JsonSerializer.Deserialize<FacebookTokenResponse>(
+                        jsonResult);
+
+                if (fbUser == null || string.IsNullOrEmpty(fbUser.Id))
+                {
+                    return (
+                        false,
+                        "No fue posible obtener la información de Facebook."
+                    );
+                }
+
+                // Verificar que el correo de Facebook corresponda
+                // al correo de la cuenta que está intentando vincular.
+                if (!string.IsNullOrEmpty(fbUser.Email) &&
+                    !string.Equals(
+                        usuario.Correo,
+                        fbUser.Email,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return (
+                        false,
+                        "El correo de Facebook no coincide con el correo de la cuenta."
+                    );
+                }
+
+                // Verificar si Facebook ya está vinculado a OTRA cuenta.
+                var facebookYaVinculado = await _context.UsuariosProveedoresAuth
+                    .FirstOrDefaultAsync(x =>
+                        x.Proveedor == "Facebook" &&
+                        x.ProveedorId == fbUser.Id &&
+                        x.IdUsuario != idUsuario);
+
+                if (facebookYaVinculado != null)
+                {
+                    return (
+                        false,
+                        "Esta cuenta de Facebook ya está vinculada a otro usuario."
+                    );
+                }
+
+                // Verificar si este usuario ya tiene Facebook vinculado.
+                var vinculacionExistente = await _context.UsuariosProveedoresAuth
+                    .FirstOrDefaultAsync(x =>
+                        x.IdUsuario == idUsuario &&
+                        x.Proveedor == "Facebook");
+
+                if (vinculacionExistente != null)
+                {
+                    return (
+                        true,
+                        "Tu cuenta de Facebook ya está vinculada."
+                    );
+                }
+
+                // Crear la vinculación.
+                var nuevaVinculacion = new UsuarioProveedorAuth
+                {
+                    IdUsuario = idUsuario,
+                    Proveedor = "Facebook",
+                    ProveedorId = fbUser.Id
+                };
+
+                _context.UsuariosProveedoresAuth.Add(nuevaVinculacion);
+
+                await _context.SaveChangesAsync();
+
+                return (
+                    true,
+                    "La cuenta de Facebook fue vinculada correctamente."
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("=== ERROR AL VINCULAR FACEBOOK ===");
+                Console.WriteLine(ex.ToString());
+
+                return (
+                    false,
+                    "No fue posible vincular la cuenta de Facebook."
+                );
+            }  
+        }
+        public async Task<List<string>> ObtenerProveedoresVinculadosAsync(int idUsuario)
+        {
+            return await _context.UsuariosProveedoresAuth
+                .Where(x => x.IdUsuario == idUsuario)
+                .Select(x => x.Proveedor)
+                .ToListAsync();
+        }
+
+
+
+
+
+
+
+
+
+}
 
     public class FacebookTokenResponse
     {
@@ -501,7 +659,5 @@ catch (Exception ex)
         [JsonPropertyName("email")]
         public string? Email { get; set; }
     }
-
-
     
 }
