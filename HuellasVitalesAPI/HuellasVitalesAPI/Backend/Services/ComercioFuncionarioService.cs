@@ -23,9 +23,9 @@ namespace HuellitasVitalesAPI.Services
 
         // ─── LISTAR EMPLEADOS DE UN COMERCIO ───
         public async Task<(bool Exito, string Mensaje, int Codigo, List<FuncionarioDTO> Funcionarios)> ListarPorComercioAsync(
-            int idUsuario, int idComercio)
+            int idUsuario, int idComercio, bool esAdmin)
         {
-            var validacion = await _validacion.ValidarPropietarioComercioAsync(idUsuario, idComercio);
+            var validacion = await _validacion.ValidarPropietarioComercioAsync(idUsuario, idComercio, esAdmin);
             if (!validacion.Exito)
                 return (false, validacion.Mensaje, validacion.Codigo, new List<FuncionarioDTO>());
 
@@ -77,11 +77,11 @@ namespace HuellitasVitalesAPI.Services
 
         // ─── VINCULAR UN USUARIO EXISTENTE COMO EMPLEADO DEL COMERCIO ───
         public async Task<(bool Exito, string Mensaje, int Codigo)> VincularAsync(
-            int idUsuarioSolicitante, VincularFuncionarioRequest request)
+            int idUsuarioSolicitante, VincularFuncionarioRequest request, bool esAdmin)
         {
             try
             {
-                var validacion = await _validacion.ValidarPropietarioComercioAsync(idUsuarioSolicitante, request.IdComercio);
+                var validacion = await _validacion.ValidarPropietarioComercioAsync(idUsuarioSolicitante, request.IdComercio, esAdmin);
                 if (!validacion.Exito)
                     return (false, validacion.Mensaje, validacion.Codigo);
 
@@ -126,7 +126,7 @@ namespace HuellitasVitalesAPI.Services
 
         // ─── ACTIVAR / DESACTIVAR UN EMPLEADO ───
         public async Task<(bool Exito, string Mensaje, int Codigo)> CambiarEstadoAsync(
-            int idUsuarioSolicitante, int idComercioFuncionario, bool activo)
+            int idUsuarioSolicitante, int idComercioFuncionario, bool activo, bool esAdmin)
         {
             try
             {
@@ -136,7 +136,7 @@ namespace HuellitasVitalesAPI.Services
                 if (funcionario == null)
                     return (false, "El registro de empleado indicado no existe.", 404);
 
-                var validacion = await _validacion.ValidarPropietarioComercioAsync(idUsuarioSolicitante, funcionario.IdComercio);
+                var validacion = await _validacion.ValidarPropietarioComercioAsync(idUsuarioSolicitante, funcionario.IdComercio, esAdmin);
                 if (!validacion.Exito)
                     return (false, validacion.Mensaje, validacion.Codigo);
 

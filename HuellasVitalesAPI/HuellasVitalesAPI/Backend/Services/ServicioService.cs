@@ -21,15 +21,15 @@ namespace HuellitasVitalesAPI.Services
         }
 
         // ─── REGISTRAR UN SERVICIO EN UNA CLÍNICA VETERINARIA ───
-        // Codigo = código HTTP sugerido para que el controlador lo retorne.
+        // AÑADIDO: bool esAdmin en los parámetros
         public async Task<(bool Exito, string Mensaje, int Codigo, int IdServicio)> CrearAsync(
-            int idUsuario, CrearServicioRequest request)
+            int idUsuario, CrearServicioRequest request, bool esAdmin)
         {
             try
             {
-                // REGLA DE NEGOCIO: los servicios solo existen en clínicas veterinarias.
+                // AÑADIDO: pasamos esAdmin al validador
                 var validacion = await _validacion.ValidarComercioHabilitadoAsync(
-                    idUsuario, request.IdComercio, ComercioValidacionService.TIPO_COMERCIO_VETERINARIA);
+                    idUsuario, request.IdComercio, ComercioValidacionService.TIPO_COMERCIO_VETERINARIA, esAdmin);
 
                 if (!validacion.Exito)
                     return (false, validacion.Mensaje, validacion.Codigo, 0);

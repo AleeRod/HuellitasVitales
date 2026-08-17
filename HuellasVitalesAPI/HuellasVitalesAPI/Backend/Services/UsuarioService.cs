@@ -532,11 +532,6 @@ namespace HuellitasVitalesAPI.Services
             true,
             "La cuenta de Google fue vinculada correctamente."
         );
-
-        return (
-            true,
-            "La cuenta de Google fue vinculada correctamente."
-        );
     }
     catch (Exception ex)
     {
@@ -675,13 +670,42 @@ namespace HuellitasVitalesAPI.Services
                 .ToListAsync();
         }
 
-
-
-
-
-
-
-
+        public async Task<object?> ObtenerPerfilConComercioAsync(int idUsuario)
+        {
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
+        
+            if (usuario == null) return null;
+        
+            // Busca si el usuario tiene un comercio afiliado (funcionario/profesional).
+            // Si es admin o cliente sin comercio, esto simplemente sale null.
+            var comercio = await (from c in _context.Comercios
+                                join p in _context.PersonasLegales
+                                    on c.IdPersonaLegal equals p.IdPersonaLegal
+                                where p.IdUsuario == idUsuario
+                                select new
+                                {
+                                    c.IdComercio,
+                                    c.IdTipoComercio,
+                                    c.NombreComercial,
+                                    c.IdEstadoSolicitud
+                                })
+                                .FirstOrDefaultAsync();
+        
+            return new
+            {
+                usuario.IdUsuario,
+                usuario.Nombre,
+                usuario.Correo,
+                IdRol = usuario.IdRol,
+                EsAdmin = usuario.IdRol == 1,
+                EsFuncionario = usuario.IdRol == 4,
+                IdComercio = comercio?.IdComercio,
+                IdTipoComercio = comercio?.IdTipoComercio,       // 1 = Veterinaria, 2 = Almacén
+                NombreComercio = comercio?.NombreComercial,
+                ComercioAprobado = comercio != null && comercio.IdEstadoSolicitud == 2
+            };
+        }
 
 }
 

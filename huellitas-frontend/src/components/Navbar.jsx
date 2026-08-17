@@ -33,8 +33,9 @@ const Navbar = () => {
     const rol = usuario.idRol;
     
     if (rol === 1) navigate('/admin');
-    else if (rol === 2) navigate('/veterinario');
-    else navigate('/cliente');
+    if (rol === 2) navigate('/veterinario');
+    else if (rol === 3) navigate('/cliente');
+    else navigate('/funcionario'); // fallback para otros roles
     setDropdownOpen(false);
   };
 

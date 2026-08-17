@@ -5,7 +5,7 @@ import { useCarrito } from '../../hooks/useCarrito';
 import { ToastContainer } from '../../components/Toast/Toast';
 import useToast from '../../components/Toast/useToast';
 import CarritoIcono from '../../components/CarritoIcono/CarritoIcono';
-import { API_BASE } from '../../api/config';
+import { API_BASE, resolverImagen } from '../../api/config';
 import ModalRegistroRapido from '../../components/ModalRegistroRapido/ModalRegistroRapido'; // 👈 Asegúrate de ajustar la ruta según donde guardaste el modal
 import { 
     Search, ShoppingCart, Package, Stethoscope, 
@@ -56,7 +56,7 @@ const CategoriaCarrusel = ({ categoriaItem, agregarAlCarrito }) => {
                     {categoriaItem.productos.map((prod) => (
                         <li key={prod.idProducto} className={styles.card}>
                             {prod.imagenUrl ? (
-                                <img src={prod.imagenUrl} alt={prod.nombreProducto} className={styles.cardImg} loading="lazy" />
+                                <img src={resolverImagen(prod.imagenUrl)} alt={prod.nombreProducto} className={styles.cardImg} loading="lazy" />
                             ) : (
                                 <div className={styles.cardImgPlaceholder}>
                                     <Package size={36} />
@@ -490,7 +490,7 @@ const Marketplace = () => {
                                                 {productosTotalesFiltrados.map((prod) => (
                                                     <li key={prod.idProducto} className={styles.card}>
                                                         {prod.imagenUrl ? (
-                                                            <img src={prod.imagenUrl} alt={prod.nombreProducto} className={styles.cardImg} loading="lazy" />
+                                                            <img src={resolverImagen(prod.imagenUrl)} alt={prod.nombreProducto} className={styles.cardImg} loading="lazy" />
                                                         ) : (
                                                             <div className={styles.cardImgPlaceholder}><Package size={36} /></div>
                                                         )}
