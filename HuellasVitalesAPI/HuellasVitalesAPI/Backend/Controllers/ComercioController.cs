@@ -18,11 +18,21 @@ namespace HuellitasVitalesAPI.Controllers
         }
 
         [HttpPost("solicitud")]
+        [Authorize] // Requiere JWT válido
         public async Task<IActionResult> RegistrarSolicitud([FromBody] SolicitudComercioRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var resultado = await _comercioService.CrearSolicitudRegistroAsync(request);
+            // 👈 2. Extraemos el ID del usuario directamente del token JWT
+            var subClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                           ?? User.FindFirst("sub")?.Value;
+            
+            if (!int.TryParse(subClaim, out var idUsuarioToken))
+                return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
+
+            // 👈 3. Pasamos el 'idUsuarioToken' seguro al servicio en lugar de confiar en el request
+            // (Recuerda asegurarte de que tu ComercioService esté recibiendo este segundo parámetro)
+            var resultado = await _comercioService.CrearSolicitudRegistroAsync(request, idUsuarioToken);
 
             if (!resultado.Exito)
             {

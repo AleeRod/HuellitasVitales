@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+// 👈 1. Importamos useEffect de React
+import React, { useState, useEffect } from 'react';
+// 👈 2. Importamos useNavigate para poder redirigir al usuario
+import { useNavigate } from 'react-router-dom'; 
 import DogNav from '../../components/DogNav/DogNav';
 import { ToastContainer } from '../../components/Toast/Toast';
 import { useToast } from '../../components/Toast/useToast';
 import styles from './SolicitudComercio.module.css';
 
-// Estado inicial del formulario, separado para poder reutilizarlo al resetear
 const ESTADO_INICIAL = {
-    idUsuario: 1,
-    idTipoPersona: 1, // 1 = Física, 2 = Jurídica
+    idTipoPersona: 1, 
     identificacion: '',
     razonSocial: '',
     veterinaria: { activo: false, nombre: '', direccion: '', telefono: '' },
@@ -16,19 +17,29 @@ const ESTADO_INICIAL = {
 
 const SolicitudComercio = () => {
     const { toasts, showToast, removeToast } = useToast();
-
     const [formData, setFormData] = useState(ESTADO_INICIAL);
+    
+    // 👈 3. Inicializamos el hook de navegación
+    const navigate = useNavigate(); 
+
+    // 👈 4. Agregamos un useEffect que se ejecuta apenas carga el componente
+    useEffect(() => {
+        const token = localStorage.getItem('token_huellitas');
+        if (!token) {
+            // Si no hay token, lo mandamos al login (ajusta la ruta '/login' si en tu proyecto se llama diferente)
+            navigate('/login', { replace: true }); 
+        }
+    }, [navigate]);
 
     const handleInputChange = (e) => {
         const { name, type, checked } = e.target;
         let value = e.target.value;
 
-        // --- VALIDACIONES EN TIEMPO REAL (FILTRO DE TECLADO) ---
         if (name.endsWith('.telefono')) {
-            value = value.replace(/[^0-9]/g, '').slice(0, 8); // Solo números, max 8
+            value = value.replace(/[^0-9]/g, '').slice(0, 8);
         }
         if (name === 'identificacion') {
-            value = value.replace(/[^0-9-]/g, '').slice(0, 20); // Solo números y guiones
+            value = value.replace(/[^0-9-]/g, '').slice(0, 20);
         }
         if (name === 'razonSocial' || name.endsWith('.nombre')) {
             value = value.slice(0, 100);
@@ -37,7 +48,6 @@ const SolicitudComercio = () => {
             value = value.slice(0, 200);
         }
 
-        // --- GUARDADO EN EL ESTADO ---
         if (type === 'checkbox') {
             const [seccion, campo] = name.split('.');
             setFormData(prev => ({
@@ -55,7 +65,6 @@ const SolicitudComercio = () => {
         }
     };
 
-    // --- VALIDACIONES DE SINTAXIS (AL DAR CLIC EN ENVIAR) ---
     const validarFormulario = () => {
         if (!formData.identificacion.trim() || formData.identificacion.trim().length < 7) {
             showToast('La identificación no es válida (mínimo 7 caracteres).', 'warning');
@@ -110,10 +119,17 @@ const SolicitudComercio = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // 👈 5. Doble validación: por si acaso intentan enviar sin token
+        const token = localStorage.getItem('token_huellitas');
+        if (!token) {
+            showToast('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.', 'error');
+            setTimeout(() => navigate('/login'), 2000);
+            return;
+        }
+
         if (!validarFormulario()) return;
 
         const payload = {
-            idUsuario: formData.idUsuario,
             idTipoPersona: parseInt(formData.idTipoPersona),
             identificacion: formData.identificacion.trim(),
             razonSocial: formData.idTipoPersona == 1 ? "" : formData.razonSocial.trim(),
@@ -141,7 +157,10 @@ const SolicitudComercio = () => {
         try {
             const res = await fetch('http://localhost:5010/api/comercio/solicitud', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(payload)
             });
 
@@ -149,11 +168,16 @@ const SolicitudComercio = () => {
 
             if (res.ok) {
                 showToast(data.mensaje || 'Solicitud enviada con éxito.', 'success');
-                // Ya no navega a otra página: solo limpia el formulario para
-                // que el usuario pueda registrar otro comercio si lo desea.
                 setFormData(ESTADO_INICIAL);
             } else {
-                showToast(data.mensaje || 'No se pudo procesar la solicitud.', 'error');
+                // Si el backend responde 401, mandamos al login
+                if (res.status === 401) {
+                    showToast('Tu sesión ha expirado o es inválida.', 'error');
+                    localStorage.removeItem('token_huellitas'); // Limpiamos rastro del token malo
+                    setTimeout(() => navigate('/login'), 2000);
+                } else {
+                    showToast(data.mensaje || 'No se pudo procesar la solicitud.', 'error');
+                }
             }
         } catch (error) {
             showToast('Error de conexión con el servidor.', 'error');
@@ -162,15 +186,11 @@ const SolicitudComercio = () => {
 
     return (
         <>
-            {/* COMPONENTE DE NAVEGACIÓN ANIMADO */}
             <DogNav />
-
-            {/* Pila de notificaciones (éxito, error, advertencia) */}
             <ToastContainer toasts={toasts} removeToast={removeToast} />
 
             <main className={styles.solicitudLayout}>
                 <div className={styles.formContainer}>
-
                     <div className={styles.cardHead}>
                         <span className={styles.heroBadge}>🚀 Nueva Afiliación</span>
                         <h2 className={styles.cardTitle}>Registro de Comercios</h2>
@@ -178,7 +198,6 @@ const SolicitudComercio = () => {
                     </div>
 
                     <form onSubmit={handleSubmit} className={styles.formArea}>
-
                         {/* SECCIÓN: Información Legal */}
                         <div className={styles.sectionTitle}>Datos Legales</div>
                         <div className={styles.panelGrid}>
@@ -194,7 +213,6 @@ const SolicitudComercio = () => {
                                 </select>
                             </div>
 
-                            {/* Razón Social se oculta/muestra dinámicamente */}
                             {formData.idTipoPersona == 2 && (
                                 <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
                                     <label className="form-label">Razón Social</label>
