@@ -25,13 +25,21 @@ namespace HuellitasVitalesAPI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            // ID del funcionario que registra (claim "sub" = IdUsuario)
+            // ID del funcionario o usuario que registra (claim "sub" = IdUsuario)
             var subClaim = User.FindFirst("sub")?.Value
                         ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
             if (!int.TryParse(subClaim, out var idUsuario))
                 return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
 
-            var resultado = await _servicioService.CrearAsync(idUsuario, request);
+            // Extraer el rol del token para determinar si es Admin
+            var rolUsuario = User.FindFirst(ClaimTypes.Role)?.Value 
+                             ?? User.FindFirst("role")?.Value;
+
+            bool esAdmin = string.Equals(rolUsuario, "Admin", StringComparison.OrdinalIgnoreCase);
+
+            // Pasamos idUsuario, request y la bandera esAdmin al servicio
+            var resultado = await _servicioService.CrearAsync(idUsuario, request, esAdmin);
 
             if (!resultado.Exito)
                 return StatusCode(resultado.Codigo, new { success = false, mensaje = resultado.Mensaje });

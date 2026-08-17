@@ -26,7 +26,8 @@ namespace HuellitasVitalesAPI.Data
         public DbSet<OrdenDetalle> OrdenDetalles { get; set; } = null!;
         public DbSet<CargoCat> CargosCat { get; set; } = null!;
         public DbSet<ComercioFuncionario> ComerciosFuncionarios { get; set; } = null!;
-        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;        
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;    
+        public DbSet<EspecieCat> EspeciesCat { get; set; } = null!;    
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Usuario>().ToTable("USUARIO");
@@ -47,7 +48,7 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<OrdenDetalle>().ToTable("ORDEN_DETALLE");
             modelBuilder.Entity<TipoComercioCat>().ToTable("TIPO_COMERCIO_CAT");
             modelBuilder.Entity<CargoCat>().ToTable("CARGO_CAT");
-
+            modelBuilder.Entity<EspecieCat>().ToTable("ESPECIE_CAT");
             // Fuerza que TODOS los DateTime se traten como UTC
             // al leer/escribir en Postgres, evitando el error
             // "Cannot write DateTime with Kind=Unspecified..."

@@ -88,6 +88,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("PermitirFrontend");
 
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -23,6 +23,12 @@ namespace HuellitasVitalesAPI.Controllers
             return int.TryParse(subClaim, out idUsuario);
         }
 
+        private bool EsUsuarioAdmin()
+        {
+            var rolUsuario = User.FindFirst(ClaimTypes.Role)?.Value ?? User.FindFirst("role")?.Value;
+            return string.Equals(rolUsuario, "Admin", StringComparison.OrdinalIgnoreCase);
+        }
+
         // GET api/comerciofuncionario?idComercio=5
         [HttpGet]
         [Authorize]
@@ -31,7 +37,7 @@ namespace HuellitasVitalesAPI.Controllers
             if (!TryObtenerIdUsuario(out var idUsuario))
                 return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
 
-            var resultado = await _service.ListarPorComercioAsync(idUsuario, idComercio);
+            var resultado = await _service.ListarPorComercioAsync(idUsuario, idComercio, EsUsuarioAdmin());
             if (!resultado.Exito)
                 return StatusCode(resultado.Codigo, new { success = false, mensaje = resultado.Mensaje });
 
@@ -63,7 +69,7 @@ namespace HuellitasVitalesAPI.Controllers
             if (!TryObtenerIdUsuario(out var idUsuario))
                 return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
 
-            var resultado = await _service.VincularAsync(idUsuario, request);
+            var resultado = await _service.VincularAsync(idUsuario, request, EsUsuarioAdmin());
             if (!resultado.Exito)
                 return StatusCode(resultado.Codigo, new { success = false, mensaje = resultado.Mensaje });
 
@@ -78,7 +84,7 @@ namespace HuellitasVitalesAPI.Controllers
             if (!TryObtenerIdUsuario(out var idUsuario))
                 return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
 
-            var resultado = await _service.CambiarEstadoAsync(idUsuario, id, request.Activo);
+            var resultado = await _service.CambiarEstadoAsync(idUsuario, id, request.Activo, EsUsuarioAdmin());
             if (!resultado.Exito)
                 return StatusCode(resultado.Codigo, new { success = false, mensaje = resultado.Mensaje });
 
