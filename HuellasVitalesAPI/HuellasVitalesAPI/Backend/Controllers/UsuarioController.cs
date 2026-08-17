@@ -51,6 +51,78 @@ namespace HuellitasVitalesAPI.Controllers
             }
         }
 
+        [Authorize]
+        [HttpGet("mascotas")]
+        public async Task<IActionResult> ObtenerMascotasDelUsuario()
+        {
+            var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var idUsuario))
+                return Unauthorized(new { success = false, mensaje = "Token inválido o no proporcionado." });
+
+            var mascotas = await _usuarioService.ObtenerMascotasPorUsuarioAsync(idUsuario);
+            return Ok(new { success = true, mascotas });
+        }
+
+        [Authorize]
+        [HttpGet("mascotas/{idMascota:int}")]
+        public async Task<IActionResult> ObtenerMascotaPorId(int idMascota)
+        {
+            var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var idUsuario))
+                return Unauthorized(new { success = false, mensaje = "Token inválido o no proporcionado." });
+
+            var mascota = await _usuarioService.ObtenerMascotaPorIdAsync(idUsuario, idMascota);
+            if (mascota == null)
+                return NotFound(new { success = false, mensaje = "Mascota no encontrada." });
+
+            return Ok(new { success = true, mascota });
+        }
+
+        [Authorize]
+        [HttpPost("mascotas")]
+        public async Task<IActionResult> CrearMascota([FromBody] CrearMascotaRequest request)
+        {
+            var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var idUsuario))
+                return Unauthorized(new { success = false, mensaje = "Token inválido o no proporcionado." });
+
+            var (exito, mensaje, mascota) = await _usuarioService.CrearMascotaAsync(idUsuario, request);
+            if (!exito)
+                return BadRequest(new { success = false, mensaje });
+
+            return Ok(new { success = true, mensaje, mascota });
+        }
+
+        [Authorize]
+        [HttpPut("mascotas/{idMascota:int}")]
+        public async Task<IActionResult> ActualizarMascota(int idMascota, [FromBody] ActualizarMascotaRequest request)
+        {
+            var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var idUsuario))
+                return Unauthorized(new { success = false, mensaje = "Token inválido o no proporcionado." });
+
+            var (exito, mensaje, mascota) = await _usuarioService.ActualizarMascotaAsync(idUsuario, idMascota, request);
+            if (!exito)
+                return BadRequest(new { success = false, mensaje });
+
+            return Ok(new { success = true, mensaje, mascota });
+        }
+
+        [Authorize]
+        [HttpDelete("mascotas/{idMascota:int}")]
+        public async Task<IActionResult> EliminarMascota(int idMascota)
+        {
+            var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var idUsuario))
+                return Unauthorized(new { success = false, mensaje = "Token inválido o no proporcionado." });
+
+            var (exito, mensaje) = await _usuarioService.EliminarMascotaAsync(idUsuario, idMascota);
+            if (!exito)
+                return BadRequest(new { success = false, mensaje });
+
+            return Ok(new { success = true, mensaje });
+        }
+
         // ─── TAREA 119: Actualizar perfil de usuario autenticado ───
         // PUT api/usuario/perfil
         [Authorize]

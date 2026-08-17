@@ -14,6 +14,9 @@ import {
 } from 'lucide-react';
 import styles from './Marketplace.module.css';
 
+// IMPORTACIÓN DEL MODAL DE CITAS
+import AgendarCitaModal from '../../components/Cliente/AgendarCitaModal/AgendarCitaModal';
+
 const ESTADO = {
     INACTIVO: 'inactivo',
     CARGANDO: 'cargando',
@@ -121,6 +124,10 @@ const Marketplace = () => {
     const [estado, setEstado] = useState(ESTADO.CARGANDO);
     const [reintento, setReintento] = useState(0);
 
+    // NUEVOS ESTADOS PARA EL MODAL DE CITAS
+    const [modalCitaOpen, setModalCitaOpen] = useState(false);
+    const [servicioParaAgendar, setServicioParaAgendar] = useState(null);
+
     const terminoDebounced = useDebounce(termino, 400);
     const abortRef = useRef(null);
 
@@ -186,7 +193,6 @@ const Marketplace = () => {
         return () => controller.abort();
     }, [terminoDebounced, reintento]);
 
-    // EXTRACCIÓN DE FILTROS ÚNICOS
     const marcasDisponibles = [...new Map(catalogoPorCategoria.flatMap(c => c.productos || []).map(p => [p.idMarca, { id: p.idMarca, nombre: p.nombreMarca }])).values()].filter(m => m.id);
     const categoriasDisponibles = catalogoPorCategoria.map(c => ({ id: c.idCategoriaProducto, nombre: c.nombreCategoria }));
     
@@ -244,8 +250,50 @@ const Marketplace = () => {
         }
     };
 
-    const agendarServicio = (idServicio) => {
-        alert(`Redirigiendo al agendamiento de cita para el servicio ID: ${idServicio}`);
+    // FUNCIONES DEL MODAL DE CITAS
+    const agendarServicio = (servicioCompleto) => {
+        setServicioParaAgendar(servicioCompleto);
+        setModalCitaOpen(true);
+    };
+
+    const handleConfirmarCita = async (datosCita) => {
+        const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+        if (!token) {
+            alert('Debes iniciar sesión para agendar una cita.');
+            setModalCitaOpen(false);
+            return;
+        }
+
+        try {
+            const payload = {
+                idMascota: Number(datosCita.idMascota),
+                idServicio: Number(datosCita.idServicio),
+                idVeterinario: datosCita.idVeterinario ? Number(datosCita.idVeterinario) : null,
+                fecha: datosCita.fecha,
+                horaInicio: datosCita.horaInicio,
+                notas: datosCita.notas || ''
+            };
+
+            const res = await fetch(`${API_BASE}/cita`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                const mensaje = data?.mensaje || 'No se pudo agendar la cita.';
+                throw new Error(mensaje);
+            }
+
+            setModalCitaOpen(false);
+            alert(data?.mensaje || 'Cita agendada correctamente.');
+        } catch (error) {
+            alert(error.message || 'Ocurrió un error al agendar la cita.');
+        }
     };
 
     const aplicarFiltrosProductos = (listaProductos) => {
@@ -276,7 +324,6 @@ const Marketplace = () => {
 
     const esModoBusqueda = terminoDebounced.trim() !== '';
     const tieneFiltrosAplicados = filtrosAvanzados.categoriasIds.length > 0 || filtrosAvanzados.marcasIds.length > 0 || filtrosAvanzados.tiposServicioIds.length > 0 || filtrosAvanzados.precioMin !== '' || filtrosAvanzados.precioMax !== '';
-    
     const mostrarComoGridVertical = esModoBusqueda || tieneFiltrosAplicados;
 
     const productosTotalesFiltrados = aplicarFiltrosProductos(
@@ -470,7 +517,8 @@ const Marketplace = () => {
                                                                 <p className={styles.cardPrecio}>₡{serv.precio}</p>
                                                                 <p className={styles.cardMeta}><span>⏱</span> {serv.duracionMinutos} min</p>
                                                             </div>
-                                                            <button className={styles.scheduleBtn} onClick={() => agendarServicio(serv.idServicio)}>
+                                                            {/* BOTÓN ACTUALIZADO PARA PASAR EL OBJETO COMPLETO */}
+                                                            <button className={styles.scheduleBtn} onClick={() => agendarServicio(serv)}>
                                                                 <CalendarPlus size={16} /><span>Agendar Cita</span>
                                                             </button>
                                                         </div>
@@ -530,7 +578,8 @@ const Marketplace = () => {
                                                                 <p className={styles.cardPrecio}>₡{serv.precio}</p>
                                                                 <p className={styles.cardMeta}><span>⏱</span> {serv.duracionMinutos} min</p>
                                                             </div>
-                                                            <button className={styles.scheduleBtn} onClick={() => agendarServicio(serv.idServicio)}>
+                                                            {/* BOTÓN ACTUALIZADO PARA PASAR EL OBJETO COMPLETO */}
+                                                            <button className={styles.scheduleBtn} onClick={() => agendarServicio(serv)}>
                                                                 <CalendarPlus size={16} /><span>Agendar Cita</span>
                                                             </button>
                                                         </div>
@@ -546,14 +595,20 @@ const Marketplace = () => {
                 </div>
             </main>
 
-            {/* MODAL DE REGISTRO RÁPIDO INTEGRADO */}
             <ModalRegistroRapido 
                 isOpen={modalCheckoutAbierto}
                 onClose={() => setModalCheckoutAbierto(false)}
                 onRegistroExitoso={() => {
                     setModalCheckoutAbierto(false);
-                    alert("¡Datos de contacto guardados correctamente! Aquí el sistema pasaría a la pasarela de pago.");
+                    alert('¡Datos de contacto guardados correctamente! Aquí el sistema pasaría a la pasarela de pago.');
                 }}
+            />
+
+            <AgendarCitaModal 
+                open={modalCitaOpen} 
+                servicioInicial={servicioParaAgendar} 
+                onClose={() => setModalCitaOpen(false)} 
+                onConfirm={handleConfirmarCita}
             />
         </>
     );

@@ -7,6 +7,12 @@ import Register from './pages/Auth/Register';
 import DashboardAdmin from './pages/Admin/DashboardAdmin';
 import PanelVeterinario from './pages/Veterinario/PanelVeterinario';
 import DashboardCliente from './pages/Cliente/DashboardCliente';
+import MisCitas from './pages/Cliente/MisCitas';
+import MisMascotas from './pages/Cliente/MisMascotas';
+import HistorialClinico from './pages/Cliente/HistorialClinico';
+import Vacunas from './pages/Cliente/Vacunas';
+import Reportes from './pages/Cliente/Reportes';
+import Configuracion from './pages/Cliente/Configuracion';
 import SolicitudComercio from './pages/SolicitudComercio/SolicitudComercio';
 import Marketplace from './pages/Marketplace/Marketplace';
 import Perfil from './pages/Perfil/Perfil';
@@ -15,7 +21,6 @@ import { CarritoProvider } from './context/CarritoProvider';
 import DashboardFuncionario from './pages/Funcionario/DashboardFuncionario';
 
 function App() {
-
   return (
     <Router>
       <CarritoProvider>
@@ -31,6 +36,12 @@ function App() {
           <Route path="/admin" element={<DashboardAdmin />} />
           <Route path="/veterinario" element={<PanelVeterinario />} />
           <Route path="/cliente" element={<DashboardCliente />} />
+          <Route path="/cliente/mis-citas" element={<MisCitas />} />
+          <Route path="/cliente/mis-mascotas" element={<MisMascotas />} />
+          <Route path="/cliente/historial-clinico" element={<HistorialClinico />} />
+          <Route path="/cliente/vacunas" element={<Vacunas />} />
+          <Route path="/cliente/reportes" element={<Reportes />} />
+          <Route path="/cliente/configuracion" element={<Configuracion />} />
           <Route path="/funcionario" element={<DashboardFuncionario />} />
         </Routes>
       </CarritoProvider>

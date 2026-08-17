@@ -73,6 +73,10 @@ namespace HuellitasVitalesAPI.Services
                     servicios = await (from s in _context.Servicios
                                      join com in _context.Comercios on s.IdComercio equals com.IdComercio
                                      join t in _context.TipoServicioCat on (int)s.IdTipoServicio equals (int)t.IdTipoServicio
+                                     join v in _context.Veterinarios on s.IdVeterinario equals v.IdVeterinario into vGroup
+                                     from v in vGroup.DefaultIfEmpty()
+                                     join u in _context.Usuarios on v.IdUsuario equals u.IdUsuario into uGroup
+                                     from u in uGroup.DefaultIfEmpty()
                                      where s.Activo == true
                                      select new
                                      {
@@ -82,6 +86,8 @@ namespace HuellitasVitalesAPI.Services
                                          TipoServicio = t.Nombre,
                                          IdComercio = com.IdComercio,
                                          NombreComercio = com.NombreComercial,
+                                         IdVeterinario = s.IdVeterinario,
+                                         NombreVeterinario = v != null && u != null ? (u.Nombre + " " + u.Apellidos).Trim() : "Equipo veterinario",
                                          Precio = s.Precio,
                                          DuracionMinutos = s.DuracionMinutos
                                      }).ToListAsync<object>();

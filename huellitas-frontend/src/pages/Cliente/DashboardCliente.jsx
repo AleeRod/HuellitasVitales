@@ -1,7 +1,259 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './DashboardCliente.css';
+import { 
+  Home, PawPrint, CalendarDays, Activity, Syringe, FileText, 
+  Settings, LogOut, Bell, Plus, Download, Dog, Cat, Eye, CheckCircle2, AlertCircle
+} from 'lucide-react';
+
+import AgendarCitaModal from '../../components/Cliente/AgendarCitaModal/AgendarCitaModal';
+import { API_BASE } from '../../api/config';
+import { ToastContainer } from '../../components/Toast/Toast';
+import { useToast } from '../../components/Toast/useToast';
 
 const DashboardCliente = () => {
+  const [usuario, setUsuario] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [citas, setCitas] = useState([]);
+  const [mascotas, setMascotas] = useState([]);
+  const [cargandoCitas, setCargandoCitas] = useState(false);
+  const [cargandoMascotas, setCargandoMascotas] = useState(false);
+  const [mostrarFormularioMascota, setMostrarFormularioMascota] = useState(false);
+  const [editandoMascotaId, setEditandoMascotaId] = useState(null);
+  const [formMascota, setFormMascota] = useState({
+    nombre: '',
+    idEspecie: 1,
+    raza: '',
+    fechaNacimiento: '',
+    activo: true
+  });
+  const { toasts, showToast, removeToast } = useToast();
+
+  const navigate = useNavigate();
+
+  // Lógica de carga de usuario (Idéntica al Admin)
+  useEffect(() => {
+    try {
+      const guardado = localStorage.getItem('usuario_huellitas') || localStorage.getItem('usuario') || localStorage.getItem('user');
+      if (guardado) {
+        setUsuario(JSON.parse(guardado));
+      }
+    } catch (err) {
+      console.error('No se pudo leer el usuario guardado', err);
+    }
+  }, []);
+
+  // Variables dinámicas para la interfaz
+  const nombreUsuario = usuario?.nombre || usuario?.Nombre || usuario?.nombreCompleto || 'Cliente';
+  const rolUsuario = usuario?.rol?.nombre || usuario?.rolNombre || usuario?.rol || 'Cliente';
+  const inicialAvatar = nombreUsuario.charAt(0).toUpperCase();
+  const citasPendientes = citas.filter((c) => c.idEstadoCita !== 3 && c.idEstadoCita !== 4).length;
+  const citasProximas = citas
+    .filter((c) => c.idEstadoCita !== 3 && c.idEstadoCita !== 4)
+    .slice(0, 2);
+
+  // Función de cerrar sesión (Idéntica al Admin)
+  const handleCerrarSesion = (e) => {
+    e.preventDefault();
+    localStorage.removeItem('usuario_huellitas');
+    localStorage.removeItem('usuario');
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('token_huellitas');
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('huellitas_token');
+    navigate('/');
+  };
+
+  const cargarMisCitas = async () => {
+    const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      setCargandoCitas(true);
+      const res = await fetch(`${API_BASE}/cita/mis-citas`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('No se pudo cargar tus citas');
+      const data = await res.json();
+      setCitas(data?.citas || []);
+    } catch (error) {
+      console.error(error);
+      setCitas([]);
+    } finally {
+      setCargandoCitas(false);
+    }
+  };
+
+  const cargarMisMascotas = async () => {
+    const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      setCargandoMascotas(true);
+      const res = await fetch(`${API_BASE}/usuario/mascotas`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo cargar tus mascotas');
+      setMascotas(Array.isArray(data?.mascotas) ? data.mascotas : []);
+    } catch (error) {
+      console.error(error);
+      setMascotas([]);
+    } finally {
+      setCargandoMascotas(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarMisCitas();
+    cargarMisMascotas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const resetFormularioMascota = () => {
+    setFormMascota({
+      nombre: '',
+      idEspecie: 1,
+      raza: '',
+      fechaNacimiento: '',
+      activo: true
+    });
+    setEditandoMascotaId(null);
+    setMostrarFormularioMascota(false);
+  };
+
+  const abrirFormularioNuevaMascota = () => {
+    resetFormularioMascota();
+    setMostrarFormularioMascota(true);
+  };
+
+  const abrirFormularioEdicionMascota = (mascota) => {
+    setEditandoMascotaId(mascota.idMascota ?? mascota.IdMascota);
+    setFormMascota({
+      nombre: mascota.nombre || mascota.Nombre || '',
+      idEspecie: Number(mascota.idEspecie ?? mascota.IdEspecie ?? 1),
+      raza: mascota.raza || mascota.Raza || '',
+      fechaNacimiento: mascota.fechaNacimiento || mascota.FechaNacimiento ? (mascota.fechaNacimiento || mascota.FechaNacimiento).slice(0, 10) : '',
+      activo: mascota.activo ?? mascota.Activo ?? true
+    });
+    setMostrarFormularioMascota(true);
+  };
+
+  const guardarMascota = async () => {
+    const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+    if (!token) {
+      showToast('Debes iniciar sesión para gestionar mascotas.', 'warning');
+      return;
+    }
+
+    const payload = {
+      nombre: formMascota.nombre.trim(),
+      idEspecie: Number(formMascota.idEspecie),
+      raza: formMascota.raza?.trim() || null,
+      fechaNacimiento: formMascota.fechaNacimiento || null,
+      activo: formMascota.activo
+    };
+
+    if (!payload.nombre) {
+      showToast('El nombre de la mascota es obligatorio.', 'error');
+      return;
+    }
+
+    try {
+      const url = editandoMascotaId
+        ? `${API_BASE}/usuario/mascotas/${editandoMascotaId}`
+        : `${API_BASE}/usuario/mascotas`;
+      const method = editandoMascotaId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo guardar la mascota.');
+
+      showToast(data?.mensaje || 'Mascota guardada correctamente.', 'success');
+      resetFormularioMascota();
+      await cargarMisMascotas();
+    } catch (error) {
+      showToast(error.message || 'Error al guardar la mascota.', 'error');
+    }
+  };
+
+  const eliminarMascota = async (mascota) => {
+    const idMascota = mascota.idMascota ?? mascota.IdMascota;
+    const nombre = mascota.nombre || mascota.Nombre || 'esta mascota';
+
+    const confirmar = window.confirm(`¿Deseas eliminar a ${nombre}?`);
+    if (!confirmar) return;
+
+    const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+    if (!token) {
+      showToast('Debes iniciar sesión para eliminar mascotas.', 'warning');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/usuario/mascotas/${idMascota}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo eliminar la mascota.');
+
+      showToast(data?.mensaje || 'Mascota eliminada.', 'success');
+      await cargarMisMascotas();
+    } catch (error) {
+      showToast(error.message || 'Error al eliminar la mascota.', 'error');
+    }
+  };
+
+  const handleConfirmarCita = async (datosCita) => {
+    const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+    if (!token) {
+      showToast('Debes iniciar sesión para agendar una cita.', 'warning');
+      setIsModalOpen(false);
+      return;
+    }
+
+    try {
+      const payload = {
+        idMascota: Number(datosCita.idMascota),
+        idServicio: Number(datosCita.idServicio),
+        idVeterinario: datosCita.idVeterinario ? Number(datosCita.idVeterinario) : null,
+        fecha: datosCita.fecha,
+        horaInicio: datosCita.horaInicio,
+        notas: datosCita.notas || ''
+      };
+
+      const res = await fetch(`${API_BASE}/cita`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.mensaje || 'No se pudo agendar la cita.');
+      }
+
+      setIsModalOpen(false);
+      showToast(data?.mensaje || 'Cita agendada correctamente.', 'success');
+      await cargarMisCitas();
+    } catch (error) {
+      showToast(error.message || 'Ocurrió un error al agendar la cita.', 'error');
+    }
+  };
+
   return (
     <div className="client-shell">
       {/* SIDEBAR */}
@@ -16,44 +268,50 @@ const DashboardCliente = () => {
           </div>
 
           <div className="nav-section">Mi cuenta</div>
-          <a href="#" className="nav-link-client active">
-            <span className="nav-icon">🏠</span>
+          <a href="#dashboard" className="nav-link-client active" onClick={(e) => e.preventDefault()}>
+            <span className="nav-icon"><Home size={18} /></span>
             Dashboard
           </a>
-          <a href="#" className="nav-link-client">
-            <span className="nav-icon">🐾</span>
+          <a href="#mascotas" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/mis-mascotas'); }}>
+            <span className="nav-icon"><PawPrint size={18} /></span>
             Mis mascotas
           </a>
-          <a href="#" className="nav-link-client">
-            <span className="nav-icon">📅</span>
+          <a href="#citas" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/mis-citas'); }}>
+            <span className="nav-icon"><CalendarDays size={18} /></span>
             Mis citas
           </a>
-          <a href="#" className="nav-link-client">
-            <span className="nav-icon">🩺</span>
+          <a href="#historial" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/historial-clinico'); }}>
+            <span className="nav-icon"><Activity size={18} /></span>
             Historial clínico
           </a>
-          <a href="#" className="nav-link-client">
-            <span className="nav-icon">💉</span>
+          <a href="#vacunas" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/vacunas'); }}>
+            <span className="nav-icon"><Syringe size={18} /></span>
             Vacunas
           </a>
-          <a href="#" className="nav-link-client">
-            <span className="nav-icon">📄</span>
+          <a href="#reportes" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/reportes'); }}>
+            <span className="nav-icon"><FileText size={18} /></span>
             Reportes
           </a>
 
           <div className="nav-section">Sistema</div>
-          <a href="#" className="nav-link-client">
-            <span className="nav-icon">⚙️</span>
+          <a href="#configuracion" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/configuracion'); }}>
+            <span className="nav-icon"><Settings size={18} /></span>
             Configuración
           </a>
-          <a href="/login" className="nav-link-client">
-            <span className="nav-icon">🚪</span>
+          
+          {/* BOTÓN CERRAR SESIÓN CON LÓGICA INTEGADA */}
+          <button 
+            onClick={handleCerrarSesion} 
+            className="nav-link-client" 
+            style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', color: '#ff4d4d', cursor: 'pointer' }}
+          >
+            <span className="nav-icon"><LogOut size={18} /></span>
             Cerrar sesión
-          </a>
+          </button>
 
           <div className="sidebar-pet-card">
             <div className="pet-mini">
-              <div className="pet-avatar">🐶</div>
+              <div className="pet-avatar"><Dog size={16} color="#4a4a4a" /></div>
               <div>
                 <div className="pet-name">Max</div>
                 <div className="pet-text">Próxima cita: 15 de julio</div>
@@ -74,17 +332,21 @@ const DashboardCliente = () => {
               </svg>
               Dashboard del cliente
             </div>
-            <h1 className="hero-title">Hola, Brandon 👋</h1>
+            {/* SALUDO DINÁMICO */}
+            <h1 className="hero-title">Hola, {nombreUsuario.split(' ')[0]} 👋</h1>
             <p className="hero-sub">Consulta tus mascotas, próximas citas, vacunas e historial de salud.</p>
           </div>
 
           <div className="top-actions">
-            <button className="icon-button" title="Notificaciones">🔔</button>
+            <button className="icon-button" title="Notificaciones">
+              <Bell size={20} />
+            </button>
             <div className="profile-mini">
-              <div className="profile-avatar">B</div>
+              {/* AVATAR Y DATOS DINÁMICOS */}
+              <div className="profile-avatar">{inicialAvatar}</div>
               <div>
-                <div className="profile-name">Brandon Alfaro</div>
-                <div className="profile-role">Cliente</div>
+                <div className="profile-name">{nombreUsuario}</div>
+                <div className="profile-role">{rolUsuario}</div>
               </div>
             </div>
           </div>
@@ -93,28 +355,28 @@ const DashboardCliente = () => {
         {/* STATS */}
         <section className="stats-grid">
           <article className="stat-card">
-            <div className="stat-icon">🐾</div>
+            <div className="stat-icon"><PawPrint size={24} color="#52B788" /></div>
             <div className="stat-label">Mascotas registradas</div>
-            <div className="stat-number">3</div>
+            <div className="stat-number">{mascotas.length}</div>
             <div className="stat-note">Perros y gatos asociados a tu cuenta</div>
           </article>
 
           <article className="stat-card">
-            <div className="stat-icon">📅</div>
+            <div className="stat-icon"><CalendarDays size={24} color="#52B788" /></div>
             <div className="stat-label">Citas pendientes</div>
-            <div className="stat-number">2</div>
+            <div className="stat-number">{cargandoCitas ? '…' : citasPendientes}</div>
             <div className="stat-note">Próximas visitas programadas</div>
           </article>
 
           <article className="stat-card">
-            <div className="stat-icon">💉</div>
+            <div className="stat-icon"><Syringe size={24} color="#52B788" /></div>
             <div className="stat-label">Vacunas al día</div>
             <div className="stat-number">8</div>
             <div className="stat-note">Control preventivo actualizado</div>
           </article>
 
           <article className="stat-card">
-            <div className="stat-icon">🩺</div>
+            <div className="stat-icon"><Activity size={24} color="#52B788" /></div>
             <div className="stat-label">Consultas realizadas</div>
             <div className="stat-number">12</div>
             <div className="stat-note">Historial clínico disponible</div>
@@ -127,44 +389,95 @@ const DashboardCliente = () => {
             <div className="card-head">
               <div>
                 <h2 className="card-title">Mis mascotas</h2>
-                <p className="card-subtitle">Resumen rápido de las mascotas registradas.</p>
+                <p className="card-subtitle">Gestiona las mascotas registradas en tu cuenta.</p>
               </div>
-              <button className="btn-main">＋ Agregar mascota</button>
+              <button className="btn-main" onClick={abrirFormularioNuevaMascota}>
+                <Plus size={16} style={{marginRight: '6px'}} /> Agregar mascota
+              </button>
             </div>
 
+            {mostrarFormularioMascota && (
+              <div style={{ marginTop: 18, marginBottom: 18, padding: 18, border: '1px solid #e9ecef', borderRadius: 14, background: '#f7f9f8' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Nombre</label>
+                    <input
+                      value={formMascota.nombre}
+                      onChange={(e) => setFormMascota({ ...formMascota, nombre: e.target.value })}
+                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #dfe6e9', borderRadius: 10 }}
+                      placeholder="Ej. Luna"
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Especie</label>
+                    <select
+                      value={formMascota.idEspecie}
+                      onChange={(e) => setFormMascota({ ...formMascota, idEspecie: Number(e.target.value) })}
+                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #dfe6e9', borderRadius: 10 }}
+                    >
+                      <option value={1}>Perro</option>
+                      <option value={2}>Gato</option>
+                      <option value={3}>Otra</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Raza</label>
+                    <input
+                      value={formMascota.raza}
+                      onChange={(e) => setFormMascota({ ...formMascota, raza: e.target.value })}
+                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #dfe6e9', borderRadius: 10 }}
+                      placeholder="Opcional"
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Nacimiento</label>
+                    <input
+                      type="date"
+                      value={formMascota.fechaNacimiento}
+                      onChange={(e) => setFormMascota({ ...formMascota, fechaNacimiento: e.target.value })}
+                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #dfe6e9', borderRadius: 10 }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14, gap: 10 }}>
+                  <button className="btn-soft" onClick={resetFormularioMascota}>Cancelar</button>
+                  <button className="btn-main" onClick={guardarMascota}>{editandoMascotaId ? 'Guardar cambios' : 'Guardar mascota'}</button>
+                </div>
+              </div>
+            )}
+
             <div className="pet-list">
-              <div className="pet-item">
-                <div className="pet-info">
-                  <div className="pet-icon">🐶</div>
-                  <div>
-                    <div className="pet-title">Max</div>
-                    <div className="pet-detail">Perro · Golden Retriever · 4 años</div>
-                  </div>
-                </div>
-                <span className="status-badge status-ok">● Salud estable</span>
-              </div>
+              {cargandoMascotas && <div className="appointment" style={{ display: 'block' }}>Cargando tus mascotas…</div>}
+              {!cargandoMascotas && mascotas.length === 0 && (
+                <div className="appointment" style={{ display: 'block' }}>Aún no tienes mascotas vinculadas a tu cuenta.</div>
+              )}
+              {!cargandoMascotas && mascotas.map((mascota) => {
+                const nombre = mascota.nombre || mascota.Nombre;
+                const especie = mascota.especie || mascota.Especie || 'Otra';
+                const raza = mascota.raza || mascota.Raza || 'Sin raza';
+                const edad = mascota.fechaNacimiento || mascota.FechaNacimiento
+                  ? `${new Date(mascota.fechaNacimiento || mascota.FechaNacimiento).getFullYear() === new Date().getFullYear() ? 'Este año' : 'Registrada'}`
+                  : 'Sin edad registrada';
+                const Icon = especie === 'Gato' ? Cat : Dog;
+                const mascotaId = mascota.idMascota ?? mascota.IdMascota;
 
-              <div className="pet-item">
-                <div className="pet-info">
-                  <div className="pet-icon">🐱</div>
-                  <div>
-                    <div className="pet-title">Luna</div>
-                    <div className="pet-detail">Gata · Persa · 2 años</div>
+                return (
+                  <div className="pet-item" key={mascotaId}>
+                    <div className="pet-info">
+                      <div className="pet-icon"><Icon size={24} color="#52B788" /></div>
+                      <div>
+                        <div className="pet-title">{nombre}</div>
+                        <div className="pet-detail">{especie} · {raza} · {edad}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <button className="btn-soft" onClick={() => abrirFormularioEdicionMascota(mascota)} style={{ padding: '8px 10px' }}>Editar</button>
+                      <button className="btn-main" onClick={() => eliminarMascota(mascota)} style={{ padding: '8px 10px', background: '#ef4444', borderColor: '#ef4444' }}>Eliminar</button>
+                    </div>
                   </div>
-                </div>
-                <span className="status-badge status-warn">● Vacuna pendiente</span>
-              </div>
-
-              <div className="pet-item">
-                <div className="pet-info">
-                  <div className="pet-icon">🐶</div>
-                  <div>
-                    <div className="pet-title">Rocky</div>
-                    <div className="pet-detail">Perro · French Poodle · 6 años</div>
-                  </div>
-                </div>
-                <span className="status-badge status-ok">● Control al día</span>
-              </div>
+                );
+              })}
             </div>
           </div>
 
@@ -175,42 +488,34 @@ const DashboardCliente = () => {
                 <h2 className="card-title">Próximas citas</h2>
                 <p className="card-subtitle">Visitas veterinarias programadas.</p>
               </div>
-              <button className="btn-soft">Ver agenda</button>
+              <button className="btn-main" onClick={() => setIsModalOpen(true)}>
+                <CalendarDays size={16} style={{marginRight: '6px'}} /> Agendar cita
+              </button>
             </div>
 
             <div className="appointment-list">
-              <div className="appointment">
-                <div className="date-box">
-                  15
-                  <span>Jul</span>
-                </div>
-                <div>
-                  <div className="appointment-title">Consulta general — Max</div>
-                  <div className="appointment-text">9:00 a.m. · Clínica Central · Dra. María López</div>
-                </div>
-              </div>
-
-              <div className="appointment">
-                <div className="date-box">
-                  22
-                  <span>Jul</span>
-                </div>
-                <div>
-                  <div className="appointment-title">Vacunación — Luna</div>
-                  <div className="appointment-text">2:30 p.m. · Área de vacunación · Dr. Carlos Rojas</div>
-                </div>
-              </div>
-
-              <div className="appointment">
-                <div className="date-box">
-                  02
-                  <span>Ago</span>
-                </div>
-                <div>
-                  <div className="appointment-title">Control dental — Rocky</div>
-                  <div className="appointment-text">11:15 a.m. · Consultorio 2 · Dra. Ana Mora</div>
-                </div>
-              </div>
+              {cargandoCitas && <div className="appointment" style={{ display: 'block' }}>Cargando tus citas…</div>}
+              {!cargandoCitas && citasProximas.length === 0 && (
+                <div className="appointment" style={{ display: 'block' }}>Aún no tienes citas agendadas.</div>
+              )}
+              {!cargandoCitas && citasProximas.map((cita) => {
+                const fecha = new Date(cita.fecha);
+                const fechaLabel = fecha.toLocaleDateString('es-CR', { day: '2-digit', month: 'short' });
+                const dia = fecha.getDate();
+                const mes = fecha.toLocaleDateString('es-CR', { month: 'short' }).replace('.', '');
+                return (
+                  <div className="appointment" key={cita.idCita}>
+                    <div className="date-box">
+                      {dia}
+                      <span>{mes}</span>
+                    </div>
+                    <div>
+                      <div className="appointment-title">{cita.nombreServicio} — {cita.nombreMascota}</div>
+                      <div className="appointment-text">{cita.horaInicio?.slice(0, 5)} · {cita.nombreVeterinario} · {cita.estadoCita}</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -243,16 +548,6 @@ const DashboardCliente = () => {
                 </div>
                 <div className="health-value">70%</div>
               </div>
-
-              <div className="health-row">
-                <div>
-                  <div className="health-label">Tratamientos activos</div>
-                  <div className="progress mt-2" style={{ width: '220px' }}>
-                    <div className="progress-bar" style={{ width: '45%' }}></div>
-                  </div>
-                </div>
-                <div className="health-value">2</div>
-              </div>
             </div>
           </div>
 
@@ -267,7 +562,9 @@ const DashboardCliente = () => {
 
             <div className="appointment-list">
               <div className="appointment">
-                <div className="date-box">💉</div>
+                <div className="date-box" style={{ background: '#fef3c7', color: '#d97706' }}>
+                  <Syringe size={20} />
+                </div>
                 <div>
                   <div className="appointment-title">Vacuna pendiente</div>
                   <div className="appointment-text">Luna tiene una vacuna pendiente para este mes.</div>
@@ -275,7 +572,9 @@ const DashboardCliente = () => {
               </div>
 
               <div className="appointment">
-                <div className="date-box">📄</div>
+                <div className="date-box" style={{ background: '#d1fae5', color: '#059669' }}>
+                  <FileText size={20} />
+                </div>
                 <div>
                   <div className="appointment-title">Reporte disponible</div>
                   <div className="appointment-text">Ya puedes consultar el reporte clínico de Max.</div>
@@ -291,7 +590,9 @@ const DashboardCliente = () => {
                 <h2 className="card-title">Historial reciente</h2>
                 <p className="card-subtitle">Últimas consultas y movimientos registrados.</p>
               </div>
-              <button className="btn-soft">Descargar historial</button>
+              <button className="btn-soft">
+                <Download size={16} style={{marginRight: '6px'}} /> Descargar historial
+              </button>
             </div>
 
             <div className="table-wrap">
@@ -314,26 +615,16 @@ const DashboardCliente = () => {
                       <td>Max</td>
                       <td>Consulta general</td>
                       <td>Dra. María López</td>
-                      <td><span className="status-badge status-ok">Completado</span></td>
-                      <td><button className="action-btn">Ver</button></td>
-                    </tr>
-
-                    <tr>
-                      <td>18/06/2026</td>
-                      <td>Luna</td>
-                      <td>Desparasitación</td>
-                      <td>Dr. Carlos Rojas</td>
-                      <td><span className="status-badge status-ok">Completado</span></td>
-                      <td><button className="action-btn">Ver</button></td>
-                    </tr>
-
-                    <tr>
-                      <td>05/06/2026</td>
-                      <td>Rocky</td>
-                      <td>Control dental</td>
-                      <td>Dra. Ana Mora</td>
-                      <td><span className="status-badge status-warn">Seguimiento</span></td>
-                      <td><button className="action-btn">Ver</button></td>
+                      <td>
+                        <span className="status-badge status-ok">
+                          <CheckCircle2 size={12} style={{marginRight: '4px'}} /> Completado
+                        </span>
+                      </td>
+                      <td>
+                        <button className="action-btn" title="Ver detalle">
+                          <Eye size={16} />
+                        </button>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -343,6 +634,14 @@ const DashboardCliente = () => {
 
         </section>
       </main>
+
+      {/* RENDERIZAMOS EL MODAL AQUÍ */}
+      <AgendarCitaModal 
+        open={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onConfirm={handleConfirmarCita} 
+      />
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };

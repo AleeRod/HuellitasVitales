@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using HuellasVitalesAPI.Backend.Models.Entidades; // Aquí irán tus clases de usuario, etc.
+using HuellasVitalesAPI.Backend.Models.Entidades;
 
 namespace HuellitasVitalesAPI.Data
 {
@@ -26,8 +26,13 @@ namespace HuellitasVitalesAPI.Data
         public DbSet<OrdenDetalle> OrdenDetalles { get; set; } = null!;
         public DbSet<CargoCat> CargosCat { get; set; } = null!;
         public DbSet<ComercioFuncionario> ComerciosFuncionarios { get; set; } = null!;
-        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;    
-        public DbSet<EspecieCat> EspeciesCat { get; set; } = null!;    
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
+        public DbSet<EspecieCat> EspeciesCat { get; set; } = null!;
+        public DbSet<Cita> Citas { get; set; } = null!;
+        public DbSet<HorarioVeterinario> HorariosVeterinario { get; set; } = null!;
+        public DbSet<EstadoCitaCat> EstadosCitaCat { get; set; } = null!;
+        public DbSet<Mascota> Mascotas { get; set; } = null!;
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Usuario>().ToTable("USUARIO");
@@ -48,7 +53,13 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<OrdenDetalle>().ToTable("ORDEN_DETALLE");
             modelBuilder.Entity<TipoComercioCat>().ToTable("TIPO_COMERCIO_CAT");
             modelBuilder.Entity<CargoCat>().ToTable("CARGO_CAT");
+            modelBuilder.Entity<ComercioFuncionario>().ToTable("COMERCIO_FUNCIONARIO");
             modelBuilder.Entity<EspecieCat>().ToTable("ESPECIE_CAT");
+            modelBuilder.Entity<Cita>().ToTable("CITA");
+            modelBuilder.Entity<HorarioVeterinario>().ToTable("HORARIO_VETERINARIO");
+            modelBuilder.Entity<EstadoCitaCat>().ToTable("ESTADO_CITA_CAT");
+            modelBuilder.Entity<Mascota>().ToTable("MASCOTA");
+
             // Fuerza que TODOS los DateTime se traten como UTC
             // al leer/escribir en Postgres, evitando el error
             // "Cannot write DateTime with Kind=Unspecified..."
