@@ -31,7 +31,6 @@ namespace HuellasVitalesAPI.Backend.Models.Entidades
         [Column("IdTipoServicio")]
         public short IdTipoServicio { get; set; }
 
-        // 👇 ¡Esta es la que faltaba!
         [Column("IdVeterinario")]
         public int? IdVeterinario { get; set; } 
     }

@@ -52,7 +52,7 @@ namespace HuellitasVitalesAPI.Controllers
                     success = true,
                     mensaje = "¡Bienvenido!",
                     token = tokenJwt,
-                    usuario = new { usuario.Nombre, usuario.Correo, usuario.IdRol }
+                    usuario = new { usuario.IdUsuario, usuario.Nombre, usuario.Correo, usuario.IdRol }
                 });
             }
             catch (Exception ex)
@@ -76,7 +76,7 @@ namespace HuellitasVitalesAPI.Controllers
                     success = true,
                     mensaje = "¡Bienvenido de vuelta a Huellitas Vitales!",
                     token = tokenJwt,
-                    usuario = new { usuario.Nombre, usuario.Correo, usuario.IdRol }
+                    usuario = new { usuario.IdUsuario, usuario.Nombre, usuario.Correo, usuario.IdRol }
                 });
             }
             catch (Exception ex)
@@ -107,7 +107,7 @@ namespace HuellitasVitalesAPI.Controllers
                     success = true,
                     mensaje = "¡Bienvenido a Huellitas Vitales!",
                     token = jwtToken,
-                    usuario = new { usuario.Nombre, usuario.Correo, usuario.IdRol }
+                    usuario = new { usuario.IdUsuario, usuario.Nombre, usuario.Correo, usuario.IdRol }
                 });
             }
             catch (Exception ex)

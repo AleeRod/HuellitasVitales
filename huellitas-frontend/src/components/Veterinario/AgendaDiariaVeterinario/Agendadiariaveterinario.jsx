@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import styles from './AgendaDiariaVeterinario.module.css';
+import { API_BASE } from '../../../api/config';
 import {
   CalendarDays,
   Calendar,
@@ -48,13 +49,22 @@ const HORARIO_VETERINARIO = [
   { DiaSemana: 6, HoraInicio: '08:00', HoraFin: '12:00' },
 ];
 
+const fechaValida = (value) => {
+  if (!value) return false;
+  const d = value instanceof Date ? value : new Date(value);
+  return !Number.isNaN(d.getTime());
+};
+
 const toISO = (d) => {
-  const x = new Date(d);
+  if (!d) return '';
+  const x = d instanceof Date ? new Date(d) : new Date(d);
+  if (!fechaValida(x)) return '';
   x.setHours(0, 0, 0, 0);
   return x.toISOString().slice(0, 10);
 };
 const addDays = (d, n) => {
   const x = new Date(d);
+  if (Number.isNaN(x.getTime())) return new Date(today);
   x.setDate(x.getDate() + n);
   return x;
 };
@@ -123,12 +133,66 @@ const AgendaDiariaVeterinario = () => {
   const [monthAnchor, setMonthAnchor] = useState(today);
   const [selectedDate, setSelectedDate] = useState(toISO(today));
   const [statusFilter, setStatusFilter] = useState('all');
-  const [citas, setCitas] = useState(CITAS_MOCK);
+  const [citas, setCitas] = useState([]);
   const [selectedCita, setSelectedCita] = useState(null);
   const [slideDir, setSlideDir] = useState(1);
   const [reprogramando, setReprogramando] = useState(false);
   const [nuevaFecha, setNuevaFecha] = useState('');
   const [nuevaHora, setNuevaHora] = useState('');
+  const [cargandoAgenda, setCargandoAgenda] = useState(false);
+
+  const normalizarCita = (cita) => {
+    const fechaRaw = cita?.fecha ?? cita?.Fecha;
+    const fechaNormalizada = fechaValida(fechaRaw) ? toISO(fechaRaw) : toISO(today);
+
+    return {
+      ...cita,
+      IdCita: cita.idCita ?? cita.IdCita,
+      IdMascota: cita.idMascota ?? cita.IdMascota,
+      NombreMascota: cita.nombreMascota ?? cita.NombreMascota ?? 'Mascota',
+      Especie: cita.especie ?? cita.Especie ?? 'Sin especie',
+      NombreCliente: cita.nombreCliente ?? cita.NombreCliente ?? 'Cliente',
+      IdVeterinario: cita.idVeterinario ?? cita.IdVeterinario,
+      NombreVeterinario: cita.nombreVeterinario ?? cita.NombreVeterinario ?? '',
+      IdServicio: cita.idServicio ?? cita.IdServicio,
+      NombreServicio: cita.nombreServicio ?? cita.NombreServicio ?? 'Servicio',
+      IdTipoServicio: cita.idTipoServicio ?? cita.IdTipoServicio ?? 1,
+      IdEstadoCita: cita.idEstadoCita ?? cita.IdEstadoCita ?? 1,
+      Fecha: fechaNormalizada,
+      HoraInicio: cita.horaInicio ?? cita.HoraInicio ?? '08:00:00',
+      HoraFin: cita.horaFin ?? cita.HoraFin ?? '08:30:00',
+      Notas: cita.notas ?? cita.Notas ?? '',
+    };
+  };
+
+  const cargarAgenda = async () => {
+    const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+    if (!token) {
+      setCitas([]);
+      return;
+    }
+
+    try {
+      setCargandoAgenda(true);
+      const res = await fetch(`${API_BASE}/cita/veterinario`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo cargar la agenda.');
+      const citasApi = Array.isArray(data?.citas) ? data.citas : [];
+      setCitas(citasApi.map(normalizarCita));
+    } catch (error) {
+      console.error('Agenda veterinario:', error);
+      setCitas([]);
+    } finally {
+      setCargandoAgenda(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarAgenda();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const weekDays = useMemo(() => {
     const start = new Date(weekAnchor);
@@ -142,6 +206,31 @@ const AgendaDiariaVeterinario = () => {
 
   const citasPorDia = (iso) => citas.filter((c) => c.Fecha === iso);
 
+  useEffect(() => {
+    if (!citas.length || !selectedDate) return;
+
+    const visibles = citas.filter((c) => {
+      const fecha = c?.Fecha;
+      return !!fecha && (statusFilter === 'all' || c.IdEstadoCita === Number(statusFilter));
+    });
+    const hayEnFecha = visibles.some((c) => c.Fecha === selectedDate);
+
+    if (!hayEnFecha) {
+      const siguiente = [...visibles].sort(
+        (a, b) => (a.Fecha || '').localeCompare(b.Fecha || '') || (a.HoraInicio || '').localeCompare(b.HoraInicio || '')
+      )[0];
+
+      if (siguiente && siguiente.Fecha && siguiente.Fecha !== selectedDate) {
+        setSelectedDate(siguiente.Fecha);
+        const fechaObj = new Date(`${siguiente.Fecha}T00:00:00`);
+        if (!Number.isNaN(fechaObj.getTime())) {
+          setWeekAnchor(fechaObj);
+          setMonthAnchor(fechaObj);
+        }
+      }
+    }
+  }, [citas, statusFilter, selectedDate]);
+
   const selectedDateObj = useMemo(() => new Date(`${selectedDate}T00:00:00`), [selectedDate]);
 
   const diaSemana = selectedDateObj.getDay();
@@ -152,7 +241,9 @@ const AgendaDiariaVeterinario = () => {
     .sort((a, b) => a.HoraInicio.localeCompare(b.HoraInicio));
 
   const selectDate = (d) => {
-    setSelectedDate(toISO(d));
+    const iso = toISO(d);
+    if (!iso) return;
+    setSelectedDate(iso);
     setWeekAnchor(d);
     setMonthAnchor(d);
     setSelectedCita(null);
@@ -172,9 +263,41 @@ const AgendaDiariaVeterinario = () => {
     selectDate(today);
   };
 
-  const updateEstado = (idCita, idEstadoCita) => {
-    setCitas((prev) => prev.map((c) => (c.IdCita === idCita ? { ...c, IdEstadoCita: idEstadoCita } : c)));
-    setSelectedCita((prev) => (prev && prev.IdCita === idCita ? { ...prev, IdEstadoCita: idEstadoCita } : prev));
+  const updateEstado = async (idCita, idEstadoCita) => {
+    const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      if (idEstadoCita === 2) {
+        const res = await fetch(`${API_BASE}/cita/${idCita}/confirmar`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.mensaje || 'No se pudo confirmar la cita.');
+        await cargarAgenda();
+        return;
+      }
+
+      if (idEstadoCita === 3) {
+        const res = await fetch(`${API_BASE}/cita/${idCita}/cancelar`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ motivo: 'Cancelada desde agenda veterinario' })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.mensaje || 'No se pudo cancelar la cita.');
+        await cargarAgenda();
+        return;
+      }
+
+      console.warn('La acción de completar cita no tiene endpoint activo aún.');
+    } catch (error) {
+      console.error('Error al actualizar cita:', error);
+    }
   };
 
   const iniciarReprogramar = () => {
@@ -197,20 +320,35 @@ const AgendaDiariaVeterinario = () => {
     return out;
   }, [reprogramando, nuevaFecha]);
 
-  const guardarReprogramacion = () => {
-    if (!nuevaHora || !horarioParaFecha(nuevaFecha)) return;
-    const dur = toMin(selectedCita.HoraFin) - toMin(selectedCita.HoraInicio);
-    const nuevoFin = minToHHMM(toMin(nuevaHora) + dur);
-    setCitas((prev) =>
-      prev.map((c) =>
-        c.IdCita === selectedCita.IdCita
-          ? { ...c, Fecha: nuevaFecha, HoraInicio: nuevaHora, HoraFin: nuevoFin, IdEstadoCita: 1 }
-          : c
-      )
-    );
-    setReprogramando(false);
-    selectDate(new Date(`${nuevaFecha}T00:00:00`));
-    setSelectedCita((prev) => ({ ...prev, Fecha: nuevaFecha, HoraInicio: nuevaHora, HoraFin: nuevoFin, IdEstadoCita: 1 }));
+  const guardarReprogramacion = async () => {
+    if (!nuevaHora || !horarioParaFecha(nuevaFecha) || !selectedCita) return;
+
+    const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/cita/${selectedCita.IdCita}/reprogramar`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          fecha: nuevaFecha,
+          horaInicio: `${nuevaHora}:00`,
+          notas: selectedCita.Notas || ''
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo reprogramar la cita.');
+
+      setReprogramando(false);
+      await cargarAgenda();
+      selectDate(new Date(`${nuevaFecha}T00:00:00`));
+    } catch (error) {
+      console.error('Error al reprogramar cita:', error);
+    }
   };
 
   return (
@@ -342,54 +480,64 @@ const AgendaDiariaVeterinario = () => {
       </div>
 
       <div className={styles.agendaBody}>
-        <div className={styles.scheduleList}>
-          {!horarioDia && (
-            <div className={styles.emptyState}>
-              <PawPrint size={22} />
-              El veterinario no atiende este día.
-            </div>
-          )}
+        {cargandoAgenda && (
+          <div className={styles.emptyState}>
+            <PawPrint size={22} />
+            Cargando agenda real...
+          </div>
+        )}
 
-          {horarioDia && citasDelDia.length === 0 && (
-            <div className={styles.emptyState}>
-              <PawPrint size={22} />
-              No hay citas agendadas para este día.
-            </div>
-          )}
-
-          {citasDelDia.map((c) => {
-            const est = estadoInfo(c.IdEstadoCita);
-            const tipo = tipoInfo(c.IdTipoServicio);
-            const Icon = tipo ? tipo.icon : Stethoscope;
-            const { hora, suf } = fmtHora(c.HoraInicio);
-            const active = selectedCita?.IdCita === c.IdCita;
-            return (
-              <div
-                key={c.IdCita}
-                className={`${styles.scheduleItem} ${active ? styles.scheduleItemActive : ''}`}
-                onClick={() => setSelectedCita(c)}
-              >
-                <div className={styles.timeBox}>
-                  {hora}
-                  <span>{suf}</span>
-                </div>
-
-                <div className={styles.patientInfo}>
-                  <div className={styles.petIcon}><Icon size={20} /></div>
-                  <div>
-                    <div className={styles.patientTitle}>{c.NombreMascota} — {c.NombreServicio}</div>
-                    <div className={styles.patientDetail}>{c.Especie} · Dueño: {c.NombreCliente}</div>
-                  </div>
-                </div>
-
-                <span className={`${styles.statusBadge} ${styles[est.badgeClass]}`}>{est.Nombre}</span>
+        {!cargandoAgenda && (
+          <div className={styles.scheduleList}>
+            {!horarioDia && (
+              <div className={styles.emptyState}>
+                <PawPrint size={22} />
+                El veterinario no atiende este día.
               </div>
-            );
-          })}
-        </div>
+            )}
+
+            {horarioDia && citasDelDia.length === 0 && (
+              <div className={styles.emptyState}>
+                <PawPrint size={22} />
+                No hay citas agendadas para este día.
+              </div>
+            )}
+
+            {citasDelDia.map((c) => {
+              const est = estadoInfo(c.IdEstadoCita) || ESTADO_CITA_CAT[0];
+              const tipo = tipoInfo(c.IdTipoServicio);
+              const Icon = tipo ? tipo.icon : Stethoscope;
+              const horaInicio = typeof c.HoraInicio === 'string' ? c.HoraInicio : `${String(c.HoraInicio.hours || 0).padStart(2, '0')}:${String(c.HoraInicio.minutes || 0).padStart(2, '0')}`;
+              const { hora, suf } = fmtHora(horaInicio.length >= 5 ? horaInicio.slice(0, 5) : horaInicio);
+              const active = selectedCita?.IdCita === c.IdCita;
+              return (
+                <div
+                  key={c.IdCita}
+                  className={`${styles.scheduleItem} ${active ? styles.scheduleItemActive : ''}`}
+                  onClick={() => setSelectedCita(c)}
+                >
+                  <div className={styles.timeBox}>
+                    {hora}
+                    <span>{suf}</span>
+                  </div>
+
+                  <div className={styles.patientInfo}>
+                    <div className={styles.petIcon}><Icon size={20} /></div>
+                    <div>
+                      <div className={styles.patientTitle}>{c.NombreMascota} — {c.NombreServicio}</div>
+                      <div className={styles.patientDetail}>{c.Especie} · Dueño: {c.NombreCliente}</div>
+                    </div>
+                  </div>
+
+                  <span className={`${styles.statusBadge} ${styles[est.badgeClass]}`}>{est.Nombre}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {selectedCita && (() => {
-          const est = estadoInfo(selectedCita.IdEstadoCita);
+          const est = estadoInfo(selectedCita.IdEstadoCita) || ESTADO_CITA_CAT[0];
           const tipo = tipoInfo(selectedCita.IdTipoServicio);
           const Icon = tipo ? tipo.icon : Stethoscope;
           return (

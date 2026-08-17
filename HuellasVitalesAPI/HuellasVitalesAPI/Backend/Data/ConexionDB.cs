@@ -22,6 +22,8 @@ namespace HuellitasVitalesAPI.Data
         public DbSet<MarcaCat> MarcasCat { get; set; } = null!;
         public DbSet<Cita> Citas { get; set; } = null!;
         public DbSet<HorarioVeterinario> HorariosVeterinario { get; set; } = null!;
+        public DbSet<EstadoCitaCat> EstadosCitaCat { get; set; } = null!;
+        public DbSet<Mascota> Mascotas { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Usuario>().ToTable("USUARIO");

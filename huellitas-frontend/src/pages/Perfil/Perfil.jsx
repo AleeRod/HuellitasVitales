@@ -22,7 +22,34 @@ const obtenerIniciales = (nombre = '', apellidos = '') => {
 
 const Perfil = () => {
     const { id: idParam } = useParams();
-    const idUsuario = idParam || localStorage.getItem('idUsuario') || 1;
+    
+    // Obtener el ID del usuario autenticado desde localStorage
+    let idUsuario = idParam;
+    if (!idUsuario) {
+        try {
+            const usuarioGuardado = localStorage.getItem('usuario_huellitas') || localStorage.getItem('usuario') || localStorage.getItem('user');
+            if (usuarioGuardado) {
+                const usuario = JSON.parse(usuarioGuardado);
+                idUsuario = usuario?.idUsuario || usuario?.IdUsuario || usuario?.id || localStorage.getItem('idUsuario');
+            } else {
+                idUsuario = localStorage.getItem('idUsuario');
+            }
+        } catch (err) {
+            console.error('Error al obtener usuario de localStorage', err);
+            idUsuario = localStorage.getItem('idUsuario');
+        }
+    }
+    
+    // Si aún no hay ID, no se puede cargar el perfil
+    if (!idUsuario) {
+        return (
+            <div style={{ padding: '2rem', textAlign: 'center', color: '#dc3545' }}>
+                <AlertTriangle size={48} style={{ marginBottom: '1rem' }} />
+                <h2>Error</h2>
+                <p>No hay sesión activa. Por favor, inicia sesión primero.</p>
+            </div>
+        );
+    }
 
     const [perfil, setPerfil] = useState(null);
     const [cargando, setCargando] = useState(true);

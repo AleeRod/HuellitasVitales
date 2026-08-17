@@ -47,12 +47,6 @@ const CITAS_OCUPADAS_MOCK = [
   { idVeterinario: 1, FechaOffset: 1, HoraInicio: '10:00', HoraFin: '10:30' },
 ];
 
-const MIS_MASCOTAS_MOCK = [
-  { IdMascota: 1, Nombre: 'Max', Especie: 'Perro', Raza: 'Golden Retriever' },
-  { IdMascota: 2, Nombre: 'Luna', Especie: 'Gato', Raza: 'Persa' },
-  { IdMascota: 3, Nombre: 'Rocky', Especie: 'Perro', Raza: 'French Poodle' },
-];
-
 const today = new Date();
 const addDays = (d, n) => {
   const x = new Date(d);
@@ -92,8 +86,11 @@ const AgendarCitaModal = ({ open, onClose, servicioInicial = null, onConfirm }) 
   const [servicioElegido, setServicioElegido] = useState(null);
   const [busquedaServicio, setBusquedaServicio] = useState('');
   const [serviciosDisponibles, setServiciosDisponibles] = useState([]);
+  const [mascotas, setMascotas] = useState([]);
   const [cargandoServicios, setCargandoServicios] = useState(false);
+  const [cargandoMascotas, setCargandoMascotas] = useState(false);
   const [errorServicios, setErrorServicios] = useState(false);
+  const [errorMascotas, setErrorMascotas] = useState(false);
 
   const [pasoIdx, setPasoIdx] = useState(0);
   const [idMascota, setIdMascota] = useState(null);
@@ -105,8 +102,32 @@ const AgendarCitaModal = ({ open, onClose, servicioInicial = null, onConfirm }) 
   const servicio = servicioInicial || servicioElegido;
   const pasosBase = servicioInicial ? ['mascota', 'horario', 'confirmar'] : ['servicio', 'mascota', 'horario', 'confirmar'];
 
-  // Reset cada vez que se abre, y trae el catálogo real si hay que elegir servicio
   useEffect(() => {
+    const cargarMascotas = async () => {
+      const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+      if (!token) {
+        setMascotas([]);
+        return;
+      }
+
+      try {
+        setCargandoMascotas(true);
+        setErrorMascotas(false);
+        const res = await fetch(`${API_BASE}/usuario/mascotas`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.mensaje || 'No se pudo cargar tus mascotas.');
+        setMascotas(Array.isArray(data?.mascotas) ? data.mascotas : []);
+      } catch (error) {
+        console.error('Mascotas del usuario:', error);
+        setMascotas([]);
+        setErrorMascotas(true);
+      } finally {
+        setCargandoMascotas(false);
+      }
+    };
+
     if (!open) return;
     setPasoIdx(0);
     setServicioElegido(null);
@@ -116,6 +137,7 @@ const AgendarCitaModal = ({ open, onClose, servicioInicial = null, onConfirm }) 
     setHoraSel(null);
     setNotas('');
     setExito(false);
+    cargarMascotas();
 
     if (!servicioInicial) {
       setCargandoServicios(true);
@@ -134,7 +156,7 @@ const AgendarCitaModal = ({ open, onClose, servicioInicial = null, onConfirm }) 
 
   const idVeterinario = servicio?.idVeterinario ?? null;
   const nombreVeterinario = servicio ? (servicio.nombreVeterinario || `Equipo de ${servicio.nombreComercio}`) : '';
-  const mascota = MIS_MASCOTAS_MOCK.find((m) => m.IdMascota === idMascota);
+  const mascota = mascotas.find((m) => Number(m.idMascota ?? m.IdMascota) === Number(idMascota));
   const Icon = servicio ? iconoPorTipo(servicio.tipoServicio) : Stethoscope;
 
   const serviciosFiltrados = useMemo(() => {
@@ -269,18 +291,29 @@ const AgendarCitaModal = ({ open, onClose, servicioInicial = null, onConfirm }) 
 
               {paso === 'mascota' && (
                 <div className={styles.grid2}>
-                  {MIS_MASCOTAS_MOCK.map((m) => {
-                    const MIcon = especieIcon(m.Especie);
-                    const active = idMascota === m.IdMascota;
+                  {cargandoMascotas && <div className={styles.noSlots}>Cargando tus mascotas...</div>}
+                  {!cargandoMascotas && errorMascotas && (
+                    <div className={styles.noSlots}>No pudimos cargar tus mascotas. Intenta nuevamente.</div>
+                  )}
+                  {!cargandoMascotas && !errorMascotas && mascotas.length === 0 && (
+                    <div className={styles.noSlots}>Todavía no tienes mascotas vinculadas a tu cuenta.</div>
+                  )}
+                  {!cargandoMascotas && !errorMascotas && mascotas.map((m) => {
+                    const especie = m.especie || m.Especie || 'Otra';
+                    const nombre = m.nombre || m.Nombre;
+                    const raza = m.raza || m.Raza || 'Sin raza';
+                    const id = Number(m.idMascota ?? m.IdMascota);
+                    const MIcon = especieIcon(especie);
+                    const active = idMascota === id;
                     return (
                       <button
-                        key={m.IdMascota}
+                        key={id}
                         className={`${styles.optionCard} ${active ? styles.optionCardActive : ''}`}
-                        onClick={() => setIdMascota(m.IdMascota)}
+                        onClick={() => setIdMascota(id)}
                       >
                         <div className={styles.optionIcon}><MIcon size={20} /></div>
-                        <div className={styles.optionTitle}>{m.Nombre}</div>
-                        <div className={styles.optionSub}>{m.Especie} · {m.Raza}</div>
+                        <div className={styles.optionTitle}>{nombre}</div>
+                        <div className={styles.optionSub}>{especie} · {raza}</div>
                       </button>
                     );
                   })}

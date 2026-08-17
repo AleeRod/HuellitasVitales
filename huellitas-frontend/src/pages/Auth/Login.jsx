@@ -59,6 +59,7 @@ function Login() {
                 if (response.ok && data.success) {
                 // Guarda el token y los datos del usuario
                 localStorage.setItem('token_huellitas', data.token);
+                localStorage.setItem('token', data.token);
                 localStorage.setItem('usuario_huellitas', JSON.stringify(data.usuario));
                 
                 // Redirige a la Landing Page
@@ -84,6 +85,7 @@ function Login() {
                 if (res.ok && data.success) {
                 // Guarda el token y los datos del usuario
                 localStorage.setItem('token_huellitas', data.token);
+                localStorage.setItem('token', data.token);
                 localStorage.setItem('usuario_huellitas', JSON.stringify(data.usuario));
                 
                 // Redirige a la Landing Page
@@ -118,8 +120,7 @@ function Login() {
             const data = await res.json();
             if (res.ok && data.success) {
                 // Guarda el token y los datos del usuario
-                localStorage.setItem('token_huellitas', data.token);
-                localStorage.setItem('usuario_huellitas', JSON.stringify(data.usuario));
+                localStorage.setItem('token_huellitas', data.token);                localStorage.setItem('token', data.token);                localStorage.setItem('usuario_huellitas', JSON.stringify(data.usuario));
                 
                 // Redirige a la Landing Page
                 navigate('/');

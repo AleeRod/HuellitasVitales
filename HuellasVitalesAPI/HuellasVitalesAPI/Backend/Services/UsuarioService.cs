@@ -200,6 +200,118 @@ namespace HuellitasVitalesAPI.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        public async Task<List<MascotaDTO>> ObtenerMascotasPorUsuarioAsync(int idUsuario)
+        {
+            return await _context.Mascotas
+                .Where(m => m.IdUsuario == idUsuario && m.Activo)
+                .OrderBy(m => m.Nombre)
+                .Select(m => new MascotaDTO
+                {
+                    IdMascota = m.IdMascota,
+                    IdUsuario = m.IdUsuario,
+                    Nombre = m.Nombre,
+                    IdEspecie = m.IdEspecie,
+                    Especie = m.IdEspecie == 1 ? "Perro" : m.IdEspecie == 2 ? "Gato" : "Otra",
+                    Raza = m.Raza,
+                    FechaNacimiento = m.FechaNacimiento,
+                    Activo = m.Activo
+                })
+                .ToListAsync();
+        }
+
+        public async Task<MascotaDTO?> ObtenerMascotaPorIdAsync(int idUsuario, int idMascota)
+        {
+            var mascota = await _context.Mascotas
+                .FirstOrDefaultAsync(m => m.IdMascota == idMascota && m.IdUsuario == idUsuario);
+
+            if (mascota == null) return null;
+
+            return new MascotaDTO
+            {
+                IdMascota = mascota.IdMascota,
+                IdUsuario = mascota.IdUsuario,
+                Nombre = mascota.Nombre,
+                IdEspecie = mascota.IdEspecie,
+                Especie = mascota.IdEspecie == 1 ? "Perro" : mascota.IdEspecie == 2 ? "Gato" : "Otra",
+                Raza = mascota.Raza,
+                FechaNacimiento = mascota.FechaNacimiento,
+                Activo = mascota.Activo
+            };
+        }
+
+        public async Task<(bool Exito, string Mensaje, MascotaDTO? Mascota)> CrearMascotaAsync(int idUsuario, CrearMascotaRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Nombre))
+                return (false, "El nombre de la mascota es obligatorio.", null);
+
+            var mascota = new Mascota
+            {
+                IdUsuario = idUsuario,
+                Nombre = request.Nombre.Trim(),
+                IdEspecie = request.IdEspecie,
+                Raza = string.IsNullOrWhiteSpace(request.Raza) ? null : request.Raza.Trim(),
+                FechaNacimiento = request.FechaNacimiento,
+                Activo = request.Activo
+            };
+
+            _context.Mascotas.Add(mascota);
+            await _context.SaveChangesAsync();
+
+            return (true, "Mascota creada correctamente.", new MascotaDTO
+            {
+                IdMascota = mascota.IdMascota,
+                IdUsuario = mascota.IdUsuario,
+                Nombre = mascota.Nombre,
+                IdEspecie = mascota.IdEspecie,
+                Especie = mascota.IdEspecie == 1 ? "Perro" : mascota.IdEspecie == 2 ? "Gato" : "Otra",
+                Raza = mascota.Raza,
+                FechaNacimiento = mascota.FechaNacimiento,
+                Activo = mascota.Activo
+            });
+        }
+
+        public async Task<(bool Exito, string Mensaje, MascotaDTO? Mascota)> ActualizarMascotaAsync(int idUsuario, int idMascota, ActualizarMascotaRequest request)
+        {
+            var mascota = await _context.Mascotas.FirstOrDefaultAsync(m => m.IdMascota == idMascota && m.IdUsuario == idUsuario);
+            if (mascota == null)
+                return (false, "La mascota no existe o no pertenece a este usuario.", null);
+
+            if (string.IsNullOrWhiteSpace(request.Nombre))
+                return (false, "El nombre de la mascota es obligatorio.", null);
+
+            mascota.Nombre = request.Nombre.Trim();
+            mascota.IdEspecie = request.IdEspecie;
+            mascota.Raza = string.IsNullOrWhiteSpace(request.Raza) ? null : request.Raza.Trim();
+            mascota.FechaNacimiento = request.FechaNacimiento;
+            mascota.Activo = request.Activo;
+
+            await _context.SaveChangesAsync();
+
+            return (true, "Mascota actualizada correctamente.", new MascotaDTO
+            {
+                IdMascota = mascota.IdMascota,
+                IdUsuario = mascota.IdUsuario,
+                Nombre = mascota.Nombre,
+                IdEspecie = mascota.IdEspecie,
+                Especie = mascota.IdEspecie == 1 ? "Perro" : mascota.IdEspecie == 2 ? "Gato" : "Otra",
+                Raza = mascota.Raza,
+                FechaNacimiento = mascota.FechaNacimiento,
+                Activo = mascota.Activo
+            });
+        }
+
+        public async Task<(bool Exito, string Mensaje)> EliminarMascotaAsync(int idUsuario, int idMascota)
+        {
+            var mascota = await _context.Mascotas.FirstOrDefaultAsync(m => m.IdMascota == idMascota && m.IdUsuario == idUsuario);
+            if (mascota == null)
+                return (false, "La mascota no existe o no pertenece a este usuario.");
+
+            mascota.Activo = false;
+            await _context.SaveChangesAsync();
+
+            return (true, "Mascota eliminada correctamente.");
+        }
+
         public async Task<Usuario?> AutenticarFacebookAsync(string fbToken)
         {
             try

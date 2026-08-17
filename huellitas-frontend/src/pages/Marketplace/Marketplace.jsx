@@ -245,10 +245,44 @@ const Marketplace = () => {
         setModalCitaOpen(true);
     };
 
-    const handleConfirmarCita = (datosCita) => {
-        console.log("Cita a enviar al backend:", datosCita);
-        // Aquí luego conectarás el fetch para guardar la cita (Task 185)
-        setModalCitaOpen(false);
+    const handleConfirmarCita = async (datosCita) => {
+        const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+        if (!token) {
+            alert('Debes iniciar sesión para agendar una cita.');
+            setModalCitaOpen(false);
+            return;
+        }
+
+        try {
+            const payload = {
+                idMascota: Number(datosCita.idMascota),
+                idServicio: Number(datosCita.idServicio),
+                idVeterinario: datosCita.idVeterinario ? Number(datosCita.idVeterinario) : null,
+                fecha: datosCita.fecha,
+                horaInicio: datosCita.horaInicio,
+                notas: datosCita.notas || ''
+            };
+
+            const res = await fetch(`${API_BASE}/cita`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                const mensaje = data?.mensaje || 'No se pudo agendar la cita.';
+                throw new Error(mensaje);
+            }
+
+            setModalCitaOpen(false);
+            alert(data?.mensaje || 'Cita agendada correctamente.');
+        } catch (error) {
+            alert(error.message || 'Ocurrió un error al agendar la cita.');
+        }
     };
 
     const aplicarFiltrosProductos = (listaProductos) => {

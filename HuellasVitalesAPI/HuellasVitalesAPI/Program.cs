@@ -3,6 +3,7 @@ using HuellitasVitalesAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,7 +12,25 @@ builder.Services.AddControllers();
 
 // Cambiamos AddOpenApi por SwaggerGen
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    // Habilita el botón "Authorize" de Swagger UI para probar
+    // los endpoints marcados con [Authorize] sin salir del navegador.
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Pegá únicamente el token JWT, sin escribir 'Bearer' adelante."
+    });
+
+    options.AddSecurityRequirement(documento => new OpenApiSecurityRequirement
+    {
+        { new OpenApiSecuritySchemeReference("Bearer", documento), new List<string>() }
+    });
+});
 
 // 1. Configurar CORS
 builder.Services.AddCors(options =>
@@ -21,7 +40,7 @@ builder.Services.AddCors(options =>
         policy.SetIsOriginAllowed(origin =>
                 origin == "http://localhost:5173" ||
                 (origin.StartsWith("https://huellitas-vitales") && origin.EndsWith(".vercel.app"))
-              )
+            )
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -40,32 +59,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             NameClaimType = System.Security.Claims.ClaimTypes.NameIdentifier
         };
-
-        // 🔥 ESTO TE DICE LA RAZÓN REAL SI EL TOKEN FALLA
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                var authHeader = context.Request.Headers["Authorization"].ToString();
-                Console.WriteLine("🔍 AUTHORIZATION HEADER CRUDO: [" + authHeader + "]");
-                return Task.CompletedTask;
-            },
-            OnAuthenticationFailed = context =>
-            {
-                Console.WriteLine("❌ JWT FALLÓ: " + context.Exception.GetType().Name + " - " + context.Exception.Message);
-                return Task.CompletedTask;
-            },
-            OnChallenge = context =>
-            {
-                Console.WriteLine("⚠️ CHALLENGE: " + context.Error + " | " + context.ErrorDescription);
-                return Task.CompletedTask;
-            },
-            OnTokenValidated = context =>
-            {
-                Console.WriteLine("✅ TOKEN OK. Claims: " + context.Principal?.Claims.Count());
-                return Task.CompletedTask;
-            }
-        };
     });
 
 // 3. Configurar Base de Datos
@@ -77,6 +70,7 @@ builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<ComercioService>();
 builder.Services.AddScoped<IMarketplaceService, MarketplaceService>();
 builder.Services.AddScoped<AgendaService>();
+builder.Services.AddScoped<CitaService>();
 
 var app = builder.Build();
 
