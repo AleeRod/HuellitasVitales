@@ -16,9 +16,9 @@ namespace HuellitasVitalesAPI.Services
             _logger = logger;
         }
 
-        public async Task<(bool Exito, string Mensaje)> CrearSolicitudRegistroAsync(SolicitudComercioRequest request)
+        public async Task<(bool Exito, string Mensaje)> CrearSolicitudRegistroAsync(SolicitudComercioRequest request, int idUsuario)
         {
-            var usuarioExiste = await _context.Usuarios.AnyAsync(u => u.IdUsuario == request.IdUsuario);
+            var usuarioExiste = await _context.Usuarios.AnyAsync(u => u.IdUsuario == idUsuario);
             if (!usuarioExiste) return (false, "El usuario solicitante no existe en el sistema.");
 
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -35,7 +35,7 @@ namespace HuellitasVitalesAPI.Services
                         IdTipoPersona = request.IdTipoPersona,
                         Identificacion = request.Identificacion,
                         RazonSocial = request.IdTipoPersona == 2 ? request.RazonSocial : null,
-                        IdUsuario = request.IdUsuario
+                        IdUsuario = idUsuario
                     };
                     _context.PersonasLegales.Add(personaLegal);
                     await _context.SaveChangesAsync();
