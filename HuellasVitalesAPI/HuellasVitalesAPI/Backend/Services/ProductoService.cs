@@ -255,5 +255,16 @@ namespace HuellitasVitalesAPI.Services
                 .Select(m => new { idMarca = m.IdMarca, nombre = m.Nombre })
                 .ToListAsync();
         }
+
+        public async Task<object> ObtenerAlmacenesDelUsuarioAsync(int idUsuario)
+        {
+            return await (from c in _context.Comercios
+                        join p in _context.PersonasLegales on c.IdPersonaLegal equals p.IdPersonaLegal
+                        where p.IdUsuario == idUsuario
+                                && c.IdTipoComercio == ComercioValidacionService.TIPO_COMERCIO_ALMACEN
+                                && c.IdEstadoSolicitud == 2 // aprobado
+                        select new { idComercio = c.IdComercio, nombreComercial = c.NombreComercial })
+                        .ToListAsync();
+        }
     }
 }

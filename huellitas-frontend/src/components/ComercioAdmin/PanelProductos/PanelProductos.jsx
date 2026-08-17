@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Plus, Pencil, Trash2, Package, Search, DollarSign, Tag, UploadCloud, Store, ImageOff } from "lucide-react";
 import styles from "./PanelProductos.module.css";
-import { resolverImagen } from "../../../api/config";
+import { resolverImagen } from "../../../api/config"; // ⚠️ ajustá esta ruta según dónde esté tu config.js
 
 const API_URL = "http://localhost:5010/api/Producto"; 
 
@@ -62,7 +62,7 @@ const PanelProductos = ({ esAdmin = true }) => {
           peticiones.push(fetch(`${API_URL}/todos-global`, { headers: getHeaders() }));
           peticiones.push(fetch(`${API_URL}/almacenes-lista`, { headers: getHeaders() }));
         } else {
-          peticiones.push(fetch(`${API_URL}/mi-almacen`, { headers: getHeaders() }));
+          peticiones.push(fetch(`${API_URL}/mis-almacenes`, { headers: getHeaders() }));
         }
 
         const respuestas = await Promise.all(peticiones);
@@ -81,12 +81,17 @@ const PanelProductos = ({ esAdmin = true }) => {
           if (dataGlobal.success) setProductos(dataGlobal.productos);
           if (dataAlmacenes.success) setAlmacenes(dataAlmacenes.almacenes);
         } else {
-          const dataAlmacen = await respuestas[3].json();
-          if (dataAlmacen.success) {
-            setIdComercioAutenticado(dataAlmacen.idComercio);
-            const resProd = await fetch(`${API_URL}/comercio/${dataAlmacen.idComercio}`, { headers: getHeaders() });
-            const dataProd = await resProd.json();
-            if (dataProd.success) setProductos(dataProd.productos);
+          const dataAlmacenes = await respuestas[3].json();
+          if (dataAlmacenes.success) {
+            setAlmacenes(dataAlmacenes.almacenes);
+
+            const primero = dataAlmacenes.almacenes[0];
+            if (primero) {
+              setIdComercioAutenticado(primero.idComercio);
+              const resProd = await fetch(`${API_URL}/comercio/${primero.idComercio}`, { headers: getHeaders() });
+              const dataProd = await resProd.json();
+              if (dataProd.success) setProductos(dataProd.productos);
+            }
           }
         }
       } catch (error) {
@@ -102,7 +107,7 @@ const PanelProductos = ({ esAdmin = true }) => {
   const abrirNuevo = () => {
     setForm({
       ...FORM_VACIO,
-      idComercio: esAdmin ? (almacenes[0]?.idComercio || "") : idComercioAutenticado
+      idComercio: idComercioAutenticado || almacenes[0]?.idComercio || ""
     });
     setImagenArchivo(null);
     setImagenPreview("");
@@ -136,6 +141,20 @@ const PanelProductos = ({ esAdmin = true }) => {
     const res = await fetch(url, { headers: getHeaders() });
     const data = await res.json();
     if (data.success) setProductos(data.productos);
+  };
+
+  // Cambia qué comercio propio está viendo/gestionando el funcionario
+  const cambiarComercioActivo = async (idComercioNuevo) => {
+    const id = Number(idComercioNuevo);
+    setIdComercioAutenticado(id);
+    setCargando(true);
+    try {
+      const res = await fetch(`${API_URL}/comercio/${id}`, { headers: getHeaders() });
+      const data = await res.json();
+      if (data.success) setProductos(data.productos);
+    } finally {
+      setCargando(false);
+    }
   };
 
   // ==========================================
@@ -189,7 +208,7 @@ const PanelProductos = ({ esAdmin = true }) => {
 
   const guardarProducto = async (e) => {
     e.preventDefault();
-    const comercioDestino = esAdmin ? Number(form.idComercio) : idComercioAutenticado;
+    const comercioDestino = Number(form.idComercio);
 
     if (!comercioDestino || !form.nombre.trim() || form.precio === "" || form.idCategoria === "") {
       setErrorForm("Completá los campos obligatorios: Comercio, Nombre, Precio y Categoría.");
@@ -296,10 +315,16 @@ const PanelProductos = ({ esAdmin = true }) => {
             {esAdmin ? "Visualizá y gestioná el inventario completo de todos los almacenes." : "Administrá el stock, catálogo y precios."}
           </p>
         </div>
-        <button className={styles.btnNuevo} onClick={abrirNuevo}>
+        <button className={styles.btnNuevo} onClick={abrirNuevo} disabled={!esAdmin && almacenes.length === 0}>
           <Plus size={18} /> Nuevo producto
         </button>
       </div>
+
+      {!esAdmin && !cargando && almacenes.length === 0 && (
+        <div className={styles.emptyState} style={{ marginBottom: "1rem" }}>
+          No tenés ningún almacén aprobado todavía. Contactá a un administrador.
+        </div>
+      )}
 
       <div className={styles.toolbar}>
         <div className={styles.searchField}>
@@ -311,6 +336,17 @@ const PanelProductos = ({ esAdmin = true }) => {
             onChange={(e) => setBusqueda(e.target.value)}
           />
         </div>
+
+        {!esAdmin && almacenes.length > 1 && (
+          <div className={styles.selectorComercio}>
+            <Store size={16} />
+            <select value={idComercioAutenticado || ""} onChange={(e) => cambiarComercioActivo(e.target.value)}>
+              {almacenes.map(a => (
+                <option key={a.idComercio} value={a.idComercio}>{a.nombreComercial}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       <div className={styles.tableWrap}>
@@ -421,7 +457,7 @@ const PanelProductos = ({ esAdmin = true }) => {
             </div>
 
             <form onSubmit={guardarProducto} className={styles.modalBody}>
-              {esAdmin && (
+              {(esAdmin || almacenes.length > 1) && (
                 <label className={styles.campo}>
                   <span>Almacén de destino *</span>
                   <select 

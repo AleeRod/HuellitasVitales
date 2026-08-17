@@ -44,6 +44,24 @@
     flex: 1;
 }
 
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,.75);
+    padding: .75rem .9rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+}
+
+.navItem:hover {
+    background: rgba(255,255,255,0.06);
+}
+
 .navItemActivo {
     display: flex;
     align-items: center;

@@ -1,4 +1,7 @@
-### 1. LOGIN (Ejecuta esto y copia el token que sale a la derecha)
+### ==========================================
+### 1. LOGIN (Guarda el token automáticamente)
+### ==========================================
+# @name loginRequest
 POST http://localhost:5010/api/Login/local
 Content-Type: application/json
 
@@ -8,15 +11,32 @@ Content-Type: application/json
 }
 
 ### ------------------------------------------
+### VARIABLE DINÁMICA DEL TOKEN
+### (Extrae la propiedad 'token' de la respuesta del Login)
+### ------------------------------------------
+@authToken = {{loginRequest.response.body.token}}
 
-### 2. ACTUALIZAR PERFIL (Pega tu token limpio después de Bearer)
-PUT http://localhost:5010/api/Usuario/perfil
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJlZHVhYmE4QGdtYWlsLmNvbSIsInJvbCI6IjMiLCJleHAiOjE3ODU2Mjk3NTV9.KadgLhzXPJcm6AEOdXem8g7g1CXhT27D5gon7kZz0jQ
+
+### ==========================================
+### 2. AGREGAR PRODUCTO AL CARRITO
+### ==========================================
+POST http://localhost:5010/api/Carrito/agregar
+Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "nombre": "Javier Antonio",
-  "apellidos": "Powers Abarca",
-  "correo": "eduaba8@gmail.com",
-  "telefono": "88888888"
+  "idProducto": 3,
+  "cantidad": 2
+}
+
+
+### ==========================================
+### 3. AGREGAR CON CANTIDAD POR DEFECTO (1)
+### ==========================================
+POST http://localhost:5010/api/Carrito/agregar
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "idProducto": 1
 }

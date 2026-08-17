@@ -12,6 +12,7 @@ import Marketplace from './pages/Marketplace/Marketplace';
 import Perfil from './pages/Perfil/Perfil';
 import Carrito from './pages/Carrito/Carrito';
 import { CarritoProvider } from './context/CarritoProvider';
+import DashboardFuncionario from './pages/Funcionario/DashboardFuncionario';
 
 function App() {
 
@@ -30,6 +31,7 @@ function App() {
           <Route path="/admin" element={<DashboardAdmin />} />
           <Route path="/veterinario" element={<PanelVeterinario />} />
           <Route path="/cliente" element={<DashboardCliente />} />
+          <Route path="/funcionario" element={<DashboardFuncionario />} />
         </Routes>
       </CarritoProvider>
     </Router>

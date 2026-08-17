@@ -28,15 +28,31 @@ const Navbar = () => {
   }, []);
 
   // Función para redirigir según el rol
+  // IDs confirmados en la BD: 1=Administrador, 2=Profesional, 3=Cliente, 4=Funcionario
   const irAlPanel = () => {
     if (!usuario) return;
     const rol = usuario.idRol;
-    
-    if (rol === 1) navigate('/admin');
-    if (rol === 2) navigate('/veterinario');
-    else if (rol === 3) navigate('/cliente');
-    else navigate('/funcionario'); // fallback para otros roles
+
+    if (rol === 1) {
+      navigate('/admin');
+    } else if (rol === 4) {
+      navigate('/funcionario');
+    } else if (rol === 2) {
+      navigate('/profesional');
+    } else {
+      navigate('/cliente');
+    }
     setDropdownOpen(false);
+  };
+
+  // Texto del rol para mostrar en el botón del dropdown
+  const nombreRol = (idRol) => {
+    switch (idRol) {
+      case 1: return 'Admin';
+      case 2: return 'Profesional';
+      case 4: return 'Funcionario';
+      default: return 'Cliente';
+    }
   };
 
   // Cerrar sesión
@@ -157,7 +173,7 @@ const Navbar = () => {
                     <line x1="8" y1="21" x2="16" y2="21"></line>
                     <line x1="12" y1="17" x2="12" y2="21"></line>
                   </svg>
-                  <span>Panel ({usuario.idRol === 1 ? 'Admin' : usuario.idRol === 2 ? 'Veterinario' : 'Cliente'})</span>
+                  <span>Panel ({nombreRol(usuario.idRol)})</span>
                 </button>
 
                 <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.1)', margin: '5px 0' }}></div>
@@ -190,7 +206,6 @@ const Navbar = () => {
   );
 };
 
-// Estilo auxiliar optimizado para las opciones con iconos
 const dropdownItemStyle = {
   padding: '10px 16px',
   color: '#e2e8f0',

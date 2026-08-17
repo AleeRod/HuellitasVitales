@@ -674,24 +674,24 @@ namespace HuellitasVitalesAPI.Services
         {
             var usuario = await _context.Usuarios
                 .FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
-        
+
             if (usuario == null) return null;
-        
-            // Busca si el usuario tiene un comercio afiliado (funcionario/profesional).
-            // Si es admin o cliente sin comercio, esto simplemente sale null.
-            var comercio = await (from c in _context.Comercios
-                                join p in _context.PersonasLegales
-                                    on c.IdPersonaLegal equals p.IdPersonaLegal
-                                where p.IdUsuario == idUsuario
-                                select new
-                                {
-                                    c.IdComercio,
-                                    c.IdTipoComercio,
-                                    c.NombreComercial,
-                                    c.IdEstadoSolicitud
-                                })
-                                .FirstOrDefaultAsync();
-        
+
+            // Trae TODOS los comercios ligados a este usuario (vía PersonaLegal),
+            // no solo uno. Un funcionario puede tener varios comercios afiliados.
+            var comercios = await (from c in _context.Comercios
+                                    join p in _context.PersonasLegales
+                                        on c.IdPersonaLegal equals p.IdPersonaLegal
+                                    where p.IdUsuario == idUsuario
+                                    select new
+                                    {
+                                        c.IdComercio,
+                                        c.IdTipoComercio,
+                                        c.NombreComercial,
+                                        Aprobado = c.IdEstadoSolicitud == 2
+                                    })
+                                    .ToListAsync();
+
             return new
             {
                 usuario.IdUsuario,
@@ -700,10 +700,7 @@ namespace HuellitasVitalesAPI.Services
                 IdRol = usuario.IdRol,
                 EsAdmin = usuario.IdRol == 1,
                 EsFuncionario = usuario.IdRol == 4,
-                IdComercio = comercio?.IdComercio,
-                IdTipoComercio = comercio?.IdTipoComercio,       // 1 = Veterinaria, 2 = Almacén
-                NombreComercio = comercio?.NombreComercial,
-                ComercioAprobado = comercio != null && comercio.IdEstadoSolicitud == 2
+                Comercios = comercios // 👈 lista completa, el frontend decide qué mostrar
             };
         }
 

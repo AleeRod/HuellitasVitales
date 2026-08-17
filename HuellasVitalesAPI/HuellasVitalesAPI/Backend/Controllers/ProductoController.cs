@@ -208,5 +208,16 @@ namespace HuellitasVitalesAPI.Controllers
                 || string.Equals(rolUsuario, "ADMINISTRADOR", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(rolUsuario, "Admin", StringComparison.OrdinalIgnoreCase);
         }
+
+        [Authorize]
+        [HttpGet("mis-almacenes")]
+        public async Task<IActionResult> ObtenerMisAlmacenes()
+        {
+            int? idUsuario = ObtenerIdUsuario();
+            if (idUsuario == null) return Unauthorized(new { success = false, mensaje = "Token inválido." });
+
+            var almacenes = await _productoService.ObtenerAlmacenesDelUsuarioAsync(idUsuario.Value);
+            return Ok(new { success = true, almacenes });
+        }
     }
 }

@@ -279,11 +279,20 @@ namespace HuellitasVitalesAPI.Controllers
                 });
             }
         }
-
-
-
-
-
-
+        
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> Me()
+        {
+            var subClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(subClaim, out var idUsuario))
+                return Unauthorized(new { success = false, mensaje = "Token inválido." });
+ 
+            var perfil = await _usuarioService.ObtenerPerfilConComercioAsync(idUsuario);
+            if (perfil == null)
+                return NotFound(new { success = false, mensaje = "Usuario no encontrado." });
+ 
+            return Ok(new { success = true, usuario = perfil });
+        }
     }
 }
