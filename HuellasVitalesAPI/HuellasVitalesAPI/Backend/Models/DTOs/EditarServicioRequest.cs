@@ -2,14 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HuellasVitalesAPI.Backend.Models.DTOs
 {
-    public class CrearServicioRequest
+    public class EditarServicioRequest
     {
-        // Comercio (clínica veterinaria) donde se ofrecerá el servicio.
-        // Mismo criterio que en CrearProductoRequest: se indica explícitamente.
-        [Required(ErrorMessage = "Debes indicar el comercio donde se registrará el servicio.")]
-        [Range(1, int.MaxValue, ErrorMessage = "El comercio indicado no es válido.")]
-        public int IdComercio { get; set; }
-
         [Required(ErrorMessage = "El nombre del servicio es obligatorio.")]
         [StringLength(150, MinimumLength = 3, ErrorMessage = "El nombre debe tener entre 3 y 150 caracteres.")]
         public string Nombre { get; set; } = string.Empty;
@@ -29,10 +23,13 @@ namespace HuellasVitalesAPI.Backend.Models.DTOs
         [Range(1, short.MaxValue, ErrorMessage = "El tipo de servicio indicado no es válido.")]
         public short IdTipoServicio { get; set; }
 
-        // El veterinario debe pertenecer a la misma veterinaria (IdComercio) que el servicio,
-        // para que al agendar una cita ya se sepa con certeza quién atiende.
+        // El veterinario debe pertenecer a la misma veterinaria (IdComercio) que el servicio.
         [Required(ErrorMessage = "Debes asignar un veterinario de esta veterinaria al servicio.")]
         [Range(1, int.MaxValue, ErrorMessage = "El veterinario indicado no es válido.")]
         public int IdVeterinario { get; set; }
+
+        // A diferencia de EditarProductoRequest, sí se permite reactivar un servicio
+        // desactivado editándolo (el modal de edición del frontend ya trae este checkbox).
+        public bool Activo { get; set; } = true;
     }
 }

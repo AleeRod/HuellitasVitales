@@ -1,0 +1,214 @@
+{
+  "main": {
+    "id": "5157a81e37ff0c1f",
+    "type": "split",
+    "children": [
+      {
+        "id": "fec5c48c214f94eb",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "bab2a17700e546c0",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "04-Notas/MEJORAS.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "MEJORAS"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "15aa1c690ab558e2",
+    "type": "split",
+    "children": [
+      {
+        "id": "c786861ea949d9ab",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "7533a7a471246b76",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "9ea0297f361b6b0b",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "38df1240a2e827cc",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "2e3ce7b4db1ee9cd",
+    "type": "split",
+    "children": [
+      {
+        "id": "17be390a6f13e4e9",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "9444fe4f710bbf41",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "04-Notas/MEJORAS.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "8390b9a71ee8166a",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "04-Notas/MEJORAS.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "dc19b043a69cee78",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "9ac35f9cacb935da",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "8ad14f618ba9dbeb",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "04-Notas/MEJORAS.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "bab2a17700e546c0",
+  "lastOpenFiles": [
+    "03-Historias-Usuario/Plantilla-Historia.md",
+    "04-Notas/MEJORAS.md.tmp.1868.67aba90dd5e9",
+    "02-Base-Datos/Modelo-Datos.md.tmp.1868.d96aa0d05ca7",
+    "01-Arquitectura/Reglas-Generales.md",
+    "01-Arquitectura/Diagrama-Componentes.md",
+    "02-Base-Datos/Modelo-Datos.md",
+    "02-Base-Datos/Modelo-Datos.md.tmp.1868.4cb1a24213d2",
+    "04-Notas/MEJORAS.md.tmp.1868.5e4a2b2342f0",
+    "01-Arquitectura/Diagrama-Componentes.md.tmp.1868.38c05c752fb3",
+    "Indice.md.tmp.1868.ab46a2b03e10",
+    "04-Notas/MEJORAS.md.tmp.1868.f7e94335f49d",
+    "03-Historias-Usuario/Plantilla-Historia.md.tmp.1868.1e6ecdf5f35a",
+    "01-Arquitectura/Diagrama-Componentes.md.tmp.1868.c63e4f0d1d28",
+    "02-Base-Datos/Modelo-Datos.md.tmp.1868.c002a9a5a012",
+    "04-Notas/MEJORAS.md",
+    "2026-08-20.md",
+    "Untitled.canvas",
+    "Untitled 1.canvas",
+    "Indice.md",
+    "Notas.md"
+  ]
+}

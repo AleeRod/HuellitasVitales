@@ -66,7 +66,7 @@ const PanelVeterinario = () => {
       <aside className={styles.sidebar}>
         <div className={styles.sidebarContent}>
           <div className={styles.brandCard}>
-            <img src="/Imagenes/logo.png" alt="Logo Huellitas Vitales" />
+            <img src="/Imagenes/logo-huellitas.png" alt="Logo Huellitas Vitales" />
             <div>
               <div className={styles.brandName}>Huellitas Vitales</div>
               <div className={styles.brandLabel}>Panel Veterinario</div>

@@ -46,7 +46,7 @@ const Configuracion = () => {
       <aside className="sidebar">
         <div className="sidebar-content">
           <div className="brand-card">
-            <img src="/Imagenes/logo.png" alt="Logo Huellitas Vitales" />
+            <img src="/Imagenes/logo-huellitas.png" alt="Logo Huellitas Vitales" />
             <div>
               <div className="brand-name">Huellitas Vitales</div>
               <div className="brand-label">Portal Cliente</div>

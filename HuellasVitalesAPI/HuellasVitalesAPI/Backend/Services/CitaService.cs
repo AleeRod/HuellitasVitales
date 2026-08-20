@@ -56,13 +56,24 @@ namespace HuellitasVitalesAPI.Services
                 }
                 else
                 {
+                    // El servicio no trae un veterinario fijo (dato legado, previo a que
+                    // IdVeterinario fuera obligatorio al crear un servicio). En cualquier caso,
+                    // el veterinario -elegido o por defecto- debe pertenecer a LA MISMA
+                    // veterinaria (servicio.IdComercio) que el servicio, nunca a otra clínica.
                     if (request.IdVeterinario.HasValue)
                     {
+                        var veterinarioSolicitado = await _context.Veterinarios
+                            .FirstOrDefaultAsync(v => v.IdVeterinario == request.IdVeterinario.Value);
+
+                        if (veterinarioSolicitado == null || veterinarioSolicitado.IdComercio != servicio.IdComercio)
+                            return (false, "El veterinario seleccionado no pertenece a esta veterinaria.", 400, null);
+
                         idVeterinarioFinal = request.IdVeterinario.Value;
                     }
                     else
                     {
                         var veterinarioPorDefecto = await _context.Veterinarios
+                            .Where(v => v.IdComercio == servicio.IdComercio)
                             .OrderBy(v => v.IdVeterinario)
                             .FirstOrDefaultAsync();
 

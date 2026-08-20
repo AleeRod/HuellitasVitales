@@ -67,7 +67,7 @@ const Navbar = () => {
   return (
     <nav className="landing-nav">
       <div className="landing-brand">
-        <img src="/Imagenes/logo.png" alt="Logo Huellitas" style={{ width: '40px', height: 'auto' }} />
+        <img src="/Imagenes/logo-huellitas.png" alt="Logo Huellitas" style={{ width: '62px', height: 'auto', filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.25))', objectFit: 'contain' }} />
         <span>Huellitas Vitales</span>
       </div>
       

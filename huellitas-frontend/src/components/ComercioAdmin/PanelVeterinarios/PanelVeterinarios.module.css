@@ -33,6 +33,34 @@
     margin: 0;
 }
 
+.headerAcciones {
+    display: flex;
+    gap: 0.7rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.selectorComercio {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0.55rem 0.9rem;
+    color: var(--pine);
+}
+
+.selectorComercio select {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--pine-dk);
+    cursor: pointer;
+}
+
 .btnNuevo {
     display: inline-flex;
     align-items: center;
@@ -54,145 +82,10 @@
     transform: translateY(-2px);
 }
 
-.badgePendientes {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: var(--danger);
-    color: #fff;
-    font-size: 0.7rem;
-    font-weight: 700;
-    min-width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 4px;
-    border: 2px solid #fff;
-}
-
-/* --- SOLICITUDES DE TIPO DE SERVICIO --- */
-.solicitudesLista {
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-    max-height: 260px;
-    overflow-y: auto;
-}
-
-.solicitudCard {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.8rem;
-    padding: 0.7rem 0.9rem;
-    background: #f8f9fa;
-    border-radius: 12px;
-    border: 1px solid var(--line);
-}
-
-.solicitudInfo {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-}
-
-.solicitudNombre {
-    font-weight: 700;
-    color: var(--pine-dk);
-    font-size: 0.9rem;
-}
-
-.solicitudMeta {
-    font-size: 0.76rem;
-    color: var(--text-md);
-}
-
-.solicitudAcciones {
-    display: flex;
-    gap: 0.4rem;
-    flex-shrink: 0;
-}
-
-.btnAprobar, .btnRechazar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 9px;
-    border: 1px solid var(--line);
-    background: #fff;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.btnAprobar {
-    color: var(--mint);
-}
-
-.btnAprobar:hover {
-    background: var(--mint);
-    color: #fff;
-    border-color: var(--mint);
-}
-
-.btnRechazar {
-    color: var(--danger);
-}
-
-.btnRechazar:hover {
-    background: var(--danger);
-    color: #fff;
-    border-color: var(--danger);
-}
-
-.btnAprobar:disabled, .btnRechazar:disabled {
+.btnNuevo:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-}
-
-.estadoBadge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 0.25rem 0.6rem;
-    border-radius: 50px;
-    white-space: nowrap;
-}
-
-.estadoBadgePendiente {
-    background: rgba(230, 168, 23, 0.14);
-    color: #a3720a;
-}
-
-.estadoBadgeAprobada {
-    background: rgba(82, 183, 136, 0.14);
-    color: var(--pine);
-}
-
-.estadoBadgeRechazada {
-    background: rgba(192, 57, 43, 0.1);
-    color: var(--danger);
-}
-
-.seccionTitulo {
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 700;
-    color: var(--text-md);
-    margin: 0.2rem 0 0;
-}
-
-.vacioSolicitudes {
-    font-size: 0.85rem;
-    color: var(--text-md);
-    text-align: center;
-    padding: 1rem;
+    transform: none;
 }
 
 /* --- ESTADOS --- */
@@ -207,7 +100,7 @@
 
 .estadoBox h3 {
     color: var(--pine);
-    margin: 0 0 0.5rem;
+    margin: 0.6rem 0 0.4rem;
 }
 
 .linkBtn {
@@ -219,66 +112,68 @@
     text-decoration: underline;
 }
 
-/* --- TABLA --- */
-.tableWrap {
+/* --- GRID DE TARJETAS --- */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+.card {
     background: #fff;
     border: 1px solid var(--line);
     border-radius: 18px;
-    overflow: hidden;
+    padding: 1.2rem;
     box-shadow: 0 8px 20px rgba(27, 67, 50, 0.05);
-}
-
-.table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.table thead th {
-    text-align: left;
-    background: #f7faf7;
-    color: var(--pine);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    padding: 0.9rem 1.1rem;
-    border-bottom: 1px solid var(--line);
-}
-
-.table tbody td {
-    padding: 0.9rem 1.1rem;
-    border-bottom: 1px solid #eef2eb;
-    vertical-align: middle;
-}
-
-.table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.table tbody tr:hover {
-    background: rgba(82, 183, 136, 0.04);
-}
-
-.nombreCell {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.7rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.nombreServicio {
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 28px rgba(27, 67, 50, 0.1);
+}
+
+.cardTop {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.avatar {
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--mint), var(--pine));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    font-family: 'Playfair Display', serif;
+}
+
+.cardNombre {
     font-weight: 700;
     color: var(--pine-dk);
+    font-size: 1rem;
+    line-height: 1.25;
 }
 
-.descripcionServicio {
-    font-size: 0.8rem;
+.cardCorreo {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
     color: var(--text-md);
-    max-width: 280px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: 0.8rem;
 }
 
-.tipoBadge {
+.especialidadBadge {
+    align-self: flex-start;
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
@@ -290,57 +185,37 @@
     border-radius: 50px;
 }
 
-.metaCell {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
+.cardDescripcion {
+    font-size: 0.82rem;
     color: var(--text-md);
-    font-size: 0.88rem;
+    margin: 0;
+    line-height: 1.4;
 }
 
-.estadoOk {
-    color: var(--mint);
-    font-weight: 700;
-    font-size: 0.82rem;
-}
-
-.estadoOff {
-    color: #a0a5a0;
-    font-weight: 700;
-    font-size: 0.82rem;
-}
-
-.acciones {
+.cardFooter {
+    margin-top: auto;
+    padding-top: 0.6rem;
+    border-top: 1px solid #eef2eb;
     display: flex;
-    gap: 0.4rem;
     justify-content: flex-end;
 }
 
-.iconBtn, .iconBtnDanger {
+.btnQuitar {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
+    gap: 0.35rem;
+    background: transparent;
     border: 1px solid var(--line);
-    background: #fff;
-    color: var(--pine);
+    color: var(--danger);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.4rem 0.8rem;
+    border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.iconBtn:hover {
-    background: var(--pine);
-    color: #fff;
-    border-color: var(--pine);
-}
-
-.iconBtnDanger {
-    color: var(--danger);
-}
-
-.iconBtnDanger:hover {
+.btnQuitar:hover {
     background: var(--danger);
     color: #fff;
     border-color: var(--danger);
@@ -359,6 +234,7 @@
   align-items: center !important;
   z-index: 9999 !important;
 }
+
 .modal {
     background: #fff;
     border-radius: 20px;
@@ -382,6 +258,9 @@
     color: var(--pine);
     margin: 0;
     font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .closeBtn {
@@ -404,10 +283,19 @@
     gap: 1.1rem;
 }
 
-.campoFila {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+.ayudaModal {
+    font-size: 0.85rem;
+    color: var(--text-md);
+    margin: 0;
+    background: var(--cream);
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+}
+
+.busquedaForm {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-end;
 }
 
 .campo {
@@ -440,20 +328,25 @@
     border-color: var(--mint);
 }
 
-.checkboxCampo {
+.usuarioEncontrado {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    font-size: 0.88rem;
-    color: var(--text-md);
-    cursor: pointer;
+    gap: 0.7rem;
+    background: rgba(82, 183, 136, 0.1);
+    border: 1px solid var(--mint-lt);
+    border-radius: 14px;
+    padding: 0.8rem 1rem;
 }
 
-.checkboxCampo input {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--mint);
-    cursor: pointer;
+.usuarioNombre {
+    font-weight: 700;
+    color: var(--pine-dk);
+    font-size: 0.92rem;
+}
+
+.usuarioCorreo {
+    font-size: 0.8rem;
+    color: var(--text-md);
 }
 
 .errorMsg {
@@ -484,6 +377,9 @@
 }
 
 .btnPrimario {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     background: var(--mint);
     color: #fff;
 }
@@ -498,6 +394,9 @@
 }
 
 .btnSecundario {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     background: transparent;
     color: var(--text-md);
     border: 1px solid var(--line);
@@ -509,22 +408,11 @@
 
 /* --- RESPONSIVE --- */
 @media (max-width: 700px) {
-    .campoFila {
+    .grid {
         grid-template-columns: 1fr;
     }
-    .table thead {
-        display: none;
-    }
-    .table, .table tbody, .table tbody tr, .table tbody td {
-        display: block;
-        width: 100%;
-    }
-    .table tbody tr {
-        border-bottom: 1px solid var(--line);
-        padding: 0.8rem 1rem;
-    }
-    .acciones {
-        justify-content: flex-start;
-        margin-top: 0.6rem;
+    .busquedaForm {
+        flex-direction: column;
+        align-items: stretch;
     }
 }

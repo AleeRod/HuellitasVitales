@@ -223,7 +223,7 @@ function Register() {
 
                     <div className={styles['paw-logo']}>
                         <div className={styles['paw-icon']}>
-                            <img src="/Imagenes/logo.png" alt="Logo" width="100" height="65" />
+                            <img src="/Imagenes/logo-huellitas.png" alt="Logo" style={{ width: '140px', height: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 8px 14px rgba(0,0,0,0.22))' }} />
                         </div>
                         <span className={styles['brand-name']}>Huellitas Vitales</span>
                     </div>

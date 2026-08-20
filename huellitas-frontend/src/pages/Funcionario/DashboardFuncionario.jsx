@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, LogOut, Store, Stethoscope } from "lucide-react";
+import { Package, LogOut, Store, Stethoscope, Users } from "lucide-react";
 import { API_BASE } from "../../api/config";
 import PanelProductos from "../../components/ComercioAdmin/PanelProductos/PanelProductos"; // ⚠️ ajustá la ruta según dónde tengas PanelProductos
+import PanelServicios from "../../components/ComercioAdmin/PanelServicios/PanelServicios";
+import PanelVeterinarios from "../../components/ComercioAdmin/PanelVeterinarios/PanelVeterinarios";
 import styles from "./DashboardFuncionario.module.css";
 
 const TIPO_COMERCIO_VETERINARIA = 1;
@@ -126,6 +128,14 @@ const DashboardFuncionario = () => {
               <Stethoscope size={18} /> Servicios
             </button>
           )}
+          {comercioVeterinaria && (
+            <button
+              className={seccionActiva === "veterinarios" ? styles.navItemActivo : styles.navItem}
+              onClick={() => setSeccionActiva("veterinarios")}
+            >
+              <Users size={18} /> Veterinarios
+            </button>
+          )}
         </nav>
 
         <button className={styles.btnSalir} onClick={cerrarSesion}>
@@ -145,11 +155,23 @@ const DashboardFuncionario = () => {
         )}
 
         {seccionActiva === "servicios" && comercioVeterinaria && (
-          <div className={styles.avisoServicios}>
-            <p>
-              Gestión de <strong>Servicios</strong> para "{comercioVeterinaria.nombreComercial}" — en desarrollo.
-            </p>
-          </div>
+          comercioVeterinaria.aprobado ? (
+            <PanelServicios esAdmin={false} />
+          ) : (
+            <div className={styles.avisoServicios}>
+              <p>"{comercioVeterinaria.nombreComercial}" todavía no fue aprobado por un administrador.</p>
+            </div>
+          )
+        )}
+
+        {seccionActiva === "veterinarios" && comercioVeterinaria && (
+          comercioVeterinaria.aprobado ? (
+            <PanelVeterinarios esAdmin={false} />
+          ) : (
+            <div className={styles.avisoServicios}>
+              <p>"{comercioVeterinaria.nombreComercial}" todavía no fue aprobado por un administrador.</p>
+            </div>
+          )
         )}
       </main>
     </div>

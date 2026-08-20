@@ -26,6 +26,7 @@ import PanelServicios from '../../components/ComercioAdmin/PanelServicios/PanelS
 import PanelProductos from '../../components/ComercioAdmin/PanelProductos/PanelProductos';
 import PanelSolicitudesPendientes from '../../components/Admin/PanelSolicitudes/PanelSolicitudesPendientes';
 import PanelEmpleados from '../../components/ComercioAdmin/PanelEmpleados/PanelEmpleados';
+import PanelVeterinarios from '../../components/ComercioAdmin/PanelVeterinarios/PanelVeterinarios';
 
 import styles from './DashboardAdmin.module.css';
 
@@ -67,7 +68,7 @@ const DashboardAdmin = () => {
         <aside className={styles.sidebar}>
           <div className={styles.sidebarInner} style={{ overflowY: 'auto', paddingBottom: '30px' }}>
             <div className={styles.brandCard}>
-              <img src="/Imagenes/logo.png" alt="Logo Huellitas Vitales" />
+              <img src="/Imagenes/logo-huellitas.png" alt="Logo Huellitas Vitales" />
               <div>
                 <div className={styles.brandName}>Huellitas Vitales</div>
                 <div className={styles.brandBadge}>Clínica Veterinaria</div>
@@ -90,10 +91,13 @@ const DashboardAdmin = () => {
               <PawPrint size={18} className={styles.navIcon} />
               Mascotas
             </a>
-            <a href="#veterinarios" className={styles.navLinkAdmin} onClick={(e) => e.preventDefault()}>
+            <button
+              className={`${styles.navLinkAdmin} ${seccionActiva === 'veterinarios' ? styles.active : ''}`}
+              onClick={() => setSeccionActiva('veterinarios')}
+            >
               <Stethoscope size={18} className={styles.navIcon} />
               Veterinarios
-            </a>
+            </button>
             <a href="#citas" className={styles.navLinkAdmin} onClick={(e) => e.preventDefault()}>
               <Calendar size={18} className={styles.navIcon} />
               Citas
@@ -389,7 +393,13 @@ const DashboardAdmin = () => {
 
           {seccionActiva === 'tiposServicio' && (
             <div style={{ width: '100%' }}>
-              <PanelServicios />
+              <PanelServicios esAdmin={true} />
+            </div>
+          )}
+
+          {seccionActiva === 'veterinarios' && (
+            <div style={{ width: '100%' }}>
+              <PanelVeterinarios esAdmin={true} />
             </div>
           )}
 

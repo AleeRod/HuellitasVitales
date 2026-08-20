@@ -73,10 +73,12 @@ builder.Services.AddScoped<IMarketplaceService, MarketplaceService>();
 builder.Services.AddScoped<ComercioValidacionService>();
 builder.Services.AddScoped<ProductoService>();
 builder.Services.AddScoped<ServicioService>();
+builder.Services.AddScoped<TipoServicioService>();
 builder.Services.AddScoped<OrdenService>();
 builder.Services.AddScoped<ComercioFuncionarioService>();
 builder.Services.AddScoped<AgendaService>();
 builder.Services.AddScoped<CitaService>();
+builder.Services.AddScoped<VeterinarioService>();
 
 var app = builder.Build();
 
