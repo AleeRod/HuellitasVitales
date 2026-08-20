@@ -1,0 +1,12 @@
+import React, { useEffect, useState } from 'react';
+import { API_BASE } from '../../api/config';
+import { ToastContainer } from '../../components/Toast/Toast';
+import { useToast } from '../../components/Toast/useToast';
+export default function TrasladarExpediente() {
+  const [mascotas, setMascotas] = useState([]), [comercios, setComercios] = useState([]), [mascota, setMascota] = useState(''), [expediente, setExpediente] = useState(null), [destino, setDestino] = useState(''), [motivo, setMotivo] = useState(''); const { toasts, showToast, removeToast } = useToast();
+  const headers = () => ({ Authorization: `Bearer ${localStorage.getItem('token_huellitas')}` });
+  useEffect(() => { fetch(`${API_BASE}/usuario/mascotas`, { headers: headers() }).then(r=>r.json()).then(d=>setMascotas(d.mascotas||[])); fetch(`${API_BASE}/comercio/buscar?q=`, { headers: headers() }).then(r=>r.json()).then(d=>setComercios(d||d.comercios||[])); }, []);
+  const elegir = async id => { setMascota(id); const r = await fetch(`${API_BASE}/expediente/mascota/${id}`, {headers:headers()}); const d=await r.json(); if(!r.ok) return showToast(d.mensaje,'warning'); setExpediente(d.expediente); };
+  const enviar = async e => { e.preventDefault(); if(!expediente||!destino) return showToast('Selecciona expediente y veterinaria.', 'warning'); const r=await fetch(`${API_BASE}/trasladoexpediente/expedientes/${expediente.idExpediente}/solicitudes`, {method:'POST',headers:{...headers(),'Content-Type':'application/json'},body:JSON.stringify({idComercioDestino:Number(destino),motivo})}); const d=await r.json(); showToast(d.mensaje, r.ok?'success':'error'); };
+  return <main className="main-content" style={{padding:32,maxWidth:700}}><h1>Trasladar expediente</h1><p>La veterinaria receptora debe aceptar la solicitud antes de obtener acceso.</p><form onSubmit={enviar} style={{display:'grid',gap:12}}><select value={mascota} onChange={e=>elegir(e.target.value)} required><option value="">Mascota</option>{mascotas.map(m=><option value={m.idMascota} key={m.idMascota}>{m.nombre}</option>)}</select><select value={destino} onChange={e=>setDestino(e.target.value)} required><option value="">Veterinaria receptora</option>{comercios.map(c=><option value={c.idComercio} key={c.idComercio}>{c.nombreComercial}</option>)}</select><textarea placeholder="Motivo del traslado (opcional)" value={motivo} onChange={e=>setMotivo(e.target.value)}/><button className="btn-main" disabled={!expediente}>Solicitar traslado</button></form><ToastContainer toasts={toasts} removeToast={removeToast}/></main>;
+}

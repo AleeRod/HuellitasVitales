@@ -77,6 +77,11 @@ builder.Services.AddScoped<OrdenService>();
 builder.Services.AddScoped<ComercioFuncionarioService>();
 builder.Services.AddScoped<AgendaService>();
 builder.Services.AddScoped<CitaService>();
+builder.Services.AddScoped<NotificacionService>();
+builder.Services.AddScoped<TrasladoExpedienteService>();
+builder.Services.AddScoped<AtencionExternaService>();
+builder.Services.AddScoped<ExpedienteService>();
+builder.Services.AddScoped<EmergenciaService>();
 
 var app = builder.Build();
 
