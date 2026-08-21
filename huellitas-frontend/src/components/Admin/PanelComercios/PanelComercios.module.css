@@ -1,0 +1,40 @@
+/* Selector de pestañas (Solicitudes / Todos los comercios) para la sección "Comercios" del
+   panel de Admin — mismo lenguaje visual (pine/mint/cream) que el resto del panel. */
+
+.tabs {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: 1.1rem;
+    flex-wrap: wrap;
+}
+
+.tab {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .65rem 1.1rem;
+    border-radius: 30px;
+    border: 1.5px solid #dde3d8;
+    background: rgba(255, 255, 255, .8);
+    color: #4a5568;
+    font-weight: 700;
+    font-size: .88rem;
+    cursor: pointer;
+    transition: all .18s ease;
+}
+
+.tab:hover {
+    border-color: #52B788;
+    color: #1B4332;
+}
+
+.tabActivo {
+    background: linear-gradient(135deg, #1B4332 0%, #2d6a4f 100%);
+    border-color: #1B4332;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(27, 67, 50, .22);
+}
+
+.tabActivo:hover {
+    color: #fff;
+}

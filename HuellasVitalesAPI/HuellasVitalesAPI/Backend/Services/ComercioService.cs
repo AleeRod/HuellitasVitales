@@ -187,7 +187,13 @@ namespace HuellitasVitalesAPI.Services
                         : (u != null ? $"{u.Nombre} {u.Apellidos}" : ""),
                     Direccion = c.Direccion,
                     Telefono = c.Telefono,
-                    FechaSolicitud = c.FechaSolicitud
+                    FechaSolicitud = c.FechaSolicitud,
+                    TipoPersona = pl.IdTipoPersona == 2 ? "Jurídica" : "Física",
+                    Identificacion = pl.Identificacion,
+                    NombreSolicitante = u != null ? u.Nombre : "",
+                    ApellidosSolicitante = u != null ? u.Apellidos : "",
+                    CorreoSolicitante = u != null ? u.Correo : null,
+                    TelefonoSolicitante = u != null ? u.Telefono : null
                 }
             ).ToListAsync();
 
@@ -221,6 +227,115 @@ namespace HuellitasVitalesAPI.Services
                 _logger.LogError(ex, "Error al rechazar el comercio {Id}", idComercio);
                 return (false, "Ocurrió un error interno al rechazar la solicitud.", 500);
             }
+        }
+
+        private static string NombreEstadoSolicitud(byte idEstadoSolicitud) => idEstadoSolicitud switch
+        {
+            1 => "Pendiente",
+            2 => "Aprobado",
+            3 => "Rechazado",
+            _ => "Desconocido"
+        };
+
+        // ─── LISTAR TODOS LOS COMERCIOS (para la vista "Comercios" del Admin) ───
+        // A diferencia de ListarPendientesAsync, acá no se filtra por estado — el admin ve
+        // pendientes, aprobados y rechazados en un mismo lugar, con filtros opcionales.
+        public async Task<List<ComercioAdminDTO>> ListarTodosAsync(string? busqueda, byte? idEstadoSolicitud)
+        {
+            var query =
+                from c in _context.Comercios
+                join pl in _context.PersonasLegales on c.IdPersonaLegal equals pl.IdPersonaLegal
+                join tc in _context.TiposComercioCat on c.IdTipoComercio equals tc.IdTipoComercio into tcGroup
+                from tc in tcGroup.DefaultIfEmpty()
+                join u in _context.Usuarios on pl.IdUsuario equals u.IdUsuario into uGroup
+                from u in uGroup.DefaultIfEmpty()
+                select new ComercioAdminDTO
+                {
+                    IdComercio = c.IdComercio,
+                    NombreComercial = c.NombreComercial,
+                    IdTipoComercio = c.IdTipoComercio,
+                    TipoComercio = tc != null ? tc.Nombre : "Sin definir",
+                    Direccion = c.Direccion,
+                    Telefono = c.Telefono,
+                    IdEstadoSolicitud = c.IdEstadoSolicitud,
+                    EstadoSolicitud = "",
+                    FechaSolicitud = c.FechaSolicitud,
+                    FechaResolucion = c.FechaResolucion,
+                    TipoPersona = pl.IdTipoPersona == 2 ? "Jurídica" : "Física",
+                    Identificacion = pl.Identificacion,
+                    NombrePersonaLegal = pl.IdTipoPersona == 2
+                        ? (pl.RazonSocial ?? "")
+                        : (u != null ? $"{u.Nombre} {u.Apellidos}" : ""),
+                    CorreoSolicitante = u != null ? u.Correo : null,
+                    TelefonoSolicitante = u != null ? u.Telefono : null
+                };
+
+            if (idEstadoSolicitud.HasValue)
+                query = query.Where(x => x.IdEstadoSolicitud == idEstadoSolicitud.Value);
+
+            if (!string.IsNullOrWhiteSpace(busqueda))
+            {
+                var termino = busqueda.Trim().ToLower();
+                query = query.Where(x =>
+                    x.NombreComercial.ToLower().Contains(termino) ||
+                    x.NombrePersonaLegal.ToLower().Contains(termino) ||
+                    (x.CorreoSolicitante != null && x.CorreoSolicitante.ToLower().Contains(termino)));
+            }
+
+            var resultado = await query.OrderByDescending(x => x.FechaSolicitud).ToListAsync();
+
+            // El nombre del estado se resuelve en memoria (mismo criterio que EspecieCat en
+            // UsuarioService): ESTADO_SOLICITUD_CAT no tiene entidad/DbSet propio en el proyecto.
+            foreach (var comercio in resultado)
+                comercio.EstadoSolicitud = NombreEstadoSolicitud(comercio.IdEstadoSolicitud);
+
+            return resultado;
+        }
+
+        // ─── EDITAR DATOS BÁSICOS DE UN COMERCIO (cualquier estado) ───
+        public async Task<(bool Exito, string Mensaje)> ActualizarAsync(int idComercio, EditarComercioRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.NombreComercial))
+                return (false, "El nombre comercial es obligatorio.");
+
+            var comercio = await _context.Comercios.FirstOrDefaultAsync(c => c.IdComercio == idComercio);
+            if (comercio == null)
+                return (false, "El comercio no existe.");
+
+            comercio.NombreComercial = request.NombreComercial.Trim();
+            comercio.IdTipoComercio = request.IdTipoComercio;
+            comercio.Direccion = string.IsNullOrWhiteSpace(request.Direccion) ? null : request.Direccion.Trim();
+            comercio.Telefono = string.IsNullOrWhiteSpace(request.Telefono) ? null : request.Telefono.Trim();
+
+            await _context.SaveChangesAsync();
+            return (true, "Comercio actualizado correctamente.");
+        }
+
+        // ─── ELIMINAR (dar de baja) UN COMERCIO YA APROBADO ───
+        // El proyecto no modela un estado "Desactivado" propio (ESTADO_SOLICITUD_CAT solo tiene
+        // Pendiente/Aprobado/Rechazado, confirmado contra la Supabase real) — agregar uno
+        // requeriría insertar una fila de catálogo nueva, un cambio de datos que hay que decidir
+        // aparte. Mientras tanto, "eliminar" un comercio (a diferencia de RechazarComercioAsync,
+        // que solo actúa sobre solicitudes pendientes) reutiliza el mismo estado Rechazado(3):
+        // en la práctica ya lo saca del marketplace (BuscarComerciosAprobadosAsync filtra por
+        // estado == 2), que es el efecto real que se busca con "eliminar" en este panel.
+        public async Task<(bool Exito, string Mensaje, int Codigo)> EliminarAsync(int idComercio, int idAdmin)
+        {
+            var comercio = await _context.Comercios.FirstOrDefaultAsync(c => c.IdComercio == idComercio);
+            if (comercio == null)
+                return (false, "El comercio no existe.", 404);
+
+            if (comercio.IdEstadoSolicitud == 3)
+                return (false, "Este comercio ya estaba eliminado.", 409);
+
+            comercio.IdEstadoSolicitud = 3;
+            comercio.FechaResolucion = DateTime.UtcNow;
+            comercio.IdUsuarioResolvio = idAdmin;
+
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Comercio {Id} eliminado (dado de baja) por el administrador {Admin}", idComercio, idAdmin);
+
+            return (true, "Comercio eliminado correctamente.", 200);
         }
 
             public async Task<List<ComercioResumenDTO>> ListarMiosAsync(int idUsuario)

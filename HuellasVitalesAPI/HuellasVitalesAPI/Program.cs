@@ -85,6 +85,7 @@ builder.Services.AddScoped<AgendaService>();
 builder.Services.AddScoped<CitaService>();
 builder.Services.AddScoped<VeterinarioService>();
 builder.Services.AddScoped<NotificacionService>();
+builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<TrasladoExpedienteService>();
 builder.Services.AddScoped<AtencionExternaService>();
 builder.Services.AddScoped<ExpedienteService>();

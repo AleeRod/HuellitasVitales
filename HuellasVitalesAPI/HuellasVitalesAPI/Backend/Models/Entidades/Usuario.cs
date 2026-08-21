@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HuellasVitalesAPI.Backend.Models.Entidades
 {
@@ -14,6 +15,12 @@ namespace HuellasVitalesAPI.Backend.Models.Entidades
         public string? PasswordHash { get; set; }
         public string Proveedor_Auth { get; set; } = "Local";
         public string? Proveedor_Id { get; set; }
+
+        // Clave del ícono predefinido elegido como avatar (ver UsuarioService.IconosPerfilValidos).
+        // Columna nueva — requiere correr en Supabase:
+        // ALTER TABLE public."USUARIO" ADD COLUMN "AvatarIcono" varchar(30) NULL;
+        [Column("AvatarIcono")]
+        public string? AvatarIcono { get; set; }
 
         // Se cambia a byte para coincidir con TINYINT de la base de datos
         public byte IdRol { get; set; }

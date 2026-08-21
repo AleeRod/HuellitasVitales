@@ -20,13 +20,13 @@
     padding:0;
 }
 
+/* Antes el fondo se ponía en el selector global `body` — al ser un CSS Module, la clase
+   `.vetShell` sí queda aislada a este archivo, pero un selector de elemento como `body` no: se
+   filtraba al documento entero sin importar qué panel estuviera montado. Se mueve el fondo acá,
+   a `.vetShell`, con un tono propio (marfil cálido) para diferenciar este panel de un vistazo. */
 body {
     min-height:100vh;
     font-family:'Inter', sans-serif;
-    background:
-        radial-gradient(circle at top left, rgba(82,183,136,.18), transparent 34%),
-        radial-gradient(circle at bottom right, rgba(221,161,94,.15), transparent 28%),
-        var(--cream);
     color:var(--text-dk);
 }
 
@@ -34,6 +34,10 @@ body {
 .vetShell {
     min-height:100vh;
     display:flex;
+    background:
+        radial-gradient(circle at top left, rgba(82,183,136,.18), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(221,161,94,.15), transparent 28%),
+        #FBF6EE;
 }
 
 /* SIDEBAR */

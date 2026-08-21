@@ -13,5 +13,8 @@ namespace HuellasVitalesAPI.Backend.Models.DTOs
         public byte IdEstadoCuenta { get; set; }  // 1 = Activa, 2 = Invitada, 3 = Suspendida
         public string Proveedor { get; set; } = "Local";
         public DateTime FechaRegistro { get; set; }
+        public string? AvatarIcono { get; set; }
+        // true si la cuenta tiene una contraseña local establecida (BCrypt), sin exponer el hash.
+        public bool TieneContrasena { get; set; }
     }
 }

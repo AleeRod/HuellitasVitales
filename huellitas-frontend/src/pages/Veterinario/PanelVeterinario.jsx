@@ -14,6 +14,7 @@ import {
   ArrowLeftRight,
   CheckCircle2,
   Clock,
+  Globe,
 } from 'lucide-react';
 import PanelServicios from '../../components/ComercioAdmin/PanelServicios/PanelServicios';
 import PanelSolicitudesTraslado from '../../components/ComercioAdmin/PanelSolicitudesTraslado/PanelSolicitudesTraslado';
@@ -21,6 +22,8 @@ import PanelEmergencias from '../../components/ComercioAdmin/PanelEmergencias/Pa
 import PanelReportes from '../../components/ComercioAdmin/PanelReportes/PanelReportes';
 import NotificacionesBell from '../../components/Notificaciones/NotificacionesBell';
 import AgendaDiariaVeterinario from '../../components/Veterinario/AgendaDiariaVeterinario/AgendaDiariaVeterinario';
+import { IconoDePerfil } from '../../components/Cliente/AvatarIconos';
+import CustomSelect from '../../components/CustomSelect/CustomSelect';
 import { API_BASE } from '../../api/config';
 import { ToastContainer } from '../../components/Toast/Toast';
 import { useToast } from '../../components/Toast/useToast';
@@ -43,6 +46,7 @@ const PanelVeterinario = () => {
   const vistaInicial = VISTAS_VALIDAS.includes(searchParams.get('vista')) ? searchParams.get('vista') : 'clinico';
   const [vista, setVista] = useState(vistaInicial);
   const [usuario, setUsuario] = useState(null);
+  const [avatarIcono, setAvatarIcono] = useState(null);
 
   // Si el veterinario ya está en este panel (no se vuelve a montar) y toca una notificación
   // que apunta acá con otra pestaña, el useState de arriba no alcanza — hay que escuchar el
@@ -72,6 +76,24 @@ const PanelVeterinario = () => {
     } catch (err) {
       console.error('No se pudo leer el usuario guardado', err);
     }
+  }, []);
+
+  // El ícono de avatar elegido no viaja en el localStorage guardado al iniciar sesión, así que
+  // se refresca desde el propio perfil (mismo patrón que ClienteLayout/DashboardAdmin).
+  useEffect(() => {
+    let activo = true;
+    const t = token();
+    if (!t) return undefined;
+
+    fetch(`${API_BASE}/usuario/perfil`, { headers: { Authorization: `Bearer ${t}` } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (activo && data?.avatarIcono) setAvatarIcono(data.avatarIcono);
+      })
+      .catch(() => {});
+
+    return () => { activo = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const cargarCitas = async () => {
@@ -300,6 +322,10 @@ const PanelVeterinario = () => {
             <span className={styles.navIcon}><BarChart3 size={17} /></span>
             Reportes
           </a>
+          <button onClick={() => navigate('/')} className={styles.navLinkVet} style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', font: 'inherit' }}>
+            <span className={styles.navIcon}><Globe size={17} /></span>
+            Volver al inicio
+          </button>
           <button onClick={cerrarSesion} className={styles.navLinkVet} style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', font: 'inherit' }}>
             <span className={styles.navIcon}><LogOut size={17} /></span>
             Cerrar sesión
@@ -338,7 +364,9 @@ const PanelVeterinario = () => {
               <NotificacionesBell size={18} />
             </div>
             <div className={styles.profileMini}>
-              <div className={styles.profileAvatar}>{inicialAvatar}</div>
+              <div className={styles.profileAvatar}>
+                {avatarIcono ? <IconoDePerfil icono={avatarIcono} size={18} /> : inicialAvatar}
+              </div>
               <div>
                 <div className={styles.profileName}>{nombreUsuario}</div>
                 <div className={styles.profileRole}>{rolUsuario}</div>
@@ -565,19 +593,16 @@ const PanelVeterinario = () => {
                     <form onSubmit={completarCita} className="row g-3">
                       <div className="col-12">
                         <label className={styles.formLabel}>Cita</label>
-                        <select
-                          className={styles.formSelect}
+                        <CustomSelect
                           style={{ width: '100%' }}
                           value={citaParaCompletar}
-                          onChange={(e) => setCitaParaCompletar(e.target.value)}
-                        >
-                          <option value="">Elegí una cita...</option>
-                          {citasCompletables.map((c) => (
-                            <option key={c.idCita} value={c.idCita}>
-                              {formatHora(c.horaInicio)} · {c.nombreMascota} · {c.nombreServicio}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={setCitaParaCompletar}
+                          placeholder="Elegí una cita..."
+                          opciones={citasCompletables.map((c) => ({
+                            value: c.idCita,
+                            label: `${formatHora(c.horaInicio)} · ${c.nombreMascota} · ${c.nombreServicio}`
+                          }))}
+                        />
                       </div>
 
                       <div className="col-12">

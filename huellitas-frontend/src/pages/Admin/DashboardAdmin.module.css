@@ -16,6 +16,9 @@ html, body {
     text-align: left !important;
 }
 
+/* Tono base propio de este panel (ligeramente más frío/neutro que el resto) — misma receta
+   radial menta/ámbar que comparten todos los paneles, solo cambia el color base, para poder
+   distinguir de un vistazo en qué zona de la plataforma estás. */
 .adminShell {
     min-height: 100vh;
     display: flex;
@@ -24,7 +27,7 @@ html, body {
     background:
         radial-gradient(circle at top left, rgba(82,183,136,.18), transparent 34%),
         radial-gradient(circle at bottom right, rgba(221,161,94,.16), transparent 28%),
-        #FEFAE0;
+        #F5F7F0;
     color: #1a1a1a;
     overflow-x: hidden;
 }
@@ -281,7 +284,8 @@ html, body {
     font-size: .88rem;
 }
 
-.topSearch span {
+.topSearch span,
+.topSearch svg {
     position: absolute;
     left: .9rem;
     top: 50%;
@@ -481,6 +485,33 @@ html, body {
     cursor: pointer;
 }
 
+/* Botón de acción destructiva de tamaño completo (rechazar, suspender...) — antes se usaba
+   .actionBtn.danger acá, pero esa clase está pensada para un botón cuadrado de solo ícono
+   (35x35px); aplicada a un botón con texto lo dejaba angosto y mal proporcionado. */
+.btnDanger {
+    border: none;
+    background: linear-gradient(135deg, #c0392b 0%, #dc3545 100%);
+    color: #fff;
+    border-radius: 14px;
+    padding: .78rem 1rem;
+    font-weight: 700;
+    transition: all .18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    cursor: pointer;
+}
+
+.btnDanger:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(192,57,43,.28);
+}
+
+.btnDanger:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
 .toolbar {
     padding: 1rem 1.2rem;
     display: flex;
@@ -510,7 +541,11 @@ html, body {
     padding-left: 2.55rem;
 }
 
-.searchField span {
+/* El ícono de lupa es un <svg> de lucide-react (no un <span>) — sin ambos selectores acá se
+   queda con su posición normal en el flujo del documento, renderizando arriba del input en vez
+   de superpuesto a la izquierda (el bug reportado: la lupa "flotando" encima del buscador). */
+.searchField span,
+.searchField svg {
     position: absolute;
     left: .9rem;
     top: 50%;
@@ -533,7 +568,12 @@ html, body {
 .tableResponsive {
     border: 1px solid #dde3d8;
     border-radius: 18px;
-    overflow: hidden;
+    /* overflow-x: auto en vez de hidden — con "hidden" cualquier celda con texto sin espacios
+       (un nombre de comercio muy largo, por ejemplo) podía forzar la tabla más ancha que su
+       contenedor y esconder por completo las columnas de la derecha (incluida "Acciones", sin
+       ninguna forma de hacer scroll para verla). */
+    overflow-x: auto;
+    overflow-y: hidden;
     background: #fff;
 }
 
@@ -561,6 +601,10 @@ html, body {
     color: #4a5568;
     font-size: .9rem;
     border-bottom: 1px solid #eef2eb;
+    /* Deja que un texto sin espacios (un nombre/dirección muy largo) se parta en vez de forzar
+       la columna — sin esto, ese tipo de texto podía estirar toda la tabla y esconder columnas
+       enteras a la derecha. */
+    overflow-wrap: anywhere;
 }
 
 .userInfo {
@@ -619,6 +663,11 @@ html, body {
     color: #945d18;
 }
 
+.roleFuncionario {
+    background: rgba(99,102,241,.14);
+    color: #4338ca;
+}
+
 .statusActive {
     background: rgba(82,183,136,.16);
     color: #2d6a4f;
@@ -670,7 +719,29 @@ html, body {
     font-size: .82rem;
 }
 
-/* MODAL */
+/* MODAL — manejado por estado de React (data-bs-toggle no funciona: Bootstrap JS no está
+   cargado en el proyecto), reutilizando el mismo aspecto visual de .modalContent/.modalHeader/
+   etc. que ya existían pensados para el modal de Bootstrap. */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 1rem;
+}
+
+.modalDialog {
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, .25);
+    border-radius: 22px;
+}
+
 .modalContent {
     border: none;
     border-radius: 22px;
@@ -692,11 +763,78 @@ html, body {
     font-family: 'Playfair Display', serif;
     font-size: 1.35rem;
     margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .modalBody {
     background: #FEFAE0;
     padding: 1.25rem;
+}
+
+/* --- FICHA DE DETALLE (modal "Ver más") --- */
+.detalleSeccion {
+    margin-bottom: 1.4rem;
+}
+
+.detalleSeccion:last-child {
+    margin-bottom: 0;
+}
+
+.detalleSeccionTitulo {
+    font-size: .72rem;
+    font-weight: 800;
+    color: #1B4332;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin: 0 0 .9rem;
+    padding-bottom: .55rem;
+    border-bottom: 1px solid #dde3d8;
+}
+
+.detalleGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1rem;
+}
+
+.detalleItem {
+    display: flex;
+    align-items: flex-start;
+    gap: .7rem;
+}
+
+.detalleIcono {
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    background: rgba(82,183,136,.15);
+    color: #1B4332;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.detalleTexto {
+    min-width: 0;
+}
+
+.detalleLabel {
+    display: block;
+    font-size: .7rem;
+    font-weight: 700;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: .18rem;
+}
+
+.detalleValor {
+    display: block;
+    font-size: .92rem;
+    font-weight: 600;
+    color: #1B4332;
+    overflow-wrap: anywhere;
 }
 
 .modalFooter {

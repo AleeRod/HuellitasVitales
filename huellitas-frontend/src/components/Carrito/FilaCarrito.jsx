@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { precioVigente } from '../../lib/carritoLocal';
+import { resolverImagen } from '../../api/config';
 import styles from './FilaCarrito.module.css';
 
 /** Formato de plata de Costa Rica: ₡12.500,00 */
@@ -44,7 +45,7 @@ export const FilaCarrito = ({ item, guardando, onCambiarCantidad, onEliminar }) 
         <li className={styles.fila} aria-busy={guardando}>
             <div className={styles.imagenCaja}>
                 {item.imagenUrl ? (
-                    <img src={item.imagenUrl} alt="" className={styles.imagen} />
+                    <img src={resolverImagen(item.imagenUrl)} alt="" className={styles.imagen} />
                 ) : (
                     <span className={styles.sinImagen} aria-hidden="true">🐾</span>
                 )}

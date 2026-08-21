@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { X, Plus, Pencil, Trash2, Clock, DollarSign, Stethoscope, Scissors, Syringe, Tags, CheckCircle, XCircle, Store, Send, Inbox, Check, Hourglass } from "lucide-react";
 import { API_BASE } from "../../../api/config";
+import { ToastContainer } from "../../Toast/Toast";
+import { useToast } from "../../Toast/useToast";
+import { useConfirm } from "../../ConfirmModal/useConfirm";
+import SelectorVeterinaria from "../../Cliente/SelectorVeterinaria/SelectorVeterinaria";
+import CustomSelect from "../../CustomSelect/CustomSelect";
 import styles from "./PanelServicios.module.css";
 
 const ESTADO_SOLICITUD = {
@@ -38,6 +43,9 @@ const ESTADO = {
 };
 
 const PanelServicios = ({ esAdmin = false }) => {
+  const { toasts, showToast, removeToast } = useToast();
+  const { pedirConfirmacion, ConfirmacionModal } = useConfirm();
+
   const [servicios, setServicios] = useState([]);
   const [estado, setEstado] = useState(ESTADO.CARGANDO);
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -268,24 +276,27 @@ const PanelServicios = ({ esAdmin = false }) => {
     }
   };
 
-  const desactivarServicio = async (servicio) => {
-    const confirmar = window.confirm(
-      `¿Seguro que querés desactivar "${servicio.nombre}"? Ya no aparecerá disponible en el Marketplace.`
-    );
-    if (!confirmar) return;
-
-    try {
-      const res = await fetch(`${API_BASE}/servicio/${servicio.idServicio}`, {
-        method: "DELETE",
-        headers: getHeaders(),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.mensaje || "No se pudo desactivar el servicio");
-      cargarServicios(idComercioSeleccionado);
-    } catch (err) {
-      console.error(err);
-      alert(err.message || "No se pudo desactivar el servicio. Intentá de nuevo.");
-    }
+  const desactivarServicio = (servicio) => {
+    pedirConfirmacion({
+      titulo: "Desactivar servicio",
+      mensaje: `¿Seguro que querés desactivar "${servicio.nombre}"? Ya no aparecerá disponible en el Marketplace.`,
+      textoConfirmar: "Sí, desactivar",
+      onConfirmar: async () => {
+        try {
+          const res = await fetch(`${API_BASE}/servicio/${servicio.idServicio}`, {
+            method: "DELETE",
+            headers: getHeaders(),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.mensaje || "No se pudo desactivar el servicio");
+          showToast("Servicio desactivado correctamente.", "success");
+          cargarServicios(idComercioSeleccionado);
+        } catch (err) {
+          console.error(err);
+          showToast(err.message || "No se pudo desactivar el servicio. Intentá de nuevo.", "error");
+        }
+      }
+    });
   };
 
   const handleCrearTipo = async (e) => {
@@ -326,7 +337,7 @@ const PanelServicios = ({ esAdmin = false }) => {
       cargarTiposServicio();
     } catch (err) {
       console.error(err);
-      alert(err.message || "No se pudo actualizar el tipo de servicio.");
+      showToast(err.message || "No se pudo actualizar el tipo de servicio.", "error");
     }
   };
 
@@ -391,7 +402,7 @@ const PanelServicios = ({ esAdmin = false }) => {
       if (accion === "aprobar") cargarTiposServicio();
     } catch (err) {
       console.error(err);
-      alert(err.message || "No se pudo resolver la solicitud.");
+      showToast(err.message || "No se pudo resolver la solicitud.", "error");
     } finally {
       setProcesandoSolicitudId(null);
     }
@@ -410,15 +421,13 @@ const PanelServicios = ({ esAdmin = false }) => {
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           {veterinarias.length > 1 && (
-            <select
-              value={idComercioSeleccionado}
-              onChange={(e) => setIdComercioSeleccionado(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #ced4da' }}
-            >
-              {veterinarias.map((v) => (
-                <option key={v.idComercio} value={v.idComercio}>{v.nombreComercial}</option>
-              ))}
-            </select>
+            <div style={{ minWidth: '220px' }}>
+              <SelectorVeterinaria
+                opciones={veterinarias}
+                valor={idComercioSeleccionado}
+                onSeleccionar={setIdComercioSeleccionado}
+              />
+            </div>
           )}
 
           {puedeVerTipos && (
@@ -575,14 +584,11 @@ const PanelServicios = ({ esAdmin = false }) => {
               {esAdmin && !editando && veterinarias.length > 1 && (
                 <label className={styles.campo}>
                   <span>Veterinaria</span>
-                  <select
-                    value={idComercioSeleccionado}
-                    onChange={(e) => setIdComercioSeleccionado(e.target.value)}
-                  >
-                    {veterinarias.map((v) => (
-                      <option key={v.idComercio} value={v.idComercio}>{v.nombreComercial}</option>
-                    ))}
-                  </select>
+                  <SelectorVeterinaria
+                    opciones={veterinarias}
+                    valor={idComercioSeleccionado}
+                    onSeleccionar={setIdComercioSeleccionado}
+                  />
                 </label>
               )}
 
@@ -611,15 +617,14 @@ const PanelServicios = ({ esAdmin = false }) => {
               <div className={styles.campoFila}>
                 <label className={styles.campo}>
                   <span>Tipo de servicio</span>
-                  <select
+                  <CustomSelect
                     value={form.idTipoServicio}
-                    onChange={(e) => handleChange("idTipoServicio", e.target.value)}
-                  >
-                    <option value="">Seleccioná un tipo</option>
-                    {tiposServicio.filter((t) => t.activo).map((t) => (
-                      <option key={t.idTipoServicio} value={t.idTipoServicio}>{t.nombre}</option>
-                    ))}
-                  </select>
+                    onChange={(valor) => handleChange("idTipoServicio", valor)}
+                    placeholder="Seleccioná un tipo"
+                    opciones={tiposServicio
+                      .filter((t) => t.activo)
+                      .map((t) => ({ value: t.idTipoServicio, label: t.nombre }))}
+                  />
                 </label>
 
                 <label className={styles.campo}>
@@ -636,17 +641,15 @@ const PanelServicios = ({ esAdmin = false }) => {
 
               <label className={styles.campo}>
                 <span>Veterinario que atiende</span>
-                <select
+                <CustomSelect
                   value={form.idVeterinario}
-                  onChange={(e) => handleChange("idVeterinario", e.target.value)}
-                >
-                  <option value="">Seleccioná un veterinario</option>
-                  {veterinariosComercio.map((v) => (
-                    <option key={v.idVeterinario} value={v.idVeterinario}>
-                      {v.nombre}{v.especialidad ? ` — ${v.especialidad}` : ""}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(valor) => handleChange("idVeterinario", valor)}
+                  placeholder="Seleccioná un veterinario"
+                  opciones={veterinariosComercio.map((v) => ({
+                    value: v.idVeterinario,
+                    label: `${v.nombre}${v.especialidad ? ` — ${v.especialidad}` : ""}`
+                  }))}
+                />
                 {veterinariosComercio.length === 0 && (
                   <span className={styles.descripcionServicio}>
                     Esta veterinaria todavía no tiene veterinarios registrados. Pedile a un administrador que lo vincule.
@@ -872,6 +875,9 @@ const PanelServicios = ({ esAdmin = false }) => {
           </div>
         </div>
       )}
+
+      {ConfirmacionModal}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };

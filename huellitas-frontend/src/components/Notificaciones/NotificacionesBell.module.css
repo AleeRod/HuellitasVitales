@@ -49,10 +49,10 @@
 }
 
 .dropdown {
-    position: absolute;
-    top: calc(100% + 10px);
-    right: 0;
+    /* position/top/right se fijan inline en el componente (coordenadas calculadas desde el
+       botón): el panel se monta en un portal a document.body, no como descendiente de .wrap. */
     width: 340px;
+    max-width: calc(100vw - 16px);
     max-height: 420px;
     overflow-y: auto;
     background: #fff;

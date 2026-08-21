@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import '../../../pages/Cliente/DashboardCliente.css';
 import {
   Home, PawPrint, CalendarDays, Activity, Syringe, FileText,
-  Settings, LogOut, Paperclip, ArrowLeftRight, AlertTriangle, Dog
+  Settings, LogOut, Paperclip, ArrowLeftRight, AlertTriangle, Globe, Receipt
 } from 'lucide-react';
 import NotificacionesBell from '../../Notificaciones/NotificacionesBell';
+import { IconoDePerfil } from '../AvatarIconos';
+import { API_BASE } from '../../../api/config';
 
 // Único lugar donde vive el menú del portal cliente. Antes cada página (Dashboard, Mis
 // mascotas, Mis citas, Historial clínico, Vacunas, Reportes, Configuración...) tenía su propia
@@ -20,6 +22,7 @@ const SECCIONES = {
   historial: { badge: 'Historial clínico', hero: 'Historial clínico', sub: 'Consultas, atenciones externas y emergencias de tus mascotas, en una sola línea de tiempo.' },
   vacunas: { badge: 'Vacunas', hero: 'Control de vacunas', sub: 'Registro de vacunación de tus mascotas.' },
   reportes: { badge: 'Reportes', hero: 'Tus reportes', sub: 'Resumen de la actividad clínica de tus mascotas.' },
+  compras: { badge: 'Mis compras', hero: 'Mis compras', sub: 'Historial de órdenes del marketplace y sus recibos.' },
   atenciones: { badge: 'Atenciones externas', hero: 'Atenciones externas', sub: 'Registrá consultas realizadas fuera de Huellitas Vitales.' },
   traslado: { badge: 'Trasladar expediente', hero: 'Trasladar expediente', sub: 'Solicitá mover el expediente de tu mascota a otra veterinaria.' },
   emergencia: { badge: 'Emergencia', hero: 'Solicitar emergencia', sub: 'Solicitá atención veterinaria inmediata para tu mascota.' },
@@ -28,6 +31,7 @@ const SECCIONES = {
 
 const ClienteLayout = ({ activo, children, titulo, subtitulo }) => {
   const [usuario, setUsuario] = useState(null);
+  const [avatarIcono, setAvatarIcono] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -37,6 +41,25 @@ const ClienteLayout = ({ activo, children, titulo, subtitulo }) => {
     } catch (err) {
       console.error('No se pudo leer el usuario guardado', err);
     }
+  }, []);
+
+  // El ícono de avatar elegido no viaja en el localStorage guardado al iniciar sesión, así que
+  // se refresca desde el propio perfil — se vuelve a pedir en cada montaje (cada navegación
+  // entre secciones del portal), por lo que un cambio hecho en Configuración se refleja de
+  // inmediato en el resto del portal sin recargar la página.
+  useEffect(() => {
+    let activo = true;
+    const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+    if (!token) return undefined;
+
+    fetch(`${API_BASE}/usuario/perfil`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (activo && data?.avatarIcono) setAvatarIcono(data.avatarIcono);
+      })
+      .catch(() => {});
+
+    return () => { activo = false; };
   }, []);
 
   const nombreUsuario = usuario?.nombre || usuario?.Nombre || usuario?.nombreCompleto || 'Cliente';
@@ -104,6 +127,10 @@ const ClienteLayout = ({ activo, children, titulo, subtitulo }) => {
             <span className="nav-icon"><FileText size={18} /></span>
             Reportes
           </a>
+          <a href="#compras" className={linkClase('compras')} onClick={ir('/cliente/mis-compras')}>
+            <span className="nav-icon"><Receipt size={18} /></span>
+            Mis compras
+          </a>
 
           <div className="nav-section">Expediente</div>
           <a href="#atenciones-externas" className={linkClase('atenciones')} onClick={ir('/cliente/atenciones-externas')}>
@@ -126,6 +153,15 @@ const ClienteLayout = ({ activo, children, titulo, subtitulo }) => {
           </a>
 
           <button
+            onClick={ir('/')}
+            className="nav-link-client"
+            style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer' }}
+          >
+            <span className="nav-icon"><Globe size={18} /></span>
+            Volver al inicio
+          </button>
+
+          <button
             onClick={handleCerrarSesion}
             className="nav-link-client"
             style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', color: '#ff4d4d', cursor: 'pointer' }}
@@ -136,7 +172,7 @@ const ClienteLayout = ({ activo, children, titulo, subtitulo }) => {
 
           <div className="sidebar-pet-card">
             <div className="pet-mini">
-              <div className="pet-avatar"><Dog size={16} color="#4a4a4a" /></div>
+              <div className="pet-avatar"><IconoDePerfil icono={avatarIcono} size={16} color="#4a4a4a" /></div>
               <div>
                 <div className="pet-name">{nombreUsuario}</div>
                 <div className="pet-text">{rolUsuario}</div>
@@ -165,7 +201,9 @@ const ClienteLayout = ({ activo, children, titulo, subtitulo }) => {
               <NotificacionesBell size={20} />
             </div>
             <div className="profile-mini">
-              <div className="profile-avatar">{inicialAvatar}</div>
+              <div className="profile-avatar">
+                {avatarIcono ? <IconoDePerfil icono={avatarIcono} size={18} /> : inicialAvatar}
+              </div>
               <div>
                 <div className="profile-name">{nombreUsuario}</div>
                 <div className="profile-role">{rolUsuario}</div>

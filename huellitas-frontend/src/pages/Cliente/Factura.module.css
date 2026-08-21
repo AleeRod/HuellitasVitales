@@ -1,0 +1,246 @@
+.acciones {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.botonVolver,
+.botonImprimir {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.65rem 1.1rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.botonVolver {
+    border: 1.5px solid var(--line, #dde3d8);
+    background: #fff;
+    color: var(--pine, #1B4332);
+}
+
+.botonVolver:hover {
+    background: rgba(82, 183, 136, 0.1);
+}
+
+.botonImprimir {
+    border: none;
+    background: linear-gradient(135deg, var(--pine, #1B4332) 0%, var(--pine-soft, #2d6a4f) 100%);
+    color: #fff;
+}
+
+.botonImprimir:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(27, 67, 50, 0.25);
+}
+
+.estado {
+    background: #fff;
+    border: 1px solid var(--line, #dde3d8);
+    border-radius: 18px;
+    padding: 2.5rem;
+    text-align: center;
+    color: var(--text-md, #3d5248);
+}
+
+.facturaCard {
+    background: #fff;
+    border: 1px solid rgba(221, 227, 216, 0.95);
+    border-radius: 22px;
+    box-shadow: 0 12px 26px rgba(27, 67, 50, 0.06);
+    padding: 1.75rem 2rem 2rem;
+}
+
+.encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 2px solid var(--pine, #1B4332);
+    margin-bottom: 1.5rem;
+}
+
+.marca {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.logo {
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+}
+
+.marcaNombre {
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+    color: var(--pine, #1B4332);
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.marcaTexto {
+    margin: 2px 0 0;
+    color: var(--text-lt, #627a6f);
+    font-size: 0.8rem;
+}
+
+.numeroOrden {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    color: var(--text-lt, #627a6f);
+    font-size: 0.85rem;
+}
+
+.numeroOrden strong {
+    color: var(--pine, #1B4332);
+    font-size: 1.4rem;
+}
+
+.datosGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+}
+
+.datoLabel {
+    margin: 0 0 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-lt, #627a6f);
+}
+
+.datoValor {
+    margin: 0;
+    font-weight: 700;
+    color: var(--text-dk, #12251c);
+}
+
+.datoSub {
+    margin: 2px 0 0;
+    font-size: 0.82rem;
+    color: var(--text-lt, #627a6f);
+}
+
+.estadoBadge {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(82, 183, 136, 0.16);
+    color: #2d6a4f;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.tablaWrap {
+    overflow-x: auto;
+    margin-bottom: 1.25rem;
+}
+
+.tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.tabla th {
+    text-align: left;
+    padding: 0.6rem 0.5rem;
+    border-bottom: 2px solid var(--line, #dde3d8);
+    color: var(--pine, #1B4332);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.tabla td {
+    padding: 0.65rem 0.5rem;
+    border-bottom: 1px solid var(--line, #dde3d8);
+    color: var(--text-dk, #12251c);
+}
+
+.filaProducto {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.miniImagenCaja {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(64, 192, 136, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+}
+
+.miniImagen {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.totalFila {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 2px solid var(--pine, #1B4332);
+    font-weight: 700;
+    color: var(--pine, #1B4332);
+    font-size: 1.05rem;
+}
+
+.totalMonto {
+    font-size: 1.3rem;
+}
+
+.pie {
+    margin: 1.5rem 0 0;
+    text-align: center;
+    font-size: 0.76rem;
+    color: var(--text-lt, #627a6f);
+    font-style: italic;
+}
+
+/* Al imprimir, solo el recibo debe quedar en la hoja: se oculta el resto del
+   portal (sidebar, topbar y los botones de acción de esta misma pantalla). */
+@media print {
+    :global(.sidebar),
+    :global(.topbar) {
+        display: none !important;
+    }
+
+    :global(.main-content) {
+        padding: 0 !important;
+    }
+
+    .acciones {
+        display: none !important;
+    }
+
+    .facturaCard {
+        box-shadow: none !important;
+        border: none !important;
+    }
+}

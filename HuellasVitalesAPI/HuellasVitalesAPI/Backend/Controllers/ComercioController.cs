@@ -137,5 +137,60 @@ namespace HuellitasVitalesAPI.Controllers
             var comercios = await _comercioService.ListarMiosAsync(idUsuario);
             return Ok(comercios);
         }
+
+        // ─── Panel de Administración: TODOS los comercios (cualquier estado) ───
+        // GET api/comercio?estado=&busqueda=
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> ListarTodos([FromQuery] byte? estado, [FromQuery] string? busqueda)
+        {
+            var rolClaim = User.FindFirst("rol")?.Value;
+            if (rolClaim != "1")
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new { success = false, mensaje = "No tienes permisos para realizar esta acción." });
+
+            var comercios = await _comercioService.ListarTodosAsync(busqueda, estado);
+            return Ok(new { success = true, comercios });
+        }
+
+        // ─── Panel de Administración: editar datos básicos de un comercio ───
+        // PUT api/comercio/{id}
+        [HttpPut("{id:int}")]
+        [Authorize]
+        public async Task<IActionResult> Actualizar(int id, [FromBody] EditarComercioRequest request)
+        {
+            var rolClaim = User.FindFirst("rol")?.Value;
+            if (rolClaim != "1")
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new { success = false, mensaje = "No tienes permisos para realizar esta acción." });
+
+            var (exito, mensaje) = await _comercioService.ActualizarAsync(id, request);
+            if (!exito)
+                return BadRequest(new { success = false, mensaje });
+
+            return Ok(new { success = true, mensaje });
+        }
+
+        // ─── Panel de Administración: eliminar (dar de baja) un comercio ───
+        // DELETE api/comercio/{id}
+        [HttpDelete("{id:int}")]
+        [Authorize]
+        public async Task<IActionResult> Eliminar(int id)
+        {
+            var rolClaim = User.FindFirst("rol")?.Value;
+            if (rolClaim != "1")
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new { success = false, mensaje = "No tienes permisos para realizar esta acción." });
+
+            var subClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            if (!int.TryParse(subClaim, out var idAdmin))
+                return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
+
+            var resultado = await _comercioService.EliminarAsync(id, idAdmin);
+            if (!resultado.Exito)
+                return StatusCode(resultado.Codigo, new { success = false, mensaje = resultado.Mensaje });
+
+            return Ok(new { success = true, mensaje = resultado.Mensaje });
+        }
     }
 }

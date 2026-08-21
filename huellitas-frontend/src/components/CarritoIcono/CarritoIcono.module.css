@@ -1,4 +1,11 @@
-/* Ícono del carrito con contador, pensado para montarse en cualquier barra. */
+/* Ícono del carrito con contador y mini-carrito desplegable, pensado para
+   montarse en cualquier barra. Comparte paleta con el dropdown de usuario del
+   navbar (fondo pine oscuro, acentos mint). */
+
+.contenedor {
+    position: relative;
+    display: inline-flex;
+}
 
 .enlace {
     position: relative;
@@ -11,6 +18,10 @@
     color: var(--pine, #1B4332);
     text-decoration: none;
     flex-shrink: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
     transition: background 0.2s ease, color 0.2s ease;
 }
 
@@ -57,4 +68,250 @@
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+}
+
+/* ---------- Mini-carrito desplegable ---------- */
+
+.dropdown {
+    position: absolute;
+    right: 0;
+    top: 52px;
+    background: #1a2e26;
+    border: 1px solid rgba(82, 183, 136, 0.3);
+    border-radius: 14px;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.32);
+    width: 340px;
+    max-width: calc(100vw - 2rem);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    animation: dropdownIn 0.18s ease-out forwards;
+}
+
+@keyframes dropdownIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dropdownHeader h4 {
+    margin: 0;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.dropdownContador {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--mint, #52B788);
+    background: rgba(82, 183, 136, 0.16);
+    padding: 3px 9px;
+    border-radius: 20px;
+}
+
+.dropdownVacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 2rem 1.25rem;
+    text-align: center;
+}
+
+.dropdownVacio span[aria-hidden] {
+    font-size: 2rem;
+}
+
+.dropdownVacio p {
+    margin: 0;
+    color: #cbd5cd;
+    font-size: 0.85rem;
+}
+
+.dropdownBotonSecundario {
+    margin-top: 0.3rem;
+    padding: 8px 18px;
+    border-radius: 30px;
+    border: 1px solid var(--mint, #52B788);
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: background 0.15s ease;
+}
+
+.dropdownBotonSecundario:hover {
+    background: rgba(82, 183, 136, 0.2);
+}
+
+.dropdownLista {
+    list-style: none;
+    margin: 0;
+    padding: 6px 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.dropdownItem {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 10px;
+    transition: background 0.15s ease;
+}
+
+.dropdownItem:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.dropdownImagenCaja {
+    width: 52px;
+    height: 52px;
+    border-radius: 9px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.dropdownImagen {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.dropdownDatos {
+    min-width: 0;
+}
+
+.dropdownNombre {
+    margin: 0;
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dropdownPrecio {
+    margin: 2px 0 6px;
+    color: #a0b8ac;
+    font-size: 0.74rem;
+}
+
+.dropdownControles {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dropdownBotonCantidad {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.dropdownBotonCantidad:hover:not(:disabled) {
+    background: rgba(82, 183, 136, 0.25);
+    border-color: var(--mint, #52B788);
+}
+
+.dropdownBotonCantidad:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.dropdownCantidad {
+    min-width: 18px;
+    text-align: center;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.dropdownEliminar {
+    margin-left: auto;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #ff8a8a;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.dropdownEliminar:hover {
+    background: rgba(255, 107, 107, 0.16);
+}
+
+.dropdownFooter {
+    padding: 12px 16px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dropdownTotal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.dropdownBotonPrimario {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--mint, #52B788) 0%, #40c088 100%);
+    color: #0e2019;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.88rem;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dropdownBotonPrimario:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(82, 183, 136, 0.3);
+}
+
+@media (max-width: 480px) {
+    .dropdown {
+        position: fixed;
+        right: 1rem;
+        left: 1rem;
+        width: auto;
+    }
 }

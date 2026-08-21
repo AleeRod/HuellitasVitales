@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { ToastContainer } from "../../Toast/Toast";
+import { useToast } from "../../Toast/useToast";
 import styles from "./PanelTiposServicio.module.css";
 
 export default function PanelTiposServicio() {
+  const { toasts, showToast, removeToast } = useToast();
   const [tipos, setTipos] = useState([
     { idTipoServicio: 1, nombre: "Consulta", activo: true },
     { idTipoServicio: 2, nombre: "Grooming", activo: true },
@@ -17,7 +20,7 @@ export default function PanelTiposServicio() {
       (t) => t.nombre.toLowerCase() === nombre.toLowerCase()
     );
     if (existe) {
-      alert("Ese tipo de servicio ya existe");
+      showToast("Ese tipo de servicio ya existe.", "warning");
       return;
     }
 
@@ -64,6 +67,8 @@ export default function PanelTiposServicio() {
           </li>
         ))}
       </ul>
+
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 }

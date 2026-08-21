@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import styles from './AgendaDiariaVeterinario.module.css';
 import { API_BASE } from '../../../api/config';
+import CustomSelect from '../../CustomSelect/CustomSelect';
 import {
   CalendarDays,
   Calendar,
@@ -465,16 +466,14 @@ const AgendaDiariaVeterinario = () => {
           {fmtFecha(selectedDateObj)}
         </div>
         <div className="d-flex gap-2 flex-wrap">
-          <select
-            className={styles.filterSelect}
+          <CustomSelect
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="all">Todos los estados</option>
-            {ESTADO_CITA_CAT.map((e) => (
-              <option key={e.IdEstadoCita} value={e.IdEstadoCita}>{e.Nombre}</option>
-            ))}
-          </select>
+            onChange={setStatusFilter}
+            opciones={[
+              { value: 'all', label: 'Todos los estados' },
+              ...ESTADO_CITA_CAT.map((e) => ({ value: e.IdEstadoCita, label: e.Nombre }))
+            ]}
+          />
           <button className={styles.btnSoft}>Exportar agenda</button>
         </div>
       </div>
@@ -616,15 +615,11 @@ const AgendaDiariaVeterinario = () => {
                     <div className={styles.noSlotsMsg}>El veterinario no atiende ese día.</div>
                   )}
                   {opcionesHora.length > 0 && (
-                    <select
-                      className={styles.dateInput}
+                    <CustomSelect
                       value={nuevaHora}
-                      onChange={(e) => setNuevaHora(e.target.value)}
-                    >
-                      {opcionesHora.map((h) => (
-                        <option key={h} value={h}>{h}</option>
-                      ))}
-                    </select>
+                      onChange={setNuevaHora}
+                      opciones={opcionesHora.map((h) => ({ value: h, label: h }))}
+                    />
                   )}
 
                   <div className={styles.detailActions}>

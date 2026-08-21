@@ -1,0 +1,124 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 1rem;
+}
+
+.modal {
+    background: #fff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .2);
+    padding: 1.6rem;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin-bottom: .3rem;
+}
+
+.header h3 {
+    font-family: 'Playfair Display', serif;
+    color: #112b21;
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.iconoPeligro {
+    display: flex;
+    color: #c0392b;
+}
+
+.iconoNormal {
+    display: flex;
+    color: #52B788;
+}
+
+.mensaje {
+    color: #4a5568;
+    font-size: .9rem;
+    margin: .8rem 0 0;
+    line-height: 1.5;
+}
+
+.footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: .6rem;
+    margin-top: 1.4rem;
+}
+
+.btnSecundario {
+    padding: .6rem 1.1rem;
+    border-radius: 10px;
+    font-size: .86rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid #dde3d8;
+    background: transparent;
+    color: #4a5568;
+}
+
+.btnSecundario:hover:not(:disabled) {
+    border-color: #1B4332;
+    color: #1B4332;
+}
+
+.btnSecundario:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.btnPrimario {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .6rem 1.2rem;
+    border-radius: 10px;
+    font-size: .86rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    background: #52B788;
+    color: #fff;
+    transition: background .2s ease;
+}
+
+.btnPrimario:hover:not(:disabled) {
+    background: #1B4332;
+}
+
+.btnPeligro {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .6rem 1.2rem;
+    border-radius: 10px;
+    font-size: .86rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    background: #c0392b;
+    color: #fff;
+    transition: background .2s ease;
+}
+
+.btnPeligro:hover:not(:disabled) {
+    background: #a3312a;
+}
+
+.btnPrimario:disabled,
+.btnPeligro:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}

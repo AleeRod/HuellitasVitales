@@ -469,31 +469,250 @@
     color: #52b788;
 }
 
-.linkedCheck {
+
+/* --- ERRORES DE FORMULARIO (Información personal y modal de contraseña) --- */
+.errorText {
+    font-size: 0.78rem;
+    color: #c0392b;
+    font-weight: 600;
+}
+
+.ayudaText {
+    font-size: 0.78rem;
+    color: var(--text-md);
+}
+
+.inputError {
+    border-color: #c0392b !important;
+}
+
+/* ================================
+   ÍCONO DE PERFIL
+================================ */
+.avatarGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+    gap: 0.7rem;
+}
+
+.avatarOpt {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 16px;
+    border: 2px solid var(--line);
+    background: rgba(254, 250, 224, .35);
+    color: var(--pine);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.avatarOpt:hover:not(:disabled) {
+    border-color: var(--mint-lt);
+    transform: translateY(-1px);
+}
+
+.avatarOpt:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+.avatarOptActivo {
+    border-color: var(--mint);
+    background: rgba(82, 183, 136, 0.16);
+}
+
+.avatarOptCheck {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--mint);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+}
+
+/* ================================
+   SWITCH DE VINCULAR/DESVINCULAR
+================================ */
+.switch {
+    position: relative;
+    width: 46px;
+    height: 26px;
+    border-radius: 50px;
+    border: none;
+    background: #d7dcd6;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+    transition: background 0.2s ease;
+}
+
+.switch:hover:not(:disabled) {
+    background: #c3cac1;
+}
+
+.switch:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.switchActivo {
+    background: var(--mint);
+}
+
+.switchActivo:hover:not(:disabled) {
+    background: var(--pine);
+}
+
+.switchThumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--mint);
+    transition: transform 0.2s ease;
+}
+
+.switchActivo .switchThumb {
+    transform: translateX(20px);
+}
+
+.fbAviso {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    color: #a3720a;
+    font-size: 0.76rem;
+    margin-top: 0.3rem;
+    max-width: 260px;
+}
+
+/* ================================
+   CONTRASEÑA — CAMPOS CON OJO Y AVISO
+================================ */
+.passwordField {
+    position: relative;
+}
+
+.passwordField input {
+    padding-right: 2.3rem;
+}
+
+.eyeToggle {
+    position: absolute;
+    top: 50%;
+    right: 0.5rem;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.2rem;
+}
+
+.avisoSinPassword {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    background: rgba(230, 168, 23, 0.12);
+    border: 1px solid rgba(230, 168, 23, 0.3);
+    color: #a3720a;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    margin-bottom: 1.1rem;
+}
+
+/* ================================
+   MODALES (confirmar desvinculación / cambiar contraseña)
+================================ */
+.overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 9999 !important;
+    padding: 1rem;
+}
+
+.modal {
+    background: #fff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 460px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    padding: 1.7rem;
+}
+
+.modalConfirm {
+    max-width: 400px;
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
+}
+
+.modalHeader h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine-dk);
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.modalSub {
+    color: var(--text-md);
+    font-size: 0.85rem;
+    margin: 0 0 1.1rem;
+}
+
+.dangerBtn {
+    background: #c0392b;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 0.7rem 1.3rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 7px 12px;
-    border-radius: 20px;
-    background: #e8f7ef;
-    color: #2d9b67;
-    font-size: 13px;
-    font-weight: 600;
+    gap: 0.4rem;
 }
 
-.linkAccountBtn {
-    border: 1px solid #52b788;
-    background: #fff;
-    color: #39966c;
-    padding: 8px 15px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
+.dangerBtn:hover:not(:disabled) {
+    background: #a3312a;
 }
 
-.linkAccountBtn:hover {
-    background: #52b788;
-    color: #fff;
+.dangerBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }

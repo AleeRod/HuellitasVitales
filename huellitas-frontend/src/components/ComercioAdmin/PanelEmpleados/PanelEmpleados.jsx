@@ -11,6 +11,11 @@
     Store,
     } from "lucide-react";
     import { API_BASE } from "../../../api/config";
+    import { ToastContainer } from "../../Toast/Toast";
+    import { useToast } from "../../Toast/useToast";
+    import { useConfirm } from "../../ConfirmModal/useConfirm";
+    import SelectorVeterinaria from "../../Cliente/SelectorVeterinaria/SelectorVeterinaria";
+    import CustomSelect from "../../CustomSelect/CustomSelect";
     import styles from "./PanelEmpleados.module.css";
 
     const ESTADO = {
@@ -46,6 +51,9 @@
     }
 
     const PanelEmpleados = () => {
+    const { toasts, showToast, removeToast } = useToast();
+    const { pedirConfirmacion, ConfirmacionModal } = useConfirm();
+
     // Comercios del dueño logueado
     const [comercios, setComercios] = useState([]);
     const [idComercioSeleccionado, setIdComercioSeleccionado] = useState("");
@@ -208,30 +216,34 @@
         }
     };
 
-    const cambiarEstadoEmpleado = async (empleado) => {
+    const cambiarEstadoEmpleado = (empleado) => {
         const nuevoEstado = !empleado.activo;
-        const confirmar = window.confirm(
-        nuevoEstado
+        pedirConfirmacion({
+        titulo: nuevoEstado ? "Reactivar empleado" : "Desactivar empleado",
+        mensaje: nuevoEstado
             ? `¿Reactivar a ${empleado.nombre} ${empleado.apellidos}?`
-            : `¿Desactivar a ${empleado.nombre} ${empleado.apellidos}? Ya no podrá operar en este comercio.`
-        );
-        if (!confirmar) return;
-
-        try {
-        const res = await fetch(
-            `${API_BASE}/ComercioFuncionario/${empleado.idComercioFuncionario}/estado`,
-            {
-            method: "PUT",
-            headers: authHeaders(true),
-            body: JSON.stringify({ activo: nuevoEstado }),
+            : `¿Desactivar a ${empleado.nombre} ${empleado.apellidos}? Ya no podrá operar en este comercio.`,
+        textoConfirmar: nuevoEstado ? "Sí, reactivar" : "Sí, desactivar",
+        variante: nuevoEstado ? "normal" : "peligro",
+        onConfirmar: async () => {
+            try {
+            const res = await fetch(
+                `${API_BASE}/ComercioFuncionario/${empleado.idComercioFuncionario}/estado`,
+                {
+                method: "PUT",
+                headers: authHeaders(true),
+                body: JSON.stringify({ activo: nuevoEstado }),
+                }
+            );
+            if (!res.ok) throw new Error("No se pudo actualizar el estado del empleado.");
+            showToast(nuevoEstado ? "Empleado reactivado correctamente." : "Empleado desactivado correctamente.", "success");
+            cargarEmpleados(idComercioSeleccionado);
+            } catch (err) {
+            console.error(err);
+            showToast(err.message, "error");
             }
-        );
-        if (!res.ok) throw new Error("No se pudo actualizar el estado del empleado.");
-        cargarEmpleados(idComercioSeleccionado);
-        } catch (err) {
-        console.error(err);
-        alert(err.message);
         }
+        });
     };
 
     const comercioActual = comercios.find(
@@ -271,19 +283,13 @@
 
         {comercios.length > 1 && (
             <div className={styles.toolbar}>
-            <label className={styles.selectorComercio}>
-                <Store size={16} />
-                <select
-                value={idComercioSeleccionado}
-                onChange={(e) => setIdComercioSeleccionado(e.target.value)}
-                >
-                {comercios.map((c) => (
-                    <option key={c.idComercio} value={c.idComercio}>
-                    {c.nombreComercial} ({c.tipoComercio})
-                    </option>
-                ))}
-                </select>
-            </label>
+            <div style={{ minWidth: '240px' }}>
+                <SelectorVeterinaria
+                opciones={comercios}
+                valor={idComercioSeleccionado}
+                onSeleccionar={setIdComercioSeleccionado}
+                />
+            </div>
             </div>
         )}
 
@@ -434,17 +440,12 @@
                 {usuarioEncontrado && (
                     <label className={styles.campo}>
                     <span>Cargo</span>
-                    <select
+                    <CustomSelect
                         value={idCargoSeleccionado}
-                        onChange={(e) => setIdCargoSeleccionado(e.target.value)}
-                    >
-                        <option value="">Seleccione un cargo...</option>
-                        {cargos.map((c) => (
-                        <option key={c.idCargo} value={c.idCargo}>
-                            {c.nombre}
-                        </option>
-                        ))}
-                    </select>
+                        onChange={setIdCargoSeleccionado}
+                        placeholder="Seleccione un cargo..."
+                        opciones={cargos.map((c) => ({ value: c.idCargo, label: c.nombre }))}
+                    />
                     </label>
                 )}
 
@@ -467,6 +468,9 @@
             </div>
             </div>
         )}
+
+        {ConfirmacionModal}
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>
     );
     };

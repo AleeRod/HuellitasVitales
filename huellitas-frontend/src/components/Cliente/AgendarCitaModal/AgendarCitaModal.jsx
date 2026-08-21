@@ -27,25 +27,13 @@ import {
 
    Lo que SIGUE siendo mock, porque el backend todavía no lo tiene:
    - Mascotas del cliente (falta endpoint de mascotas)
-   - Horario laboral del veterinario / disponibilidad real (#184)
-   - Citas ya ocupadas (para no chocar horarios, #187)
-   Cuando esos endpoints existan, se reemplazan los bloques MOCK de abajo
-   por fetch reales — la forma de los datos ya está pensada para calzar.
+
+   Los horarios disponibles YA consultan el horario real del veterinario y las
+   citas que ya tiene ocupadas (GET /api/agenda/disponibilidad) — antes usaban un
+   horario inventado igual para todos (8am-5pm de lunes a viernes, 8am-12pm
+   sábado) sin importar el veterinario ni lo que ya tenía agendado, así que
+   mostraba horas que en realidad no estaban libres.
 ------------------------------------------------------------------------- */
-
-const HORARIO_VETERINARIO_MOCK = [
-  { DiaSemana: 1, HoraInicio: '08:00', HoraFin: '17:00' },
-  { DiaSemana: 2, HoraInicio: '08:00', HoraFin: '17:00' },
-  { DiaSemana: 3, HoraInicio: '08:00', HoraFin: '17:00' },
-  { DiaSemana: 4, HoraInicio: '08:00', HoraFin: '17:00' },
-  { DiaSemana: 5, HoraInicio: '08:00', HoraFin: '17:00' },
-  { DiaSemana: 6, HoraInicio: '08:00', HoraFin: '12:00' },
-];
-
-const CITAS_OCUPADAS_MOCK = [
-  { idVeterinario: 1, FechaOffset: 0, HoraInicio: '09:00', HoraFin: '09:30' },
-  { idVeterinario: 1, FechaOffset: 1, HoraInicio: '10:00', HoraFin: '10:30' },
-];
 
 const today = new Date();
 const addDays = (d, n) => {
@@ -98,6 +86,9 @@ const AgendarCitaModal = ({ open, onClose, servicioInicial = null, onConfirm }) 
   const [horaSel, setHoraSel] = useState(null);
   const [notas, setNotas] = useState('');
   const [exito, setExito] = useState(false);
+  const [horariosDisponibles, setHorariosDisponibles] = useState([]);
+  const [cargandoHorarios, setCargandoHorarios] = useState(false);
+  const [errorHorarios, setErrorHorarios] = useState(false);
 
   const servicio = servicioInicial || servicioElegido;
   const pasosBase = servicioInicial ? ['mascota', 'horario', 'confirmar'] : ['servicio', 'mascota', 'horario', 'confirmar'];
@@ -169,28 +160,45 @@ const AgendarCitaModal = ({ open, onClose, servicioInicial = null, onConfirm }) 
 
   const proximosDias = useMemo(() => Array.from({ length: 14 }, (_, i) => addDays(today, i)), []);
 
-  const horarioDia = (iso) => {
-    const dow = new Date(`${iso}T00:00:00`).getDay();
-    return HORARIO_VETERINARIO_MOCK.find((h) => h.DiaSemana === dow);
-  };
-
-  const slotsDisponibles = useMemo(() => {
-    if (!servicio) return [];
-    const h = horarioDia(fechaSel);
-    if (!h) return [];
-    const dur = Number(servicio.duracionMinutos) || 30;
-    const ocupados = CITAS_OCUPADAS_MOCK.filter(
-      (c) => c.idVeterinario === idVeterinario && toISO(addDays(today, c.FechaOffset)) === fechaSel
-    );
-    const out = [];
-    for (let m = toMin(h.HoraInicio); m + dur <= toMin(h.HoraFin); m += 30) {
-      const fin = m + dur;
-      const choca = ocupados.some((c) => m < toMin(c.HoraFin) && fin > toMin(c.HoraInicio));
-      if (!choca) out.push(minToHHMM(m));
+  // Horario real del veterinario para ese día + citas que ya tiene ocupadas — antes esto era
+  // un horario inventado igual para todos (8am-5pm todos los días), así que aparecían horas
+  // que en realidad no estaban disponibles.
+  useEffect(() => {
+    if (!servicio) return;
+    if (!idVeterinario) {
+      setHorariosDisponibles([]);
+      setCargandoHorarios(false);
+      setErrorHorarios(false);
+      return;
     }
-    return out;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fechaSel, servicio]);
+
+    let cancelado = false;
+    const cargarDisponibilidad = async () => {
+      setCargandoHorarios(true);
+      setErrorHorarios(false);
+      try {
+        const dur = Number(servicio.duracionMinutos) || 30;
+        const url = `${API_BASE}/agenda/disponibilidad?idVeterinario=${idVeterinario}&fecha=${fechaSel}&duracionMinutos=${dur}`;
+        const res = await fetch(url);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.mensaje || 'No se pudo consultar la disponibilidad del veterinario.');
+        if (!cancelado) setHorariosDisponibles(Array.isArray(data.horasDisponibles) ? data.horasDisponibles : []);
+      } catch (error) {
+        console.error('Disponibilidad del veterinario:', error);
+        if (!cancelado) {
+          setHorariosDisponibles([]);
+          setErrorHorarios(true);
+        }
+      } finally {
+        if (!cancelado) setCargandoHorarios(false);
+      }
+    };
+
+    cargarDisponibilidad();
+    return () => {
+      cancelado = true;
+    };
+  }, [servicio, idVeterinario, fechaSel]);
 
   const paso = pasosBase[pasoIdx];
   const totalPasos = pasosBase.length;
@@ -206,7 +214,7 @@ const AgendarCitaModal = ({ open, onClose, servicioInicial = null, onConfirm }) 
       const horaFin = minToHHMM(toMin(horaSel) + (Number(servicio.duracionMinutos) || 30));
       const nuevaCita = {
         idMascota,
-        nombreMascota: mascota.Nombre,
+        nombreMascota: mascota.nombre || mascota.Nombre,
         idVeterinario,
         nombreVeterinario,
         idServicio: servicio.idServicio,
@@ -326,12 +334,10 @@ const AgendarCitaModal = ({ open, onClose, servicioInicial = null, onConfirm }) 
                     {proximosDias.map((d) => {
                       const iso = toISO(d);
                       const active = iso === fechaSel;
-                      const disponible = !!horarioDia(iso);
                       return (
                         <button
                           key={iso}
-                          disabled={!disponible}
-                          className={`${styles.dayChip} ${active ? styles.dayChipActive : ''} ${!disponible ? styles.dayChipDisabled : ''}`}
+                          className={`${styles.dayChip} ${active ? styles.dayChipActive : ''}`}
                           onClick={() => {
                             setFechaSel(iso);
                             setHoraSel(null);
@@ -348,10 +354,19 @@ const AgendarCitaModal = ({ open, onClose, servicioInicial = null, onConfirm }) 
                     <Clock size={14} /> Horarios disponibles — {fmtFechaLarga(new Date(`${fechaSel}T00:00:00`))}
                   </div>
                   <div className={styles.slotsGrid}>
-                    {slotsDisponibles.length === 0 && (
+                    {!idVeterinario && (
+                      <div className={styles.noSlots}>Este servicio todavía no tiene un veterinario asignado — comunicate con la clínica para coordinar un horario.</div>
+                    )}
+                    {idVeterinario && cargandoHorarios && (
+                      <div className={styles.noSlots}>Consultando la disponibilidad del veterinario...</div>
+                    )}
+                    {idVeterinario && !cargandoHorarios && errorHorarios && (
+                      <div className={styles.noSlots}>No pudimos consultar la disponibilidad. Probá de nuevo más tarde.</div>
+                    )}
+                    {idVeterinario && !cargandoHorarios && !errorHorarios && horariosDisponibles.length === 0 && (
                       <div className={styles.noSlots}>No hay horarios disponibles este día. Probá con otra fecha.</div>
                     )}
-                    {slotsDisponibles.map((h) => (
+                    {idVeterinario && !cargandoHorarios && !errorHorarios && horariosDisponibles.map((h) => (
                       <button
                         key={h}
                         className={`${styles.slotBtn} ${horaSel === h ? styles.slotBtnActive : ''}`}
@@ -378,7 +393,7 @@ const AgendarCitaModal = ({ open, onClose, servicioInicial = null, onConfirm }) 
                       <PawPrint size={16} />
                       <div>
                         <div className={styles.summaryLabel}>Mascota</div>
-                        {mascota.Nombre} ({mascota.Raza})
+                        {mascota.nombre || mascota.Nombre} ({mascota.raza || mascota.Raza || 'sin raza'})
                       </div>
                     </div>
                     <div className={styles.summaryRow}>
@@ -437,7 +452,7 @@ const AgendarCitaModal = ({ open, onClose, servicioInicial = null, onConfirm }) 
               </div>
               <div className={styles.summaryRow}>
                 <PawPrint size={16} />
-                <div>{mascota.Nombre} — {servicio.nombreServicio}</div>
+                <div>{mascota.nombre || mascota.Nombre} — {servicio.nombreServicio}</div>
               </div>
             </div>
             <button className={styles.btnPrimary} onClick={onClose}>Listo</button>

@@ -9,9 +9,20 @@ function Login() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    
+
     // Estado para notificaciones
     const [notification, setNotification] = useState({ message: '', type: '' });
+
+    // ─── Recuperar contraseña ───
+    // 'login' | 'olvide-correo' | 'olvide-nueva'. No es una pantalla aparte: reemplaza el
+    // contenido del mismo form-card, así queda integrado al mismo panel visual del login.
+    const [vista, setVista] = useState('login');
+    const [correoRecuperar, setCorreoRecuperar] = useState('');
+    const [tokenRecuperar, setTokenRecuperar] = useState('');
+    const [nuevaPassword, setNuevaPassword] = useState('');
+    const [confirmarPassword, setConfirmarPassword] = useState('');
+    const [showNuevaPassword, setShowNuevaPassword] = useState(false);
+    const [cargandoRecuperar, setCargandoRecuperar] = useState(false);
     
     const navigate = useNavigate();
     const location = useLocation();
@@ -76,6 +87,92 @@ function Login() {
             triggerNotification("Problemas conectando con el servidor. Verifica que tu API en C# esté corriendo.");
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    // ─── Recuperar contraseña ───
+    // El backend (POST /api/password/recuperar) todavía no envía el correo de verdad — es una
+    // limitación temporal documentada ahí mismo ("TEMPORAL: lo devolvemos solo para probar
+    // desde Swagger") — devuelve el token de recuperación directo en la respuesta. Mientras no
+    // haya envío de correo real, el flujo usa ese mismo token para pasar al segundo paso sin
+    // pedirle a la persona que copie o pegue nada, y sin fingir que se mandó un correo.
+    const volverALogin = () => {
+        setVista('login');
+        setCorreoRecuperar('');
+        setTokenRecuperar('');
+        setNuevaPassword('');
+        setConfirmarPassword('');
+        setNotification({ message: '', type: '' });
+    };
+
+    const solicitarRecuperacion = async (e) => {
+        e.preventDefault();
+        if (!correoRecuperar) {
+            triggerNotification('Ingresá tu correo para continuar.');
+            return;
+        }
+
+        setCargandoRecuperar(true);
+        try {
+            const res = await fetch(`${API_BASE}/password/recuperar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ correo: correoRecuperar })
+            });
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                triggerNotification(data.mensaje || 'No se pudo procesar la solicitud.');
+                return;
+            }
+
+            if (!data.token) {
+                // No revela si el correo existe o no en el sistema.
+                triggerNotification('Si el correo está registrado, vas a poder continuar con el restablecimiento.', 'success');
+                return;
+            }
+
+            setTokenRecuperar(data.token);
+            setNotification({ message: '', type: '' });
+            setVista('olvide-nueva');
+        } catch (error) {
+            triggerNotification('Problemas conectando con el servidor.');
+        } finally {
+            setCargandoRecuperar(false);
+        }
+    };
+
+    const restablecerPassword = async (e) => {
+        e.preventDefault();
+        if (!nuevaPassword || nuevaPassword.length < 8) {
+            triggerNotification('La nueva contraseña debe tener al menos 8 caracteres.');
+            return;
+        }
+        if (nuevaPassword !== confirmarPassword) {
+            triggerNotification('Las contraseñas no coinciden.');
+            return;
+        }
+
+        setCargandoRecuperar(true);
+        try {
+            const res = await fetch(`${API_BASE}/password/restablecer`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: tokenRecuperar, correo: correoRecuperar, nuevaPassword })
+            });
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                triggerNotification(data.mensaje || 'No se pudo restablecer la contraseña.');
+                return;
+            }
+
+            triggerNotification(data.mensaje || 'Contraseña actualizada correctamente. Ya podés iniciar sesión.', 'success');
+            setTimeout(volverALogin, 1800);
+        } catch (error) {
+            triggerNotification('Problemas conectando con el servidor.');
+        } finally {
+            setCargandoRecuperar(false);
         }
     };
 
@@ -277,6 +374,8 @@ function Login() {
                         <span className={styles['brand-name']}>Huellitas Vitales</span>
                     </div>
 
+                    {vista === 'login' && (
+                    <>
                     <h2 className={styles['form-heading']}>Bienvenidos a la mejor clínica</h2>
                     <p className={styles['form-sub']}>Ingresa tus datos para continuar</p>
 
@@ -349,7 +448,14 @@ function Login() {
                                 <input type="checkbox" id="remember" />
                                 Recordarme
                             </label>
-                            <Link to="#" className={styles['forgot-link']}>¿Olvidaste tu clave?</Link>
+                            <button
+                                type="button"
+                                className={styles['forgot-link']}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                                onClick={() => { setVista('olvide-correo'); setNotification({ message: '', type: '' }); }}
+                            >
+                                ¿Olvidaste tu clave?
+                            </button>
                         </div>
 
                         <button 
@@ -396,6 +502,151 @@ function Login() {
                     <p className={styles['register-txt']}>
                         ¿No tienes cuenta? <Link to="/register">Regístrate gratis</Link>
                     </p>
+                    </>
+                    )}
+
+                    {vista === 'olvide-correo' && (
+                        <>
+                            <h2 className={styles['form-heading']}>¿Olvidaste tu contraseña?</h2>
+                            <p className={styles['form-sub']}>Ingresá tu correo y te ayudamos a restablecerla.</p>
+
+                            <form onSubmit={solicitarRecuperacion} noValidate>
+                                <div className={styles['field-group']}>
+                                    <label htmlFor="correo-recuperar">Correo electrónico</label>
+                                    <div className={styles['input-wrap']}>
+                                        <input
+                                            type="email"
+                                            id="correo-recuperar"
+                                            placeholder="TuCorreo@mail.com"
+                                            autoComplete="email"
+                                            required
+                                            value={correoRecuperar}
+                                            onChange={(e) => setCorreoRecuperar(e.target.value)}
+                                        />
+                                        <span className={styles['input-icon']}>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <rect x="2" y="4" width="20" height="16" rx="2" />
+                                                <path d="m2 7 10 7 10-7" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    className={styles['btn-login']}
+                                    disabled={cargandoRecuperar}
+                                    style={{ opacity: cargandoRecuperar ? 0.7 : 1 }}
+                                    onClick={handleRipple}
+                                >
+                                    <span>{cargandoRecuperar ? 'Enviando...' : 'Continuar'}</span>
+                                </button>
+                            </form>
+
+                            <p className={styles['register-txt']}>
+                                <button
+                                    type="button"
+                                    className={styles['forgot-link']}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                                    onClick={volverALogin}
+                                >
+                                    ← Volver a iniciar sesión
+                                </button>
+                            </p>
+                        </>
+                    )}
+
+                    {vista === 'olvide-nueva' && (
+                        <>
+                            <h2 className={styles['form-heading']}>Nueva contraseña</h2>
+                            <p className={styles['form-sub']}>Verificamos tu correo — ya podés definir una contraseña nueva.</p>
+
+                            <form onSubmit={restablecerPassword} noValidate>
+                                <div className={styles['field-group']}>
+                                    <label htmlFor="nueva-password">Nueva contraseña</label>
+                                    <div className={styles['input-wrap']}>
+                                        <input
+                                            type={showNuevaPassword ? 'text' : 'password'}
+                                            id="nueva-password"
+                                            placeholder="Mínimo 8 caracteres"
+                                            autoComplete="new-password"
+                                            required
+                                            value={nuevaPassword}
+                                            onChange={(e) => setNuevaPassword(e.target.value)}
+                                        />
+                                        <span className={styles['input-icon']}>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <rect x="3" y="11" width="18" height="11" rx="2" />
+                                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                            </svg>
+                                        </span>
+                                        <button
+                                            type="button"
+                                            className={styles['toggle-pass']}
+                                            onClick={() => setShowNuevaPassword(!showNuevaPassword)}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                {showNuevaPassword ? (
+                                                    <>
+                                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                                                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                                                        <line x1="1" y1="1" x2="23" y2="23" />
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                        <circle cx="12" cy="12" r="3" />
+                                                    </>
+                                                )}
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className={styles['field-group']}>
+                                    <label htmlFor="confirmar-password">Confirmar contraseña</label>
+                                    <div className={styles['input-wrap']}>
+                                        <input
+                                            type={showNuevaPassword ? 'text' : 'password'}
+                                            id="confirmar-password"
+                                            placeholder="Repetí la contraseña"
+                                            autoComplete="new-password"
+                                            required
+                                            value={confirmarPassword}
+                                            onChange={(e) => setConfirmarPassword(e.target.value)}
+                                        />
+                                        <span className={styles['input-icon']}>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <rect x="3" y="11" width="18" height="11" rx="2" />
+                                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    className={styles['btn-login']}
+                                    disabled={cargandoRecuperar}
+                                    style={{ opacity: cargandoRecuperar ? 0.7 : 1 }}
+                                    onClick={handleRipple}
+                                >
+                                    <span>{cargandoRecuperar ? 'Guardando...' : 'Guardar nueva contraseña'}</span>
+                                </button>
+                            </form>
+
+                            <p className={styles['register-txt']}>
+                                <button
+                                    type="button"
+                                    className={styles['forgot-link']}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                                    onClick={volverALogin}
+                                >
+                                    ← Volver a iniciar sesión
+                                </button>
+                            </p>
+                        </>
+                    )}
 
                 </div>
             </div>

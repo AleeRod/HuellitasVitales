@@ -47,25 +47,6 @@
     margin-bottom: 1rem;
     }
 
-    .selectorComercio {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 0.5rem 0.85rem;
-    color: #1b4332;
-    }
-
-    .selectorComercio select {
-    border: none;
-    background: transparent;
-    font-weight: 600;
-    color: #1b4332;
-    outline: none;
-    }
-
     .estadoBox {
     display: flex;
     flex-direction: column;

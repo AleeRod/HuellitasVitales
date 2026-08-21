@@ -1,0 +1,194 @@
+/* Zona de sesión (login/registro o avatar + menú) para montar en cualquier
+   barra de navegación. Mismo look que el dropdown original del Navbar de la
+   landing, pero autocontenido en un CSS Module. */
+
+.anonimo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.botonOutline,
+.botonSolido {
+    display: inline-flex;
+    align-items: center;
+    height: 40px;
+    padding: 0 1.1rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.botonOutline {
+    background: transparent;
+    color: var(--pine-soft, #2d6a4f);
+    border: 2px solid rgba(64, 192, 136, 0.5);
+}
+
+.botonOutline:hover {
+    background: rgba(64, 192, 136, 0.12);
+    border-color: var(--mint, #52B788);
+    color: var(--pine, #1B4332);
+    transform: translateY(-2px);
+}
+
+.botonSolido {
+    background: var(--pine, #1B4332);
+    color: #fff;
+    border: 2px solid var(--pine, #1B4332);
+}
+
+.botonSolido:hover {
+    background: var(--pine-soft, #2d6a4f);
+    border-color: var(--pine-soft, #2d6a4f);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(27, 67, 50, 0.18);
+}
+
+.contenedor {
+    position: relative;
+}
+
+.boton {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(82, 183, 136, 0.15);
+    border: 1px solid #52B788;
+    padding: 6px 14px;
+    border-radius: 30px;
+    cursor: pointer;
+    color: var(--pine, #1B4332);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.boton:hover {
+    background: rgba(82, 183, 136, 0.28);
+    border-color: var(--mint, #52B788);
+}
+
+.boton:focus-visible {
+    outline: 2px solid var(--mint, #52B788);
+    outline-offset: 2px;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #52B788;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.nombre {
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chevron {
+    transition: transform 0.18s ease;
+    flex-shrink: 0;
+}
+
+.chevronAbierto {
+    transform: rotate(180deg);
+}
+
+.dropdown {
+    position: absolute;
+    right: 0;
+    top: 52px;
+    background: #1a2e26;
+    border: 1px solid rgba(82, 183, 136, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    width: 230px;
+    padding: 8px 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    animation: dropdownIn 0.18s ease-out forwards;
+}
+
+@keyframes dropdownIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownCabecera {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 5px;
+}
+
+.dropdownCabecera p {
+    margin: 0;
+    font-size: 12px;
+    color: #a0aec0;
+}
+
+.dropdownCabecera strong {
+    display: block;
+    margin-top: 2px;
+    font-size: 13px;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dropdownItem {
+    padding: 10px 16px;
+    color: #e2e8f0;
+    text-decoration: none;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: inherit;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.dropdownItem:hover {
+    background: rgba(82, 183, 136, 0.14);
+    color: #fff;
+}
+
+.dropdownItemPeligro {
+    color: #ff6b6b;
+}
+
+.dropdownItemPeligro:hover {
+    background: rgba(255, 107, 107, 0.14);
+    color: #ff8a8a;
+}
+
+.separador {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 5px 0;
+}
+
+@media (max-width: 480px) {
+    .nombre {
+        display: none;
+    }
+}

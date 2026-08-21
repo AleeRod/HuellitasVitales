@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { X, Send, Check, Calendar, FileText, Eye, ArrowLeftRight } from "lucide-react";
 import { API_BASE } from "../../../api/config";
+import { ToastContainer } from "../../Toast/Toast";
+import { useToast } from "../../Toast/useToast";
+import { useConfirm } from "../../ConfirmModal/useConfirm";
 import styles from "./PanelSolicitudesTraslado.module.css";
 
 const ESTADO = {
@@ -22,6 +25,9 @@ const formatFecha = (fechaISO) => {
 };
 
 const PanelSolicitudesTraslado = () => {
+  const { toasts, showToast, removeToast } = useToast();
+  const { pedirConfirmacion, ConfirmacionModal } = useConfirm();
+
   const [solicitudes, setSolicitudes] = useState([]);
   const [estado, setEstado] = useState(ESTADO.CARGANDO);
 
@@ -60,17 +66,21 @@ const PanelSolicitudesTraslado = () => {
       setExpedienteAbierto(data.expediente);
     } catch (err) {
       console.error(err);
-      alert(err.message || "No se pudo cargar el expediente.");
+      showToast(err.message || "No se pudo cargar el expediente.", "error");
       setExpedienteAbierto(null);
     } finally {
       setCargandoExpediente(false);
     }
   };
 
-  const aceptar = async (solicitud) => {
-    const confirmar = window.confirm(`¿Aceptar el traslado del expediente de ${solicitud.nombreMascota}?`);
-    if (!confirmar) return;
-    await resolver(solicitud.idSolicitudTraslado, "aceptar");
+  const aceptar = (solicitud) => {
+    pedirConfirmacion({
+      titulo: "Aceptar traslado",
+      mensaje: `¿Aceptar el traslado del expediente de ${solicitud.nombreMascota}?`,
+      textoConfirmar: "Sí, aceptar",
+      variante: "normal",
+      onConfirmar: () => resolver(solicitud.idSolicitudTraslado, "aceptar")
+    });
   };
 
   const abrirRechazo = (solicitud) => {
@@ -94,10 +104,11 @@ const PanelSolicitudesTraslado = () => {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.mensaje || "No se pudo resolver la solicitud.");
+      showToast("Solicitud de traslado resuelta correctamente.", "success");
       cargarPendientes();
     } catch (err) {
       console.error(err);
-      alert(err.message || "No se pudo resolver la solicitud.");
+      showToast(err.message || "No se pudo resolver la solicitud.", "error");
     } finally {
       setProcesandoId(null);
     }
@@ -249,6 +260,9 @@ const PanelSolicitudesTraslado = () => {
           </div>
         </div>
       )}
+
+      {ConfirmacionModal}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };

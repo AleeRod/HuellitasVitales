@@ -40,27 +40,6 @@
     flex-wrap: wrap;
 }
 
-.selectorComercio {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 0.55rem 0.9rem;
-    color: var(--pine);
-}
-
-.selectorComercio select {
-    border: none;
-    outline: none;
-    background: transparent;
-    font-weight: 700;
-    font-size: 0.88rem;
-    color: var(--pine-dk);
-    cursor: pointer;
-}
-
 .btnNuevo {
     display: inline-flex;
     align-items: center;

@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useGoogleLogin } from '@react-oauth/google';
 import DogNav from '../../components/DogNav/DogNav';
 import { ToastContainer } from '../../components/Toast/Toast';
 import { API_BASE } from '../../api/config';
+import { ICONOS_PERFIL, IconoDePerfil } from '../../components/Cliente/AvatarIconos';
 import styles from './Perfil.module.css';
-import { User, Contact, Mail, Phone, Lock, Calendar, Edit2, AlertTriangle, KeyRound } from 'lucide-react';
-import { GoogleLogin } from '@react-oauth/google';
+import {
+  User, Contact, Mail, Phone, Lock, Calendar, Edit2, AlertTriangle, KeyRound,
+  Eye, EyeOff, X, Check, Sparkles
+} from 'lucide-react';
 
 const ROLES = { 1: 'Administrador', 2: 'Veterinario', 3: 'Cliente' };
 const ESTADOS_CUENTA = {
@@ -20,6 +24,9 @@ const obtenerIniciales = (nombre = '', apellidos = '') => {
   return (a + b).toUpperCase() || 'US';
 };
 
+const obtenerToken = () =>
+  localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+
 const Perfil = () => {
   const { id: idParam } = useParams();
   const [perfil, setPerfil] = useState(null);
@@ -29,9 +36,27 @@ const Perfil = () => {
   const [guardando, setGuardando] = useState(false);
   const [erroresForm, setErroresForm] = useState({});
   const [proveedoresVinculados, setProveedoresVinculados] = useState({ google: false, facebook: false });
-  const [cuentasConectadas, setCuentasConectadas] = useState({ google: false, facebook: false });
   const [formData, setFormData] = useState({ nombre: '', apellidos: '', correo: '', telefono: '' });
   const [toasts, setToasts] = useState([]);
+
+  // Ícono de perfil (mismo set y mismo endpoint que Configuración del portal cliente).
+  const [avatarIcono, setAvatarIcono] = useState(null);
+  const [guardandoIcono, setGuardandoIcono] = useState(null);
+
+  // Cuentas vinculadas — switch (vincular/desvincular), no un botón de una sola vía.
+  const [procesando, setProcesando] = useState({ google: false, facebook: false });
+  const [confirmacion, setConfirmacion] = useState(null); // { clave, etiqueta } | null
+  // 'cargando' | 'listo' | 'bloqueado' — igual que en Configuración: cubre el caso de que un
+  // bloqueador de anuncios o extensión de privacidad impida cargar el SDK de Facebook.
+  const [fbEstado, setFbEstado] = useState('cargando');
+
+  // Contraseña — modal, no un botón decorativo.
+  const [tieneContrasena, setTieneContrasena] = useState(true);
+  const [modalPasswordAbierto, setModalPasswordAbierto] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ actual: '', nueva: '', confirmar: '' });
+  const [mostrarPassword, setMostrarPassword] = useState({ actual: false, nueva: false, confirmar: false });
+  const [erroresPassword, setErroresPassword] = useState({});
+  const [guardandoPassword, setGuardandoPassword] = useState(false);
 
   const addToast = (message, type = 'info', duration = 4000) => {
     const id = Date.now();
@@ -42,23 +67,9 @@ const Perfil = () => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const obtenerIdUsuario = () => {
-    try {
-      const usuarioGuardado = localStorage.getItem('usuario_huellitas') || localStorage.getItem('usuario') || localStorage.getItem('user');
-      if (usuarioGuardado) {
-        const usuario = JSON.parse(usuarioGuardado);
-        return usuario?.idUsuario ?? usuario?.IdUsuario ?? usuario?.id ?? localStorage.getItem('idUsuario');
-      }
-    } catch (err) {
-      console.error('Error al obtener usuario de localStorage', err);
-    }
-
-    return localStorage.getItem('idUsuario');
-  };
-
   const cargarProveedoresVinculados = async () => {
     try {
-      const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+      const token = obtenerToken();
       if (!token) return;
 
       const res = await fetch(`${API_BASE}/usuario/proveedores-vinculados`, {
@@ -88,7 +99,7 @@ const Perfil = () => {
       setError(false);
 
       try {
-        const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+        const token = obtenerToken();
 
         if (!token) {
           if (activo) setError(true);
@@ -111,12 +122,9 @@ const Perfil = () => {
         const data = await res.json();
         if (!activo) return;
 
-        const proveedor = (data?.proveedor || '').toLowerCase();
         setPerfil(data);
-        setCuentasConectadas({
-          google: proveedor.includes('google'),
-          facebook: proveedor.includes('facebook')
-        });
+        setAvatarIcono(data?.avatarIcono || null);
+        setTieneContrasena(!!data?.tieneContrasena);
         setFormData({
           nombre: data?.nombre || '',
           apellidos: data?.apellidos || '',
@@ -136,16 +144,33 @@ const Perfil = () => {
     return () => { activo = false; };
   }, [idParam]);
 
+  // SDK de Facebook — se detecta si nunca llega a cargar (bloqueador de anuncios / extensión de
+  // privacidad), en vez de dejar que el botón falle en silencio.
   useEffect(() => {
-    if (window.FB) return;
+    let cancelado = false;
+    let intentos = 0;
+
+    const revisarListo = () => {
+      if (cancelado) return;
+      if (window.FB) {
+        setFbEstado('listo');
+        return;
+      }
+      intentos += 1;
+      if (intentos > 20) { // ~6s de espera antes de darlo por bloqueado
+        setFbEstado('bloqueado');
+        return;
+      }
+      setTimeout(revisarListo, 300);
+    };
+
+    if (window.FB) {
+      setFbEstado('listo');
+      return undefined;
+    }
 
     window.fbAsyncInit = function () {
-      window.FB.init({
-        appId: '4263441943966367',
-        cookie: true,
-        xfbml: true,
-        version: 'v13.0'
-      });
+      window.FB.init({ appId: '4263441943966367', cookie: true, xfbml: true, version: 'v21.0' });
     };
 
     if (!document.getElementById('facebook-jssdk')) {
@@ -154,8 +179,12 @@ const Perfil = () => {
       js.src = 'https://connect.facebook.net/es_LA/sdk.js';
       js.async = true;
       js.defer = true;
+      js.onerror = () => { if (!cancelado) setFbEstado('bloqueado'); };
       document.body.appendChild(js);
     }
+
+    revisarListo();
+    return () => { cancelado = true; };
   }, []);
 
   const handleChange = (e) => {
@@ -208,7 +237,7 @@ const Perfil = () => {
 
     setGuardando(true);
     try {
-      const token = localStorage.getItem('jwt') || localStorage.getItem('token_huellitas');
+      const token = obtenerToken();
       const res = await fetch(`${API_BASE}/usuario/perfil`, {
         method: 'PUT',
         headers: {
@@ -231,86 +260,231 @@ const Perfil = () => {
     }
   };
 
-  const handleVincularGoogle = async (response) => {
+  // ─── Ícono de perfil ───
+  const elegirIcono = async (clave) => {
+    if (clave === avatarIcono || guardandoIcono) return;
+    const token = obtenerToken();
+    if (!token) {
+      addToast('Debes iniciar sesión para cambiar tu ícono de perfil.', 'warning');
+      return;
+    }
+
+    setGuardandoIcono(clave);
     try {
-      const tokenHuellitas = localStorage.getItem('token_huellitas');
-      if (!tokenHuellitas) {
-        addToast('Debes iniciar sesión antes de vincular Google.', 'warning');
-        return;
-      }
-
-      if (!response?.credential) {
-        addToast('No se pudo obtener la credencial de Google.', 'error');
-        return;
-      }
-
-      const res = await fetch(`${API_BASE}/login/vincular-google`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${tokenHuellitas}`
-        },
-        body: JSON.stringify({ token: response.credential })
+      const res = await fetch(`${API_BASE}/usuario/avatar`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ icono: clave })
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo actualizar tu ícono de perfil.');
 
-      const data = await res.json();
-      if (res.ok && data.success) {
-        addToast(data.mensaje || 'Cuenta de Google vinculada correctamente.', 'success');
-        await cargarProveedoresVinculados();
-        const proveedor = (perfil?.proveedor || '').toLowerCase();
-        setCuentasConectadas({
-          google: proveedor.includes('google'),
-          facebook: proveedor.includes('facebook')
-        });
-      } else {
-        addToast(data.mensaje || 'No fue posible vincular la cuenta de Google.', 'error');
-      }
+      setAvatarIcono(clave);
+      addToast(data?.mensaje || 'Ícono de perfil actualizado.', 'success');
     } catch (error) {
-      console.error('Error al vincular Google:', error);
-      addToast('Ocurrió un error al intentar vincular Google.', 'error');
+      addToast(error.message || 'Error al actualizar el ícono de perfil.', 'error');
+    } finally {
+      setGuardandoIcono(null);
     }
   };
 
-  const handleVincularFacebook = () => {
-    const tokenHuellitas = localStorage.getItem('token_huellitas');
-    if (!tokenHuellitas) {
+  // ─── Cuentas vinculadas: switch único que vincula o desvincula ───
+  const pedirConfirmacionDesvincular = (clave, etiqueta) => {
+    const token = obtenerToken();
+    if (!token) {
+      addToast(`Debes iniciar sesión antes de desvincular ${etiqueta}.`, 'warning');
+      return;
+    }
+    setConfirmacion({ clave, etiqueta });
+  };
+
+  const confirmarDesvinculacion = async () => {
+    if (!confirmacion) return;
+    const { clave, etiqueta } = confirmacion;
+    const token = obtenerToken();
+    setConfirmacion(null);
+
+    setProcesando((prev) => ({ ...prev, [clave]: true }));
+    try {
+      const res = await fetch(`${API_BASE}/usuario/proveedores-vinculados/${clave}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.mensaje || `No se pudo desvincular ${etiqueta}.`);
+
+      addToast(data?.mensaje || `Cuenta de ${etiqueta} desvinculada.`, 'success');
+      await cargarProveedoresVinculados();
+    } catch (error) {
+      addToast(error.message || `Error al desvincular ${etiqueta}.`, 'error');
+    } finally {
+      setProcesando((prev) => ({ ...prev, [clave]: false }));
+    }
+  };
+
+  // Google: flujo implícito (useGoogleLogin) en vez de <GoogleLogin>, para poder disparar el
+  // vínculo desde un switch propio — el botón/iframe de <GoogleLogin> no se puede simular por
+  // seguridad. El access token se valida contra /oauth2/v3/userinfo en el backend.
+  const vincularGoogleConToken = async (accessToken) => {
+    const token = obtenerToken();
+    if (!token) {
+      addToast('Debes iniciar sesión antes de vincular Google.', 'warning');
+      return;
+    }
+
+    setProcesando((prev) => ({ ...prev, google: true }));
+    try {
+      const res = await fetch(`${API_BASE}/usuario/vincular-google-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ accessToken })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo vincular la cuenta de Google.');
+
+      addToast(data?.mensaje || 'Cuenta de Google vinculada correctamente.', 'success');
+      await cargarProveedoresVinculados();
+    } catch (error) {
+      addToast(error.message || 'Error al vincular la cuenta de Google.', 'error');
+    } finally {
+      setProcesando((prev) => ({ ...prev, google: false }));
+    }
+  };
+
+  const iniciarSesionGoogle = useGoogleLogin({
+    flow: 'implicit',
+    onSuccess: (respuesta) => vincularGoogleConToken(respuesta.access_token),
+    onError: () => addToast('No fue posible autenticar con Google.', 'error')
+  });
+
+  const handleSwitchGoogle = () => {
+    if (procesando.google) return;
+    if (proveedoresVinculados.google) {
+      pedirConfirmacionDesvincular('google', 'Google');
+    } else {
+      iniciarSesionGoogle();
+    }
+  };
+
+  const enviarVinculacionFacebook = async (accessToken, token) => {
+    setProcesando((prev) => ({ ...prev, facebook: true }));
+    try {
+      const res = await fetch(`${API_BASE}/usuario/vincular-facebook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ token: accessToken })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        addToast(data.mensaje || 'Cuenta de Facebook vinculada correctamente.', 'success');
+        await cargarProveedoresVinculados();
+      } else {
+        addToast(data.mensaje || 'No fue posible vincular Facebook.', 'error');
+      }
+    } catch (error) {
+      console.error('Error al vincular Facebook:', error);
+      addToast('Ocurrió un error al vincular Facebook.', 'error');
+    } finally {
+      setProcesando((prev) => ({ ...prev, facebook: false }));
+    }
+  };
+
+  const handleSwitchFacebook = () => {
+    if (procesando.facebook) return;
+
+    if (proveedoresVinculados.facebook) {
+      pedirConfirmacionDesvincular('facebook', 'Facebook');
+      return;
+    }
+
+    const token = obtenerToken();
+    if (!token) {
       addToast('Debes iniciar sesión antes de vincular Facebook.', 'warning');
       return;
     }
-
-    if (!window.FB) {
-      addToast('Facebook todavía se está cargando. Espera unos segundos e inténtalo nuevamente.', 'warning');
+    if (fbEstado === 'bloqueado' || !window.FB) {
+      addToast('No se pudo cargar el inicio de sesión de Facebook. Es probable que un bloqueador de anuncios o una extensión de privacidad del navegador lo esté bloqueando.', 'error');
+      return;
+    }
+    if (fbEstado === 'cargando') {
+      addToast('Facebook todavía se está cargando. Esperá unos segundos e intentalo de nuevo.', 'warning');
       return;
     }
 
-    window.FB.login(async (response) => {
-      if (!response.authResponse) {
+    window.FB.login((respuesta) => {
+      if (!respuesta.authResponse) {
         addToast('No se completó la autorización de Facebook.', 'warning');
         return;
       }
-
-      try {
-        const res = await fetch(`${API_BASE}/usuario/vincular-facebook`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${tokenHuellitas}`
-          },
-          body: JSON.stringify({ token: response.authResponse.accessToken })
-        });
-
-        const data = await res.json();
-        if (res.ok && data.success) {
-          addToast(data.mensaje || 'Cuenta de Facebook vinculada correctamente.', 'success');
-          await cargarProveedoresVinculados();
-        } else {
-          addToast(data.mensaje || 'No fue posible vincular Facebook.', 'error');
-        }
-      } catch (error) {
-        console.error('Error al vincular Facebook:', error);
-        addToast('Ocurrió un error al vincular Facebook.', 'error');
-      }
+      enviarVinculacionFacebook(respuesta.authResponse.accessToken, token);
     }, { scope: 'public_profile,email' });
+  };
+
+  // ─── Cambiar contraseña ───
+  const handleChangePassword = (e) => {
+    const { name, value } = e.target;
+    setPasswordForm((prev) => ({ ...prev, [name]: value }));
+    if (erroresPassword[name]) setErroresPassword((prev) => ({ ...prev, [name]: '' }));
+  };
+
+  const toggleMostrar = (campo) => setMostrarPassword((prev) => ({ ...prev, [campo]: !prev[campo] }));
+
+  const cerrarModalPassword = () => {
+    setModalPasswordAbierto(false);
+    setPasswordForm({ actual: '', nueva: '', confirmar: '' });
+    setErroresPassword({});
+    setMostrarPassword({ actual: false, nueva: false, confirmar: false });
+  };
+
+  const validarPassword = () => {
+    const errores = {};
+    if (tieneContrasena && !passwordForm.actual) {
+      errores.actual = 'Ingresá tu contraseña actual.';
+    }
+    if (!passwordForm.nueva || passwordForm.nueva.length < 8) {
+      errores.nueva = 'La nueva contraseña debe tener al menos 8 caracteres.';
+    }
+    if (passwordForm.confirmar !== passwordForm.nueva) {
+      errores.confirmar = 'Las contraseñas no coinciden.';
+    }
+    setErroresPassword(errores);
+    if (Object.keys(errores).length > 0) {
+      addToast('Revisá los errores del formulario de contraseña.', 'warning');
+      return false;
+    }
+    return true;
+  };
+
+  const guardarPassword = async (e) => {
+    e.preventDefault();
+    const token = obtenerToken();
+    if (!token) {
+      addToast('Debés iniciar sesión para cambiar tu contraseña.', 'warning');
+      return;
+    }
+    if (!validarPassword()) return;
+
+    setGuardandoPassword(true);
+    try {
+      const res = await fetch(`${API_BASE}/usuario/password`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          passwordActual: tieneContrasena ? passwordForm.actual : null,
+          passwordNueva: passwordForm.nueva
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo cambiar la contraseña.');
+
+      addToast(data?.mensaje || 'Contraseña actualizada correctamente.', 'success');
+      setTieneContrasena(true);
+      cerrarModalPassword();
+    } catch (error) {
+      addToast(error.message || 'Error al cambiar la contraseña.', 'error');
+    } finally {
+      setGuardandoPassword(false);
+    }
   };
 
   const estado = perfil ? (ESTADOS_CUENTA[perfil.idEstadoCuenta] || ESTADOS_CUENTA[1]) : null;
@@ -328,7 +502,13 @@ const Perfil = () => {
                 <div className={`${styles.avatar} ${styles.skeleton}`} />
               ) : (
                 <div className={styles.avatar}>
-                  {perfil ? obtenerIniciales(perfil.nombre, perfil.apellidos) : <User size={40} />}
+                  {avatarIcono ? (
+                    <IconoDePerfil icono={avatarIcono} size={44} />
+                  ) : perfil ? (
+                    obtenerIniciales(perfil.nombre, perfil.apellidos)
+                  ) : (
+                    <User size={40} />
+                  )}
                 </div>
               )}
 
@@ -358,6 +538,33 @@ const Perfil = () => {
               <AlertTriangle className={styles.errorIcon} size={48} />
               <p>No pudimos cargar la información del perfil. Inténtalo más tarde.</p>
             </div>
+          )}
+
+          {!error && !cargando && (
+            <section className={styles.infoCard}>
+              <div className={styles.sectionHeader}>
+                <h2 className={styles.sectionTitle}><Sparkles size={16} /> Ícono de perfil</h2>
+              </div>
+
+              <div className={styles.avatarGrid}>
+                {ICONOS_PERFIL.map(({ clave, etiqueta, Icon }) => {
+                  const activo = clave === avatarIcono;
+                  return (
+                    <button
+                      key={clave}
+                      type="button"
+                      title={etiqueta}
+                      className={`${styles.avatarOpt} ${activo ? styles.avatarOptActivo : ''}`}
+                      onClick={() => elegirIcono(clave)}
+                      disabled={guardandoIcono !== null}
+                    >
+                      <Icon size={24} />
+                      {activo && <span className={styles.avatarOptCheck}><Check size={11} /></span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
           )}
 
           {!error && (
@@ -434,20 +641,18 @@ const Perfil = () => {
                         </div>
                       </div>
 
-                      {proveedoresVinculados.google ? (
-                        <span className={styles.linkedCheck}>✓ Vinculado</span>
-                      ) : (
-                        <GoogleLogin
-                          onSuccess={handleVincularGoogle}
-                          onError={() => addToast('No fue posible autenticar con Google.', 'error')}
-                          useOneTap={false}
-                          type="standard"
-                          theme="outline"
-                          size="medium"
-                          shape="rectangular"
-                          text="continue_with"
-                        />
-                      )}
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={proveedoresVinculados.google}
+                        aria-label={proveedoresVinculados.google ? 'Desvincular cuenta de Google' : 'Vincular cuenta de Google'}
+                        title={proveedoresVinculados.google ? 'Vinculada — clic para desvincular' : 'Vincular cuenta de Google'}
+                        className={`${styles.switch} ${proveedoresVinculados.google ? styles.switchActivo : ''}`}
+                        onClick={handleSwitchGoogle}
+                        disabled={procesando.google}
+                      >
+                        <span className={styles.switchThumb}>{proveedoresVinculados.google && <Check size={12} />}</span>
+                      </button>
                     </div>
 
                     <div className={styles.linkedAccount}>
@@ -456,14 +661,27 @@ const Perfil = () => {
                         <div>
                           <strong>Facebook</strong>
                           <p>{proveedoresVinculados.facebook ? 'Cuenta vinculada' : 'No vinculada'}</p>
+                          {!proveedoresVinculados.facebook && fbEstado === 'bloqueado' && (
+                            <div className={styles.fbAviso}>
+                              <AlertTriangle size={13} />
+                              <span>No se pudo cargar. Puede estar bloqueado por un bloqueador de anuncios.</span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      {proveedoresVinculados.facebook ? (
-                        <span className={styles.linkedCheck}>✓ Vinculado</span>
-                      ) : (
-                        <button type="button" className={styles.linkAccountBtn} onClick={handleVincularFacebook}>Vincular</button>
-                      )}
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={proveedoresVinculados.facebook}
+                        aria-label={proveedoresVinculados.facebook ? 'Desvincular cuenta de Facebook' : 'Vincular cuenta de Facebook'}
+                        title={proveedoresVinculados.facebook ? 'Vinculada — clic para desvincular' : 'Vincular cuenta de Facebook'}
+                        className={`${styles.switch} ${proveedoresVinculados.facebook ? styles.switchActivo : ''}`}
+                        onClick={handleSwitchFacebook}
+                        disabled={procesando.facebook || (!proveedoresVinculados.facebook && fbEstado === 'bloqueado')}
+                      >
+                        <span className={styles.switchThumb}>{proveedoresVinculados.facebook && <Check size={12} />}</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -475,9 +693,13 @@ const Perfil = () => {
                   <div className={styles.securityAction}>
                     <div className={styles.securityText}>
                       <strong>Contraseña</strong>
-                      <p>Actualiza tu contraseña periódicamente para mantener tu cuenta segura.</p>
+                      <p>{tieneContrasena
+                        ? 'Actualiza tu contraseña periódicamente para mantener tu cuenta segura.'
+                        : 'Tu cuenta se creó con Google o Facebook y todavía no tiene una contraseña propia.'}</p>
                     </div>
-                    <button className={styles.passwordBtn}><KeyRound size={16} /> Cambiar Contraseña</button>
+                    <button type="button" className={styles.passwordBtn} onClick={() => setModalPasswordAbierto(true)}>
+                      <KeyRound size={16} /> {tieneContrasena ? 'Cambiar Contraseña' : 'Establecer Contraseña'}
+                    </button>
                   </div>
                 </div>
               )}
@@ -485,6 +707,135 @@ const Perfil = () => {
           )}
         </div>
       </main>
+
+      {confirmacion && (
+        <div
+          className={styles.overlay}
+          onClick={() => !procesando[confirmacion.clave] && setConfirmacion(null)}
+        >
+          <div className={`${styles.modal} ${styles.modalConfirm}`} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <AlertTriangle size={20} color="#a3720a" />
+              <h3>Desvincular {confirmacion.etiqueta}</h3>
+            </div>
+            <p className={styles.modalSub}>
+              ¿Seguro que querés desvincular tu cuenta de {confirmacion.etiqueta}? Vas a dejar de poder usarla para iniciar sesión.
+            </p>
+            <div className={styles.formActions}>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => setConfirmacion(null)}
+                disabled={procesando[confirmacion.clave]}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={styles.dangerBtn}
+                onClick={confirmarDesvinculacion}
+                disabled={procesando[confirmacion.clave]}
+              >
+                {procesando[confirmacion.clave] ? 'Desvinculando…' : 'Sí, desvincular'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalPasswordAbierto && (
+        <div className={styles.overlay} onClick={() => !guardandoPassword && cerrarModalPassword()}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <KeyRound size={20} color="#1B4332" />
+              <h3>{tieneContrasena ? 'Cambiar contraseña' : 'Establecer contraseña'}</h3>
+              <button
+                type="button"
+                onClick={cerrarModalPassword}
+                style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#4a5568' }}
+                aria-label="Cerrar"
+                disabled={guardandoPassword}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className={styles.modalSub}>Usá una contraseña que no utilicés en otros sitios.</p>
+
+            {!tieneContrasena && (
+              <div className={styles.avisoSinPassword}>
+                <AlertTriangle size={18} />
+                <span>Tu cuenta se creó con Google o Facebook. Al establecer una contraseña también vas a poder iniciar sesión con tu correo.</span>
+              </div>
+            )}
+
+            <form onSubmit={guardarPassword} className={styles.editForm}>
+              {tieneContrasena && (
+                <div className={styles.formGroup}>
+                  <label>Contraseña actual</label>
+                  <div className={styles.passwordField}>
+                    <input
+                      type={mostrarPassword.actual ? 'text' : 'password'}
+                      name="actual"
+                      value={passwordForm.actual}
+                      onChange={handleChangePassword}
+                      autoFocus
+                    />
+                    <button type="button" className={styles.eyeToggle} onClick={() => toggleMostrar('actual')} tabIndex={-1}>
+                      {mostrarPassword.actual ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {erroresPassword.actual && <span className={styles.errorText}>{erroresPassword.actual}</span>}
+                </div>
+              )}
+
+              <div className={styles.formGroup}>
+                <label>Nueva contraseña</label>
+                <div className={styles.passwordField}>
+                  <input
+                    type={mostrarPassword.nueva ? 'text' : 'password'}
+                    name="nueva"
+                    value={passwordForm.nueva}
+                    onChange={handleChangePassword}
+                  />
+                  <button type="button" className={styles.eyeToggle} onClick={() => toggleMostrar('nueva')} tabIndex={-1}>
+                    {mostrarPassword.nueva ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {erroresPassword.nueva ? (
+                  <span className={styles.errorText}>{erroresPassword.nueva}</span>
+                ) : (
+                  <span className={styles.ayudaText}>Mínimo 8 caracteres.</span>
+                )}
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Confirmar nueva contraseña</label>
+                <div className={styles.passwordField}>
+                  <input
+                    type={mostrarPassword.confirmar ? 'text' : 'password'}
+                    name="confirmar"
+                    value={passwordForm.confirmar}
+                    onChange={handleChangePassword}
+                  />
+                  <button type="button" className={styles.eyeToggle} onClick={() => toggleMostrar('confirmar')} tabIndex={-1}>
+                    {mostrarPassword.confirmar ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {erroresPassword.confirmar && <span className={styles.errorText}>{erroresPassword.confirmar}</span>}
+              </div>
+
+              <div className={styles.formActions}>
+                <button type="button" className={styles.cancelBtn} onClick={cerrarModalPassword} disabled={guardandoPassword}>
+                  Cancelar
+                </button>
+                <button type="submit" className={styles.saveBtn} disabled={guardandoPassword}>
+                  {guardandoPassword ? 'Guardando…' : tieneContrasena ? 'Cambiar contraseña' : 'Establecer contraseña'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 };

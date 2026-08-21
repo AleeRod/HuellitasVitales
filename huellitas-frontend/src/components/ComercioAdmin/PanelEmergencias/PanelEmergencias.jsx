@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { X, AlertTriangle, MapPin, Clock, Play, CheckCircle2, PawPrint, Radio, Phone } from "lucide-react";
 import { API_BASE } from "../../../api/config";
+import { ToastContainer } from "../../Toast/Toast";
+import { useToast } from "../../Toast/useToast";
+import { useConfirm } from "../../ConfirmModal/useConfirm";
 import styles from "./PanelEmergencias.module.css";
 
 const ESTADO = {
@@ -22,6 +25,9 @@ const formatFecha = (fechaISO) => {
 };
 
 const PanelEmergencias = () => {
+  const { toasts, showToast, removeToast } = useToast();
+  const { pedirConfirmacion, ConfirmacionModal } = useConfirm();
+
   const [pendientes, setPendientes] = useState([]);
   const [enCurso, setEnCurso] = useState([]);
   const [estado, setEstado] = useState(ESTADO.CARGANDO);
@@ -56,10 +62,14 @@ const PanelEmergencias = () => {
     }
   };
 
-  const aceptar = async (emergencia) => {
-    const confirmar = window.confirm(`¿Aceptar esta emergencia (${emergencia.motivo})?`);
-    if (!confirmar) return;
-    await accionar(emergencia.idExpediente, emergencia.idEmergencia, "aceptar");
+  const aceptar = (emergencia) => {
+    pedirConfirmacion({
+      titulo: "Aceptar emergencia",
+      mensaje: `¿Aceptar esta emergencia (${emergencia.motivo})?`,
+      textoConfirmar: "Sí, aceptar",
+      variante: "normal",
+      onConfirmar: () => accionar(emergencia.idExpediente, emergencia.idEmergencia, "aceptar")
+    });
   };
 
   const iniciar = async (emergencia) => {
@@ -108,10 +118,11 @@ const PanelEmergencias = () => {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.mensaje || "No se pudo actualizar la emergencia.");
+      showToast("Emergencia actualizada correctamente.", "success");
       cargarTodo();
     } catch (err) {
       console.error(err);
-      alert(err.message || "No se pudo actualizar la emergencia.");
+      showToast(err.message || "No se pudo actualizar la emergencia.", "error");
     } finally {
       setProcesandoId(null);
     }
@@ -262,6 +273,9 @@ const PanelEmergencias = () => {
           </div>
         </div>
       )}
+
+      {ConfirmacionModal}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };

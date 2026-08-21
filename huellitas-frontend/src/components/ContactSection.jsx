@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
+import { ToastContainer } from './Toast/Toast';
+import { useToast } from './Toast/useToast';
 
 const ContactSection = () => {
   const [formValues, setFormValues] = useState({ name: '', email: '', message: '' });
   const [focusFields, setFocusFields] = useState({ name: false, email: false, message: false });
+  const { toasts, showToast, removeToast } = useToast();
 
   const handleFocus = (field) => setFocusFields({ ...focusFields, [field]: true });
-  
+
   const handleBlur = (field, val) => {
     if (val.trim() === "") setFocusFields({ ...focusFields, [field]: false });
   };
@@ -14,7 +17,7 @@ const ContactSection = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert("Mensaje enviado. Nuestro equipo se pondrá en contacto pronto.");
+    showToast("Mensaje enviado. Nuestro equipo se pondrá en contacto pronto.", 'success');
     setFormValues({ name: '', email: '', message: '' });
   };
 
@@ -73,6 +76,8 @@ const ContactSection = () => {
         </div>
 
       </div>
+
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </section>
   );
 };

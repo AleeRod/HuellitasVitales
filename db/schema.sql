@@ -66,6 +66,7 @@ CREATE TABLE public.USUARIO (
   IdEstadoCuenta smallint NOT NULL DEFAULT 1,
   IdRol smallint NOT NULL,
   FechaRegistro timestamp without time zone DEFAULT now(),
+  "AvatarIcono" character varying(30), -- pendiente: ALTER TABLE, ver Docs/04-Notas/MEJORAS.md (Mejora-05)
   CONSTRAINT USUARIO_pkey PRIMARY KEY (IdUsuario),
   CONSTRAINT usuario_idestadocuenta_fkey FOREIGN KEY (IdEstadoCuenta) REFERENCES public.ESTADO_CUENTA_CAT(IdEstadoCuenta),
   CONSTRAINT usuario_idrol_fkey FOREIGN KEY (IdRol) REFERENCES public.ROL(IdRol)
@@ -252,7 +253,7 @@ CREATE TABLE public.TIPO_SERVICIO_CAT (
 CREATE TABLE public."EXPEDIENTE" (
   "IdExpediente" integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "IdMascota" integer NOT NULL UNIQUE REFERENCES public."MASCOTA"("IdMascota"),
-  "IdComercioActual" integer NOT NULL REFERENCES public."COMERCIO"("IdComercio"),
+  "IdComercioActual" integer REFERENCES public."COMERCIO"("IdComercio"),
   "FechaApertura" timestamp with time zone NOT NULL DEFAULT now(),
   "Activo" boolean NOT NULL DEFAULT true
 );

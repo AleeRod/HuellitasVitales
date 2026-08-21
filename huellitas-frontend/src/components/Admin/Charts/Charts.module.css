@@ -1,0 +1,162 @@
+.periodoSelector {
+    display: inline-flex;
+    gap: .25rem;
+    background: #f4f6f4;
+    padding: .25rem;
+    border-radius: 50px;
+}
+
+.periodoBtn {
+    border: none;
+    background: transparent;
+    color: #718096;
+    font-size: .78rem;
+    font-weight: 700;
+    padding: .45rem .95rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all .15s ease;
+}
+
+.periodoBtn:hover {
+    color: #1B4332;
+}
+
+.periodoBtnActivo {
+    background: #fff;
+    color: #1B4332;
+    box-shadow: 0 3px 10px rgba(27, 67, 50, .12);
+}
+
+.sinDatos {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: #718096;
+    font-size: .88rem;
+}
+
+/* --- BARRAS --- */
+.barrasWrap {
+    display: flex;
+    align-items: flex-end;
+    gap: .6rem;
+    height: 220px;
+    padding: 1rem .5rem 0;
+    overflow-x: auto;
+}
+
+.barraCol {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 34px;
+    height: 100%;
+}
+
+.barraValor {
+    font-size: .76rem;
+    font-weight: 800;
+    color: #1B4332;
+    margin-bottom: .3rem;
+}
+
+.barraPista {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    background: rgba(82, 183, 136, .08);
+    border-radius: 8px 8px 0 0;
+}
+
+.barra {
+    width: 100%;
+    border-radius: 8px 8px 0 0;
+    transition: height .3s ease;
+    min-height: 4px;
+}
+
+.barraLabel {
+    margin-top: .5rem;
+    font-size: .72rem;
+    color: #718096;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* --- DONA --- */
+.donaWrap {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding: .5rem;
+}
+
+.dona {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.donaHueco {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.donaTotal {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #1B4332;
+}
+
+.donaTotalLabel {
+    font-size: .68rem;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.donaLeyenda {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+    font-size: .85rem;
+    color: #4a5568;
+    flex: 1;
+    min-width: 160px;
+}
+
+.donaLeyenda li {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.donaPunto {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.donaPorcentaje {
+    margin-left: auto;
+    color: #718096;
+    font-size: .78rem;
+    font-weight: 700;
+}

@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "04-Notas/MEJORAS.md",
+                "file": "01-Arquitectura/Reglas-Generales.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "MEJORAS"
+              "title": "Reglas-Generales"
             }
           }
         ]
@@ -190,23 +190,31 @@
   },
   "active": "bab2a17700e546c0",
   "lastOpenFiles": [
-    "03-Historias-Usuario/Plantilla-Historia.md",
-    "04-Notas/MEJORAS.md.tmp.1868.67aba90dd5e9",
-    "02-Base-Datos/Modelo-Datos.md.tmp.1868.d96aa0d05ca7",
-    "01-Arquitectura/Reglas-Generales.md",
     "01-Arquitectura/Diagrama-Componentes.md",
     "02-Base-Datos/Modelo-Datos.md",
-    "02-Base-Datos/Modelo-Datos.md.tmp.1868.4cb1a24213d2",
-    "04-Notas/MEJORAS.md.tmp.1868.5e4a2b2342f0",
-    "01-Arquitectura/Diagrama-Componentes.md.tmp.1868.38c05c752fb3",
-    "Indice.md.tmp.1868.ab46a2b03e10",
-    "04-Notas/MEJORAS.md.tmp.1868.f7e94335f49d",
-    "03-Historias-Usuario/Plantilla-Historia.md.tmp.1868.1e6ecdf5f35a",
-    "01-Arquitectura/Diagrama-Componentes.md.tmp.1868.c63e4f0d1d28",
-    "02-Base-Datos/Modelo-Datos.md.tmp.1868.c002a9a5a012",
+    "01-Arquitectura/image.png",
+    "03-Historias-Usuario/HU-206-Panel-Veterinario-Funcional.md",
+    "03-Historias-Usuario/HU-205-Notificaciones-Internas.md",
+    "03-Historias-Usuario/HU-204-Exportar-Expediente-PDF.md",
+    "03-Historias-Usuario/HU-203-Emergencia-Veterinaria.md",
+    "03-Historias-Usuario/HU-201-Traslado-Expediente.md",
+    "03-Historias-Usuario/HU-200-Expediente-Clinico-Digital.md",
+    "03-Historias-Usuario/HU-202-Atenciones-Externas.md",
     "04-Notas/MEJORAS.md",
-    "2026-08-20.md",
+    "01-Arquitectura/Diagrama-Componentes.md.tmp.4412.118b0d976e96",
     "Untitled.canvas",
+    "03-Historias-Usuario/Plantilla-Historia.md",
+    "02-Base-Datos/Modelo-Datos.md.tmp.4412.5c67608d5f5e",
+    "04-Notas/MEJORAS.md.tmp.4412.3580174bee51",
+    "01-Arquitectura/Diagrama-Componentes.md.tmp.4412.7a2e3ffc95b0",
+    "01-Arquitectura/Diagrama-Componentes.md.tmp.4412.8869c9102cd1",
+    "04-Notas/MEJORAS.md.tmp.4412.111654ab7219",
+    "02-Base-Datos/Modelo-Datos.md.tmp.4412.1997a66d8e0e",
+    "01-Arquitectura/Diagrama-Componentes.md.tmp.4412.d9240044680e",
+    "01-Arquitectura/Diagrama-Componentes.md.tmp.4412.7fdac71985f9",
+    "01-Arquitectura/Diagrama-Componentes.md.tmp.4412.ac95f60fe10d",
+    "01-Arquitectura/Reglas-Generales.md",
+    "2026-08-20.md",
     "Untitled 1.canvas",
     "Indice.md",
     "Notas.md"

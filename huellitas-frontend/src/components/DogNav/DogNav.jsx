@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import RunningDog from '../DogNav/Runningdog';
+import CarritoIcono from '../CarritoIcono/CarritoIcono';
+import PerfilMenu from '../PerfilMenu/PerfilMenu';
 import styles from './DogNav.module.css';
 
 const DogNav = () => {
@@ -11,6 +13,11 @@ const DogNav = () => {
             <button onClick={() => navigate('/')} className={styles.backBtn}>
                 <span className={styles.backArrow}>←</span> Volver
             </button>
+
+            <div className={styles.acciones}>
+                <CarritoIcono />
+                <PerfilMenu />
+            </div>
 
             <div className={styles.track}>
                 <div className={styles.grassLine}></div>

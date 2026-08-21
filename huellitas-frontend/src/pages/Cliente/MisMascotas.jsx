@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Dog, Cat } from 'lucide-react';
 
 import ClienteLayout from '../../components/Cliente/ClienteLayout/ClienteLayout';
 import { API_BASE } from '../../api/config';
 import { ToastContainer } from '../../components/Toast/Toast';
 import { useToast } from '../../components/Toast/useToast';
+import { useConfirm } from '../../components/ConfirmModal/useConfirm';
+import CustomSelect from '../../components/CustomSelect/CustomSelect';
 
 const MisMascotas = () => {
   const [mascotas, setMascotas] = useState([]);
@@ -19,6 +22,9 @@ const MisMascotas = () => {
     activo: true
   });
   const { toasts, showToast, removeToast } = useToast();
+  const { pedirConfirmacion, ConfirmacionModal } = useConfirm();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const obtenerToken = () => localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
 
@@ -58,6 +64,17 @@ const MisMascotas = () => {
     resetFormularioMascota();
     setMostrarFormularioMascota(true);
   };
+
+  // Llegada desde "Crear Perfil de Mascota Gratis" del landing (ya con sesión iniciada): abre
+  // el formulario directo en vez de dejar a la persona en la lista buscando el botón.
+  useEffect(() => {
+    if (location.state?.abrirFormulario) {
+      abrirFormularioNuevaMascota();
+      // Limpia el state: si la persona refresca o vuelve atrás, no se vuelve a abrir solo.
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const abrirFormularioEdicionMascota = (mascota) => {
     setEditandoMascotaId(mascota.idMascota ?? mascota.IdMascota);
@@ -114,32 +131,36 @@ const MisMascotas = () => {
     }
   };
 
-  const eliminarMascota = async (mascota) => {
+  const eliminarMascota = (mascota) => {
     const idMascota = mascota.idMascota ?? mascota.IdMascota;
     const nombre = mascota.nombre || mascota.Nombre || 'esta mascota';
 
-    const confirmar = window.confirm(`¿Deseas eliminar a ${nombre}?`);
-    if (!confirmar) return;
+    pedirConfirmacion({
+      titulo: 'Eliminar mascota',
+      mensaje: `¿Deseás eliminar a ${nombre}?`,
+      textoConfirmar: 'Sí, eliminar',
+      onConfirmar: async () => {
+        const token = obtenerToken();
+        if (!token) {
+          showToast('Debes iniciar sesión para eliminar mascotas.', 'warning');
+          return;
+        }
 
-    const token = obtenerToken();
-    if (!token) {
-      showToast('Debes iniciar sesión para eliminar mascotas.', 'warning');
-      return;
-    }
+        try {
+          const res = await fetch(`${API_BASE}/usuario/mascotas/${idMascota}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.mensaje || 'No se pudo eliminar la mascota.');
 
-    try {
-      const res = await fetch(`${API_BASE}/usuario/mascotas/${idMascota}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo eliminar la mascota.');
-
-      showToast(data?.mensaje || 'Mascota eliminada.', 'success');
-      await cargarMisMascotas();
-    } catch (error) {
-      showToast(error.message || 'Error al eliminar la mascota.', 'error');
-    }
+          showToast(data?.mensaje || 'Mascota eliminada.', 'success');
+          await cargarMisMascotas();
+        } catch (error) {
+          showToast(error.message || 'Error al eliminar la mascota.', 'error');
+        }
+      }
+    });
   };
 
   return (
@@ -170,15 +191,16 @@ const MisMascotas = () => {
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Especie</label>
-                  <select
+                  <CustomSelect
                     value={formMascota.idEspecie}
-                    onChange={(e) => setFormMascota({ ...formMascota, idEspecie: Number(e.target.value) })}
-                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #dfe6e9', borderRadius: 10 }}
-                  >
-                    <option value={1}>Perro</option>
-                    <option value={2}>Gato</option>
-                    <option value={3}>Otra</option>
-                  </select>
+                    onChange={(valor) => setFormMascota({ ...formMascota, idEspecie: Number(valor) })}
+                    style={{ width: '100%' }}
+                    opciones={[
+                      { value: 1, label: 'Perro' },
+                      { value: 2, label: 'Gato' },
+                      { value: 3, label: 'Otra' }
+                    ]}
+                  />
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Raza</label>
@@ -242,6 +264,7 @@ const MisMascotas = () => {
         </div>
       </section>
 
+      {ConfirmacionModal}
       <ToastContainer toasts={toasts} removeToast={removeToast} />
     </ClienteLayout>
   );

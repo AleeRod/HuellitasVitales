@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -24,6 +25,14 @@ namespace HuellitasVitalesAPI.Services
             _context = context;
             _config = config;
         }
+
+        // Lista blanca de íconos predefinidos que el cliente puede elegir como avatar de
+        // perfil (ver AvatarIconos.jsx en el frontend, que renderiza estas mismas claves con
+        // lucide-react). Nunca se acepta un valor libre desde el cliente.
+        public static readonly string[] IconosPerfilValidos =
+        {
+            "dog", "cat", "pawprint", "bird", "rabbit", "fish", "turtle", "bone", "heart", "user"
+        };
 
         // Actualizar los datos del perfil de usuario
         public async Task<(bool Exito, string Mensaje)> ActualizarPerfilAsync(int idUsuario, ActualizarPerfilDTO dto)
@@ -70,8 +79,326 @@ namespace HuellitasVitalesAPI.Services
                 IdRol = u.IdRol,
                 IdEstadoCuenta = u.IdEstadoCuenta,
                 Proveedor = u.Proveedor_Auth,
-                FechaRegistro = u.FechaRegistro
+                FechaRegistro = u.FechaRegistro,
+                AvatarIcono = u.AvatarIcono,
+                TieneContrasena = !string.IsNullOrEmpty(u.PasswordHash)
             };
+        }
+
+        // Actualiza el ícono de avatar del usuario, validado contra IconosPerfilValidos.
+        public async Task<(bool Exito, string Mensaje)> ActualizarAvatarAsync(int idUsuario, string icono)
+        {
+            if (string.IsNullOrWhiteSpace(icono) || !IconosPerfilValidos.Contains(icono))
+                return (false, "El ícono seleccionado no es válido.");
+
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
+            if (usuario == null)
+                return (false, "El usuario no existe.");
+
+            usuario.AvatarIcono = icono;
+            await _context.SaveChangesAsync();
+
+            return (true, "Ícono de perfil actualizado correctamente.");
+        }
+
+        // Cambia la contraseña del usuario autenticado. Si la cuenta todavía no tiene una
+        // contraseña local (se registró solo con Google/Facebook), permite establecer la
+        // primera sin pedir "contraseña actual" — no hay ninguna que verificar.
+        public async Task<(bool Exito, string Mensaje)> CambiarPasswordAsync(int idUsuario, CambiarPasswordDTO dto)
+        {
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
+            if (usuario == null)
+                return (false, "El usuario no existe.");
+
+            if (string.IsNullOrWhiteSpace(dto.PasswordNueva) || dto.PasswordNueva.Length < 8)
+                return (false, "La nueva contraseña debe tener al menos 8 caracteres.");
+
+            var teniaContrasena = !string.IsNullOrEmpty(usuario.PasswordHash);
+
+            if (teniaContrasena)
+            {
+                if (string.IsNullOrWhiteSpace(dto.PasswordActual))
+                    return (false, "Debes ingresar tu contraseña actual.");
+
+                if (!BCrypt.Net.BCrypt.Verify(dto.PasswordActual, usuario.PasswordHash))
+                    return (false, "La contraseña actual no es correcta.");
+            }
+
+            usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.PasswordNueva);
+            await _context.SaveChangesAsync();
+
+            return (true, teniaContrasena
+                ? "Tu contraseña fue actualizada correctamente."
+                : "Se estableció una contraseña para tu cuenta. Ya podés iniciar sesión con tu correo y esta contraseña.");
+        }
+
+        // ─── Panel de Administración: gestión de cualquier usuario de la plataforma ───
+        private const byte ROL_ADMINISTRADOR = 1;
+        private const byte ROL_VETERINARIO = 2;
+        private const byte ROL_CLIENTE = 3;
+        private const byte ROL_FUNCIONARIO = 4;
+
+        private static UsuarioAdminDTO MapearUsuarioAdmin(Usuario u, string nombreRol) => new()
+        {
+            IdUsuario = u.IdUsuario,
+            Nombre = u.Nombre,
+            Apellidos = u.Apellidos,
+            Correo = u.Correo,
+            Telefono = u.Telefono,
+            IdRol = u.IdRol,
+            NombreRol = nombreRol,
+            IdEstadoCuenta = u.IdEstadoCuenta,
+            AvatarIcono = u.AvatarIcono,
+            FechaRegistro = u.FechaRegistro
+        };
+
+        // Lista todos los usuarios de la plataforma, con filtros opcionales por rol, estado de
+        // cuenta y una búsqueda libre por nombre/apellidos/correo. Usado por el panel de
+        // Administración (Usuarios y Roles y permisos).
+        public async Task<List<UsuarioAdminDTO>> ListarUsuariosAsync(byte? idRol, byte? idEstadoCuenta, string? busqueda)
+        {
+            var query = from u in _context.Usuarios
+                        join r in _context.Roles on (int)u.IdRol equals r.IdRol into rGroup
+                        from r in rGroup.DefaultIfEmpty()
+                        select new { Usuario = u, NombreRol = r != null ? r.Nombre : "Sin rol" };
+
+            if (idRol.HasValue)
+                query = query.Where(x => x.Usuario.IdRol == idRol.Value);
+
+            if (idEstadoCuenta.HasValue)
+                query = query.Where(x => x.Usuario.IdEstadoCuenta == idEstadoCuenta.Value);
+
+            if (!string.IsNullOrWhiteSpace(busqueda))
+            {
+                var termino = busqueda.Trim().ToLower();
+                query = query.Where(x =>
+                    x.Usuario.Nombre.ToLower().Contains(termino) ||
+                    x.Usuario.Apellidos.ToLower().Contains(termino) ||
+                    x.Usuario.Correo.ToLower().Contains(termino));
+            }
+
+            var resultados = await query.OrderByDescending(x => x.Usuario.FechaRegistro).ToListAsync();
+            return resultados.Select(x => MapearUsuarioAdmin(x.Usuario, x.NombreRol)).ToList();
+        }
+
+        // El admin crea una cuenta nueva directamente, con el rol que elija — a diferencia del
+        // auto-registro (RegistrarNuevoUsuario), que siempre entra como Cliente(3).
+        public async Task<(bool Exito, string Mensaje)> CrearUsuarioComoAdminAsync(CrearUsuarioAdminDTO dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Nombre) || string.IsNullOrWhiteSpace(dto.Apellidos))
+                return (false, "El nombre y los apellidos son obligatorios.");
+
+            if (string.IsNullOrWhiteSpace(dto.Correo))
+                return (false, "El correo es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password.Length < 8)
+                return (false, "La contraseña debe tener al menos 8 caracteres.");
+
+            if (dto.IdRol < ROL_ADMINISTRADOR || dto.IdRol > ROL_FUNCIONARIO)
+                return (false, "El rol indicado no es válido.");
+
+            var existeCorreo = await _context.Usuarios.AnyAsync(u => u.Correo == dto.Correo);
+            if (existeCorreo)
+                return (false, "Este correo ya se encuentra registrado.");
+
+            var nuevoUsuario = new Usuario
+            {
+                Nombre = dto.Nombre,
+                Apellidos = dto.Apellidos,
+                Correo = dto.Correo,
+                Telefono = dto.Telefono,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                Proveedor_Auth = "Local",
+                IdRol = dto.IdRol,
+                IdEstadoCuenta = 1,
+                FechaRegistro = DateTime.UtcNow
+            };
+
+            _context.Usuarios.Add(nuevoUsuario);
+            await _context.SaveChangesAsync();
+
+            return (true, "Usuario creado correctamente.");
+        }
+
+        public async Task<UsuarioAdminDTO?> ObtenerUsuarioAdminAsync(int idUsuario)
+        {
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
+            if (usuario == null) return null;
+
+            var rol = await _context.Roles.FirstOrDefaultAsync(r => r.IdRol == usuario.IdRol);
+            return MapearUsuarioAdmin(usuario, rol?.Nombre ?? "Sin rol");
+        }
+
+        // Estadísticas reales para las tarjetas del panel de Usuarios — no existía ninguna
+        // agregación de usuarios en el proyecto (ReporteService solo agrega actividad clínica).
+        // Incluye además el desglose por rol y por estado de cuenta, para los gráficos de
+        // dona del Dashboard.
+        public async Task<object> ObtenerEstadisticasUsuariosAsync()
+        {
+            var total = await _context.Usuarios.CountAsync();
+            var activos = await _context.Usuarios.CountAsync(u => u.IdEstadoCuenta == 1);
+            var invitados = await _context.Usuarios.CountAsync(u => u.IdEstadoCuenta == 2);
+            var suspendidos = await _context.Usuarios.CountAsync(u => u.IdEstadoCuenta == 3);
+            var clientes = await _context.Usuarios.CountAsync(u => u.IdRol == ROL_CLIENTE);
+            var veterinarios = await _context.Usuarios.CountAsync(u => u.IdRol == ROL_VETERINARIO);
+            var funcionarios = await _context.Usuarios.CountAsync(u => u.IdRol == ROL_FUNCIONARIO);
+            var administradores = await _context.Usuarios.CountAsync(u => u.IdRol == ROL_ADMINISTRADOR);
+            var profesionales = veterinarios + funcionarios;
+
+            return new
+            {
+                total,
+                activos,
+                profesionales,
+                administradores,
+                porRol = new { administradores, veterinarios, clientes, funcionarios },
+                porEstado = new { activas = activos, invitadas = invitados, suspendidas = suspendidos }
+            };
+        }
+
+        private static readonly string[] MESES_ES =
+        {
+            "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"
+        };
+
+        // Registros de usuarios agrupados por período, para el gráfico principal del Dashboard.
+        // Se agrupa en memoria (no con SQL) a propósito: evita depender de datos de cultura
+        // (nombres de mes) que pueden faltar en el contenedor de despliegue si corre en modo
+        // "invariant globalization".
+        public async Task<List<PuntoSerieDTO>> ObtenerRegistrosPorPeriodoAsync(string? periodo)
+        {
+            var fechas = await _context.Usuarios.Select(u => u.FechaRegistro).ToListAsync();
+            var hoy = DateTime.UtcNow.Date;
+            var puntos = new List<PuntoSerieDTO>();
+
+            switch ((periodo ?? "mensual").ToLowerInvariant())
+            {
+                case "anual":
+                    for (var i = 5; i >= 0; i--)
+                    {
+                        var anio = hoy.Year - i;
+                        var cantidad = fechas.Count(f => f.Year == anio);
+                        puntos.Add(new PuntoSerieDTO { Etiqueta = anio.ToString(), Cantidad = cantidad });
+                    }
+                    break;
+
+                case "semanal":
+                    for (var i = 7; i >= 0; i--)
+                    {
+                        var finVentana = hoy.AddDays(-7 * i);
+                        var inicioVentana = finVentana.AddDays(-6);
+                        var cantidad = fechas.Count(f => f.Date >= inicioVentana && f.Date <= finVentana);
+                        puntos.Add(new PuntoSerieDTO { Etiqueta = $"{inicioVentana:dd/MM}", Cantidad = cantidad });
+                    }
+                    break;
+
+                default: // mensual
+                    for (var i = 11; i >= 0; i--)
+                    {
+                        var mes = hoy.AddMonths(-i);
+                        var cantidad = fechas.Count(f => f.Year == mes.Year && f.Month == mes.Month);
+                        puntos.Add(new PuntoSerieDTO { Etiqueta = $"{MESES_ES[mes.Month - 1]} {mes.Year}", Cantidad = cantidad });
+                    }
+                    break;
+            }
+
+            return puntos;
+        }
+
+        // El admin edita los datos de CUALQUIER usuario (a diferencia de ActualizarPerfilAsync,
+        // que solo deja al usuario editar su propia cuenta vía el claim del JWT).
+        public async Task<(bool Exito, string Mensaje)> ActualizarPerfilComoAdminAsync(int idUsuario, ActualizarPerfilDTO dto)
+        {
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
+            if (usuario == null)
+                return (false, "El usuario no existe.");
+
+            if (usuario.Correo != dto.Correo)
+            {
+                var existeCorreo = await _context.Usuarios.AnyAsync(u => u.Correo == dto.Correo && u.IdUsuario != idUsuario);
+                if (existeCorreo)
+                    return (false, "El correo electrónico ya se encuentra registrado por otro usuario.");
+            }
+
+            usuario.Nombre = dto.Nombre;
+            usuario.Apellidos = dto.Apellidos;
+            usuario.Correo = dto.Correo;
+            usuario.Telefono = dto.Telefono;
+
+            await _context.SaveChangesAsync();
+            return (true, "Usuario actualizado con éxito.");
+        }
+
+        // Reasigna el rol de un usuario. A diferencia de las promociones automáticas
+        // (VeterinarioService.VincularAsync / ComercioService.AprobarComercioAsync, que solo
+        // suben a un Cliente puro), esta es una reasignación explícita del admin a cualquier
+        // rol — pero nunca se permite dejar la plataforma sin ningún administrador activo.
+        public async Task<(bool Exito, string Mensaje)> CambiarRolAsync(int idUsuario, byte idRol)
+        {
+            if (idRol < ROL_ADMINISTRADOR || idRol > ROL_FUNCIONARIO)
+                return (false, "El rol indicado no es válido.");
+
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
+            if (usuario == null)
+                return (false, "El usuario no existe.");
+
+            if (usuario.IdRol == ROL_ADMINISTRADOR && idRol != ROL_ADMINISTRADOR)
+            {
+                var otrosAdmins = await _context.Usuarios.CountAsync(u =>
+                    u.IdRol == ROL_ADMINISTRADOR && u.IdEstadoCuenta == 1 && u.IdUsuario != idUsuario);
+
+                if (otrosAdmins == 0)
+                    return (false, "No podés quitarle el rol de Administrador al único administrador activo de la plataforma.");
+            }
+
+            usuario.IdRol = idRol;
+            await _context.SaveChangesAsync();
+
+            return (true, "Rol actualizado correctamente.");
+        }
+
+        // Activar/suspender una cuenta — es el "Eliminar" del panel de Usuarios: nunca se borra
+        // físicamente un USUARIO (rompería en cascada mascotas, citas, expedientes, etc.).
+        public async Task<(bool Exito, string Mensaje)> CambiarEstadoCuentaAsync(int idUsuario, byte idEstadoCuenta)
+        {
+            if (idEstadoCuenta < 1 || idEstadoCuenta > 3)
+                return (false, "El estado indicado no es válido.");
+
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
+            if (usuario == null)
+                return (false, "El usuario no existe.");
+
+            if (usuario.IdRol == ROL_ADMINISTRADOR && idEstadoCuenta != 1)
+            {
+                var otrosAdminsActivos = await _context.Usuarios.CountAsync(u =>
+                    u.IdRol == ROL_ADMINISTRADOR && u.IdEstadoCuenta == 1 && u.IdUsuario != idUsuario);
+
+                if (otrosAdminsActivos == 0)
+                    return (false, "No podés desactivar al único administrador activo de la plataforma.");
+            }
+
+            usuario.IdEstadoCuenta = idEstadoCuenta;
+
+            using var transaccion = await _context.Database.BeginTransactionAsync();
+
+            // Suspender la cuenta es el "Eliminar" del panel de Usuarios (ver comentario de
+            // arriba: nunca se borra físicamente un USUARIO). Para que de verdad se sienta como
+            // un borrado, sus mascotas también se dan de baja acá — no se borran físicamente
+            // por la misma razón (romperían en cascada citas/expedientes ya existentes), pero
+            // dejan de aparecer como activas en cualquier lado (Marketplace, agenda, etc.).
+            // Reactivar la cuenta NO reactiva las mascotas automáticamente: no hay forma de
+            // saber cuáles ya estaban inactivas antes de la suspensión.
+            if (idEstadoCuenta == 3)
+            {
+                await _context.Mascotas
+                    .Where(m => m.IdUsuario == idUsuario && m.Activo)
+                    .ExecuteUpdateAsync(s => s.SetProperty(m => m.Activo, false));
+            }
+
+            await _context.SaveChangesAsync();
+            await transaccion.CommitAsync();
+
+            return (true, "Estado de la cuenta actualizado correctamente.");
         }
 
         public (bool Exito, string Mensaje) RegistrarNuevoUsuario(RegistroRequest request)
@@ -677,19 +1004,48 @@ namespace HuellitasVitalesAPI.Services
 
                 using var httpClient = new HttpClient();
 
+                // Versión explícita del Graph API — sin ella, Facebook usa la versión
+                // "default" configurada en el panel de la app, que puede quedar desactualizada
+                // sin que nadie lo note. v21.0 es una versión estable reciente.
                 var verifyTokenUrl =
-                    $"https://graph.facebook.com/me" +
+                    $"https://graph.facebook.com/v21.0/me" +
                     $"?fields=first_name,last_name,email,id" +
                     $"&access_token={facebookToken}";
 
                 var response = await httpClient.GetAsync(verifyTokenUrl);
+                var jsonResult = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    return (false, "El token de Facebook no es válido.");
-                }
+                    // Log completo en el backend para poder diagnosticar (el mismo patrón de
+                    // Console.WriteLine que ya usa el resto de este método para sus catch).
+                    Console.WriteLine("=== FACEBOOK GRAPH API RECHAZÓ EL TOKEN ===");
+                    Console.WriteLine($"Status: {response.StatusCode}");
+                    Console.WriteLine(jsonResult);
 
-                var jsonResult = await response.Content.ReadAsStringAsync();
+                    // Facebook devuelve el motivo real en error.message (permisos, app en modo
+                    // desarrollo sin el usuario agregado como tester, token expirado, etc.) —
+                    // se lo mostramos al usuario en vez de un genérico "no es válido" que no
+                    // ayuda a diagnosticar nada.
+                    string? mensajeFacebook = null;
+                    try
+                    {
+                        using var doc = System.Text.Json.JsonDocument.Parse(jsonResult);
+                        if (doc.RootElement.TryGetProperty("error", out var errorEl) &&
+                            errorEl.TryGetProperty("message", out var msgEl))
+                        {
+                            mensajeFacebook = msgEl.GetString();
+                        }
+                    }
+                    catch (System.Text.Json.JsonException)
+                    {
+                        // jsonResult no era JSON válido; se ignora y se usa el mensaje genérico.
+                    }
+
+                    return (false, mensajeFacebook != null
+                        ? $"Facebook rechazó la vinculación: {mensajeFacebook}"
+                        : "El token de Facebook no es válido.");
+                }
 
                 var fbUser =
                     System.Text.Json.JsonSerializer.Deserialize<FacebookTokenResponse>(
@@ -782,6 +1138,121 @@ namespace HuellitasVitalesAPI.Services
                 .ToListAsync();
         }
 
+        // Vincula Google a partir de un access token del flujo implícito (useGoogleLogin), en
+        // vez del credential/ID token que usa VincularGoogleAsync. Se apoya en el endpoint
+        // userinfo de Google en vez de validar un JWT — mismo patrón que ya usa
+        // VincularFacebookAsync contra el Graph API de Facebook, para que el switch de
+        // Configuración pueda vincular Google sin depender del botón/iframe de <GoogleLogin>.
+        public async Task<(bool Exito, string Mensaje)> VincularGoogleConAccessTokenAsync(int idUsuario, string accessToken)
+        {
+            try
+            {
+                var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
+                if (usuario == null)
+                    return (false, "El usuario no existe.");
+
+                if (usuario.IdEstadoCuenta != 1)
+                    return (false, "La cuenta no se encuentra activa.");
+
+                using var httpClient = new HttpClient();
+                var response = await httpClient.GetAsync(
+                    $"https://www.googleapis.com/oauth2/v3/userinfo?access_token={accessToken}");
+                var jsonResult = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("=== GOOGLE USERINFO RECHAZÓ EL TOKEN ===");
+                    Console.WriteLine($"Status: {response.StatusCode}");
+                    Console.WriteLine(jsonResult);
+                    return (false, "El token de Google no es válido o expiró.");
+                }
+
+                var googleUser = System.Text.Json.JsonSerializer.Deserialize<GoogleUserInfoResponse>(jsonResult);
+                if (googleUser == null || string.IsNullOrEmpty(googleUser.Sub))
+                    return (false, "No fue posible obtener la información de Google.");
+
+                if (!string.IsNullOrEmpty(googleUser.Email) &&
+                    !string.Equals(usuario.Correo, googleUser.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    return (false, "El correo de Google no coincide con el correo de la cuenta.");
+                }
+
+                var googleYaVinculado = await _context.UsuariosProveedoresAuth
+                    .FirstOrDefaultAsync(x =>
+                        x.Proveedor == "Google" &&
+                        x.ProveedorId == googleUser.Sub &&
+                        x.IdUsuario != idUsuario);
+
+                if (googleYaVinculado != null)
+                    return (false, "Esta cuenta de Google ya está vinculada a otro usuario.");
+
+                var vinculacionExistente = await _context.UsuariosProveedoresAuth
+                    .FirstOrDefaultAsync(x => x.IdUsuario == idUsuario && x.Proveedor == "Google");
+
+                if (vinculacionExistente != null)
+                    return (true, "Tu cuenta de Google ya está vinculada.");
+
+                _context.UsuariosProveedoresAuth.Add(new UsuarioProveedorAuth
+                {
+                    IdUsuario = idUsuario,
+                    Proveedor = "Google",
+                    ProveedorId = googleUser.Sub
+                });
+
+                await _context.SaveChangesAsync();
+
+                return (true, "La cuenta de Google fue vinculada correctamente.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("=== ERROR AL VINCULAR GOOGLE (access token) ===");
+                Console.WriteLine(ex.ToString());
+                return (false, "No fue posible vincular la cuenta de Google.");
+            }
+        }
+
+        // Desvincula Google o Facebook de la cuenta autenticada. Nunca deja al usuario sin
+        // ninguna forma de volver a entrar: si no tiene contraseña local, exige que quede al
+        // menos otro proveedor vinculado.
+        public async Task<(bool Exito, string Mensaje)> DesvincularProveedorAsync(int idUsuario, string proveedor)
+        {
+            var proveedorNormalizado = proveedor?.Trim();
+            var esGoogle = string.Equals(proveedorNormalizado, "Google", StringComparison.OrdinalIgnoreCase);
+            var esFacebook = string.Equals(proveedorNormalizado, "Facebook", StringComparison.OrdinalIgnoreCase);
+
+            if (string.IsNullOrEmpty(proveedorNormalizado) || !(esGoogle || esFacebook))
+                return (false, "Proveedor no reconocido.");
+
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
+            if (usuario == null)
+                return (false, "El usuario no existe.");
+
+            var vinculacion = await _context.UsuariosProveedoresAuth
+                .FirstOrDefaultAsync(x => x.IdUsuario == idUsuario &&
+                    (esGoogle ? x.Proveedor == "Google" : x.Proveedor == "Facebook"));
+
+            if (vinculacion == null)
+                return (false, "Esa cuenta no está vinculada.");
+
+            var tienePassword = !string.IsNullOrEmpty(usuario.PasswordHash);
+            if (!tienePassword)
+            {
+                var otrosProveedores = await _context.UsuariosProveedoresAuth
+                    .CountAsync(x => x.IdUsuario == idUsuario &&
+                        x.IdUsuarioProveedorAuth != vinculacion.IdUsuarioProveedorAuth);
+
+                if (otrosProveedores == 0)
+                {
+                    return (false, "No podés desvincular tu único método de acceso. Establecé una contraseña o vinculá otra cuenta antes de desvincular esta.");
+                }
+            }
+
+            _context.UsuariosProveedoresAuth.Remove(vinculacion);
+            await _context.SaveChangesAsync();
+
+            return (true, $"Cuenta de {vinculacion.Proveedor} desvinculada correctamente.");
+        }
+
         public async Task<object?> ObtenerPerfilConComercioAsync(int idUsuario)
         {
             var usuario = await _context.Usuarios
@@ -832,5 +1303,20 @@ namespace HuellitasVitalesAPI.Services
         [JsonPropertyName("email")]
         public string? Email { get; set; }
     }
-    
+
+    // Respuesta del endpoint userinfo de Google (oauth2/v3/userinfo), usada por
+    // VincularGoogleConAccessTokenAsync — distinta del payload de GoogleJsonWebSignature que
+    // usa el flujo por credential/ID token.
+    public class GoogleUserInfoResponse
+    {
+        [JsonPropertyName("sub")]
+        public string? Sub { get; set; }
+
+        [JsonPropertyName("email")]
+        public string? Email { get; set; }
+
+        [JsonPropertyName("email_verified")]
+        public bool? EmailVerified { get; set; }
+    }
+
 }

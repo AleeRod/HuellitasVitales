@@ -1,0 +1,140 @@
+/* Acciones de cada cita (reprogramar/cancelar) y el modal de reprogramación — mismo
+   lenguaje visual pine/mint/cream que el resto del portal cliente. */
+
+.acciones {
+    display: flex;
+    gap: .5rem;
+    margin-top: .6rem;
+    flex-wrap: wrap;
+}
+
+.btnAccion {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .45rem .85rem;
+    border-radius: 10px;
+    border: 1.5px solid #dde3d8;
+    background: #fff;
+    color: #1B4332;
+    font-size: .8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s ease;
+}
+
+.btnAccion:hover:not(:disabled) {
+    border-color: #52B788;
+    background: rgba(82, 183, 136, .08);
+}
+
+.btnAccionDanger {
+    color: #c0392b;
+}
+
+.btnAccionDanger:hover:not(:disabled) {
+    border-color: #c0392b;
+    background: rgba(192, 57, 43, .08);
+}
+
+.btnAccion:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+/* ---------- Modal de reprogramación ---------- */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 43, 33, .55);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 1rem;
+}
+
+.modal {
+    background: #fff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 24px 50px rgba(0, 0, 0, .22);
+    overflow: hidden;
+    animation: aparecer .18s ease-out;
+}
+
+@keyframes aparecer {
+    from { opacity: 0; transform: translateY(10px) scale(.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modalHeader {
+    padding: 1.25rem 1.4rem 1rem;
+    border-bottom: 1px solid #dde3d8;
+}
+
+.modalHeader h3 {
+    margin: 0 0 .3rem;
+    font-family: 'Playfair Display', serif;
+    color: #1B4332;
+    font-size: 1.25rem;
+}
+
+.modalHeader p {
+    margin: 0;
+    color: #718096;
+    font-size: .85rem;
+}
+
+.modalBody {
+    padding: 1.25rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+}
+
+.campo label {
+    font-size: .78rem;
+    font-weight: 700;
+    color: #1B4332;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.campo input[type='date'] {
+    border: 1.5px solid #dde3d8;
+    border-radius: 12px;
+    padding: .7rem .9rem;
+    font-size: .9rem;
+    outline: none;
+}
+
+.campo input[type='date']:focus {
+    border-color: #52B788;
+    box-shadow: 0 0 0 3px rgba(82, 183, 136, .17);
+}
+
+.sinHorarios {
+    padding: .8rem;
+    border-radius: 12px;
+    background: #f7f9f8;
+    color: #718096;
+    font-size: .85rem;
+    text-align: center;
+}
+
+.modalFooter {
+    padding: 1rem 1.4rem 1.4rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: .6rem;
+}

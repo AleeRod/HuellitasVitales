@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Bell } from "lucide-react";
 import { API_BASE, manejarSesionExpirada } from "../../api/config";
@@ -42,11 +43,23 @@ const rutaDestino = (notificacion) => {
 
 // Campanita de notificaciones real: reemplaza los botones <Bell> decorativos que había
 // repetidos por toda la app (sin onClick, sin datos). Consume /api/notificacion.
+//
+// El panel desplegable se monta en un portal a document.body (en vez de vivir en el flujo
+// normal del DOM, como antes). Este componente se usa dentro de topbars con `backdrop-filter`
+// (el "cristal esmerilado" del panel de Admin, por ejemplo) y esas mismas cabeceras además
+// recortan overflow en pantallas más chicas — con el dropdown viviendo ahí adentro, quedaba a
+// merced de cualquier `overflow`/stacking context raro del contenedor de turno (el mismo tipo
+// de bug que ya se dio con el mini-carrito dentro de DogNav). Al vivir en un portal, se
+// posiciona con coordenadas fijas calculadas desde el botón (`getBoundingClientRect`) y ya no
+// depende en absoluto de qué tenga el ancestro por encima.
 const NotificacionesBell = ({ size = 18 }) => {
   const [abierto, setAbierto] = useState(false);
   const [notificaciones, setNotificaciones] = useState([]);
   const [cargado, setCargado] = useState(false);
+  const [posicion, setPosicion] = useState({ top: 0, right: 0 });
   const contenedorRef = useRef(null);
+  const botonRef = useRef(null);
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
   const cargar = async () => {
@@ -78,16 +91,43 @@ const NotificacionesBell = ({ size = 18 }) => {
     return () => clearInterval(intervalo);
   }, []);
 
+  // Clic afuera: como el panel vive en un portal (no es descendiente en el DOM del botón),
+  // hay que revisar tanto el botón como el propio panel antes de cerrar.
   useEffect(() => {
     const alHacerClickFuera = (e) => {
-      if (contenedorRef.current && !contenedorRef.current.contains(e.target)) setAbierto(false);
+      const clickEnBoton = contenedorRef.current && contenedorRef.current.contains(e.target);
+      const clickEnDropdown = dropdownRef.current && dropdownRef.current.contains(e.target);
+      if (!clickEnBoton && !clickEnDropdown) setAbierto(false);
     };
     document.addEventListener("mousedown", alHacerClickFuera);
     return () => document.removeEventListener("mousedown", alHacerClickFuera);
   }, []);
 
+  // Cerrar al hacer scroll o cambiar el tamaño de la ventana, para que el panel (con posición
+  // fija calculada una sola vez al abrir) nunca quede flotando lejos del botón.
+  useEffect(() => {
+    if (!abierto) return undefined;
+    const cerrar = () => setAbierto(false);
+    window.addEventListener("scroll", cerrar, true);
+    window.addEventListener("resize", cerrar);
+    return () => {
+      window.removeEventListener("scroll", cerrar, true);
+      window.removeEventListener("resize", cerrar);
+    };
+  }, [abierto]);
+
   const toggle = () => {
-    setAbierto((prev) => !prev);
+    setAbierto((prev) => {
+      const next = !prev;
+      if (next && botonRef.current) {
+        const rect = botonRef.current.getBoundingClientRect();
+        setPosicion({
+          top: rect.bottom + 10,
+          right: Math.max(8, window.innerWidth - rect.right),
+        });
+      }
+      return next;
+    });
     if (!cargado) cargar();
   };
 
@@ -115,34 +155,40 @@ const NotificacionesBell = ({ size = 18 }) => {
 
   return (
     <div className={styles.wrap} ref={contenedorRef}>
-      <button className={styles.boton} title="Notificaciones" onClick={toggle}>
+      <button ref={botonRef} className={styles.boton} title="Notificaciones" onClick={toggle}>
         <Bell size={size} />
         {noLeidas > 0 && <span className={styles.badge}>{noLeidas > 9 ? "9+" : noLeidas}</span>}
       </button>
 
-      {abierto && (
-        <div className={styles.dropdown}>
-          <div className={styles.header}>Notificaciones</div>
-          {notificaciones.length === 0 ? (
-            <div className={styles.vacio}>No tenés notificaciones todavía.</div>
-          ) : (
-            notificaciones.map((n) => (
-              <button
-                key={n.idNotificacion}
-                className={`${styles.item} ${!n.leida ? styles.itemNoLeida : ""}`}
-                onClick={() => marcarLeida(n)}
-              >
-                <div className={styles.itemTitulo}>
-                  {!n.leida && <span className={styles.puntoNoLeido} />}
-                  {n.titulo}
-                </div>
-                <div className={styles.itemMensaje}>{n.mensaje}</div>
-                <div className={styles.itemFecha}>{formatFecha(n.fechaCreacion)}</div>
-              </button>
-            ))
-          )}
-        </div>
-      )}
+      {abierto &&
+        createPortal(
+          <div
+            className={styles.dropdown}
+            ref={dropdownRef}
+            style={{ position: "fixed", top: posicion.top, right: posicion.right }}
+          >
+            <div className={styles.header}>Notificaciones</div>
+            {notificaciones.length === 0 ? (
+              <div className={styles.vacio}>No tenés notificaciones todavía.</div>
+            ) : (
+              notificaciones.map((n) => (
+                <button
+                  key={n.idNotificacion}
+                  className={`${styles.item} ${!n.leida ? styles.itemNoLeida : ""}`}
+                  onClick={() => marcarLeida(n)}
+                >
+                  <div className={styles.itemTitulo}>
+                    {!n.leida && <span className={styles.puntoNoLeido} />}
+                    {n.titulo}
+                  </div>
+                  <div className={styles.itemMensaje}>{n.mensaje}</div>
+                  <div className={styles.itemFecha}>{formatFecha(n.fechaCreacion)}</div>
+                </button>
+              ))
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

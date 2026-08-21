@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import DogNav from '../../components/DogNav/DogNav';
 import { ToastContainer } from '../../components/Toast/Toast';
 import { useToast } from '../../components/Toast/useToast';
+import CustomSelect from '../../components/CustomSelect/CustomSelect';
 import styles from './SolicitudComercio.module.css';
 
 const ESTADO_INICIAL = {
@@ -207,10 +208,15 @@ const SolicitudComercio = () => {
                             </div>
                             <div className={styles.inputGroup}>
                                 <label className="form-label">Tipo de Persona</label>
-                                <select name="idTipoPersona" value={formData.idTipoPersona} className="form-select" onChange={handleInputChange}>
-                                    <option value={1}>Física</option>
-                                    <option value={2}>Jurídica</option>
-                                </select>
+                                <CustomSelect
+                                    value={formData.idTipoPersona}
+                                    onChange={(valor) => handleInputChange({ target: { name: 'idTipoPersona', value: valor } })}
+                                    style={{ width: '100%' }}
+                                    opciones={[
+                                        { value: 1, label: 'Física' },
+                                        { value: 2, label: 'Jurídica' }
+                                    ]}
+                                />
                             </div>
 
                             {formData.idTipoPersona == 2 && (

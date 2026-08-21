@@ -6,6 +6,7 @@ import { ToastContainer } from '../../components/Toast/Toast';
 import useToast from '../../components/Toast/useToast';
 import FilaCarrito from '../../components/Carrito/FilaCarrito';
 import ModalRegistroRapido from '../../components/ModalRegistroRapido/ModalRegistroRapido'; // Ajusta la ruta si difiere en tu carpeta
+import ModalMetodoPago from '../../components/ModalMetodoPago/ModalMetodoPago';
 import { crearOrden } from '../../api/ordenes';
 import styles from './Carrito.module.css';
 
@@ -27,6 +28,8 @@ const Carrito = () => {
     
     // Estado para controlar la visibilidad del modal de registro rápido
     const [modalRegistroAbierto, setModalRegistroAbierto] = useState(false);
+    // Estado para controlar la visibilidad del modal de método de pago (simulado)
+    const [modalPagoAbierto, setModalPagoAbierto] = useState(false);
 
     useEffect(() => {
         if (!mensajeError) return;
@@ -41,27 +44,32 @@ const Carrito = () => {
     };
 
     /**
-     * Función principal para procesar la orden tras validar token o tras registro rápido.
+     * Función principal para procesar la orden tras validar token y tras el paso
+     * (simulado) de método de pago. Devuelve si la compra se registró o no, para
+     * que quien la llama decida si corresponde cerrar el modal de pago.
      */
-    const procesarCompra = async (tokenUsuario) => {
+    const procesarCompra = async (tokenUsuario, metodoPago) => {
         setPagando(true);
 
         try {
-            const respuesta = await crearOrden(items, tokenUsuario);
+            const respuesta = await crearOrden(items, tokenUsuario, metodoPago);
             vaciar();
             showToast(
-                `Listo, tu compra quedó registrada con el número ${respuesta?.orden?.idOrden ?? ''}.`.trim(),
+                `Listo, tu compra quedó registrada con el número ${respuesta?.orden?.idOrden ?? ''}. Podés ver el recibo en Mis compras.`.trim(),
                 'success'
             );
+            return true;
         } catch (error) {
             showToast(error.message, 'error');
+            return false;
         } finally {
             setPagando(false);
         }
     };
 
     /**
-     * Al dar clic en 'Completar compra': Si no hay token, abre el modal de registro rápido.
+     * Al dar clic en 'Completar compra': si no hay sesión, primero pide el
+     * registro/login rápido; si ya hay sesión, va directo al método de pago.
      */
     const pagar = () => {
         const token = localStorage.getItem('token_huellitas');
@@ -71,16 +79,27 @@ const Carrito = () => {
             return;
         }
 
-        procesarCompra(token);
+        setModalPagoAbierto(true);
     };
 
     /**
-     * Callback invocado por ModalRegistroRapido cuando el registro es exitoso.
+     * Callback invocado por ModalRegistroRapido cuando el registro es exitoso:
+     * ya hay sesión, así que corresponde pasar al método de pago.
      */
     const alCompletarRegistroRapido = () => {
         setModalRegistroAbierto(false);
-        const nuevoToken = localStorage.getItem('token_huellitas');
-        procesarCompra(nuevoToken);
+        setModalPagoAbierto(true);
+    };
+
+    /**
+     * Callback invocado por ModalMetodoPago al confirmar el pago (simulado).
+     * Solo se cierra el modal si la orden se registró correctamente; si falló,
+     * se deja abierto para que la persona pueda reintentar.
+     */
+    const confirmarPago = async (metodoPago) => {
+        const token = localStorage.getItem('token_huellitas');
+        const exito = await procesarCompra(token, metodoPago);
+        if (exito) setModalPagoAbierto(false);
     };
 
     const vacio = items.length === 0;
@@ -94,6 +113,16 @@ const Carrito = () => {
                 isOpen={modalRegistroAbierto}
                 onClose={() => setModalRegistroAbierto(false)}
                 onRegistroExitoso={alCompletarRegistroRapido}
+            />
+
+            {/* Modal de Método de Pago (simulado) */}
+            <ModalMetodoPago
+                isOpen={modalPagoAbierto}
+                onClose={() => setModalPagoAbierto(false)}
+                total={total}
+                unidades={unidades}
+                procesando={pagando}
+                onConfirmar={confirmarPago}
             />
 
             <div className={styles.contenedor}>
@@ -122,9 +151,20 @@ const Carrito = () => {
                         <p className={styles.vacioTexto}>
                             Date una vuelta por el marketplace y armá la compra para tu mascota.
                         </p>
-                        <Link to="/marketplace" className={styles.vacioBoton}>
-                            Ver productos
-                        </Link>
+                        <div className={styles.vacioAcciones}>
+                            <Link to="/marketplace" className={styles.vacioBoton}>
+                                Ver productos
+                            </Link>
+                            {localStorage.getItem('token_huellitas') && (
+                                <button
+                                    type="button"
+                                    className={styles.vacioBotonSecundario}
+                                    onClick={() => navigate('/cliente/mis-compras')}
+                                >
+                                    Ver mis compras
+                                </button>
+                            )}
+                        </div>
                     </div>
                 ) : (
                     <div className={styles.cuerpo}>
@@ -173,7 +213,7 @@ const Carrito = () => {
                             </button>
 
                             <p className={styles.resumenNota}>
-                                Para terminar la compra te vamos a pedir que iniciés sesión.
+                                Te vamos a pedir iniciar sesión y elegir un método de pago para terminar la compra.
                             </p>
                         </aside>
                     </div>

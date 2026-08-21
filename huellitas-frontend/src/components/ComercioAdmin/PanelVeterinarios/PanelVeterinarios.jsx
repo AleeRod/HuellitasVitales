@@ -10,6 +10,10 @@ import {
   Store,
 } from "lucide-react";
 import { API_BASE } from "../../../api/config";
+import { ToastContainer } from "../../Toast/Toast";
+import { useToast } from "../../Toast/useToast";
+import { useConfirm } from "../../ConfirmModal/useConfirm";
+import SelectorVeterinaria from "../../Cliente/SelectorVeterinaria/SelectorVeterinaria";
 import styles from "./PanelVeterinarios.module.css";
 
 const ESTADO = {
@@ -31,6 +35,9 @@ const iniciales = (nombre = "", apellidos = "") =>
   `${nombre.charAt(0)}${apellidos.charAt(0)}`.toUpperCase() || "V";
 
 const PanelVeterinarios = ({ esAdmin = false }) => {
+  const { toasts, showToast, removeToast } = useToast();
+  const { pedirConfirmacion, ConfirmacionModal } = useConfirm();
+
   const [veterinarias, setVeterinarias] = useState([]);
   const [idComercioSeleccionado, setIdComercioSeleccionado] = useState("");
   const [cargandoVeterinarias, setCargandoVeterinarias] = useState(true);
@@ -167,24 +174,27 @@ const PanelVeterinarios = ({ esAdmin = false }) => {
     }
   };
 
-  const quitarVeterinario = async (veterinario) => {
-    const confirmar = window.confirm(
-      `¿Quitar a ${veterinario.nombre} ${veterinario.apellidos} de esta veterinaria? Sus citas y servicios ya registrados no se ven afectados.`
-    );
-    if (!confirmar) return;
-
-    try {
-      const res = await fetch(`${API_BASE}/veterinario/${veterinario.idVeterinario}`, {
-        method: "DELETE",
-        headers: authHeaders(),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.mensaje || "No se pudo quitar al veterinario.");
-      cargarVeterinarios(idComercioSeleccionado);
-    } catch (err) {
-      console.error(err);
-      alert(err.message || "No se pudo quitar al veterinario.");
-    }
+  const quitarVeterinario = (veterinario) => {
+    pedirConfirmacion({
+      titulo: "Quitar veterinario",
+      mensaje: `¿Quitar a ${veterinario.nombre} ${veterinario.apellidos} de esta veterinaria? Sus citas y servicios ya registrados no se ven afectados.`,
+      textoConfirmar: "Sí, quitar",
+      onConfirmar: async () => {
+        try {
+          const res = await fetch(`${API_BASE}/veterinario/${veterinario.idVeterinario}`, {
+            method: "DELETE",
+            headers: authHeaders(),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.mensaje || "No se pudo quitar al veterinario.");
+          showToast("Veterinario desvinculado correctamente.", "success");
+          cargarVeterinarios(idComercioSeleccionado);
+        } catch (err) {
+          console.error(err);
+          showToast(err.message || "No se pudo quitar al veterinario.", "error");
+        }
+      }
+    });
   };
 
   const veterinariaActual = veterinarias.find(
@@ -219,19 +229,11 @@ const PanelVeterinarios = ({ esAdmin = false }) => {
 
         <div className={styles.headerAcciones}>
           {veterinarias.length > 1 && (
-            <label className={styles.selectorComercio}>
-              <Store size={16} />
-              <select
-                value={idComercioSeleccionado}
-                onChange={(e) => setIdComercioSeleccionado(e.target.value)}
-              >
-                {veterinarias.map((v) => (
-                  <option key={v.idComercio} value={v.idComercio}>
-                    {v.nombreComercial}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <SelectorVeterinaria
+              opciones={veterinarias}
+              valor={idComercioSeleccionado}
+              onSeleccionar={setIdComercioSeleccionado}
+            />
           )}
 
           <button
@@ -409,6 +411,9 @@ const PanelVeterinarios = ({ esAdmin = false }) => {
           </div>
         </div>
       )}
+
+      {ConfirmacionModal}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };

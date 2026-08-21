@@ -10,6 +10,8 @@ import PanelVeterinario from './pages/Veterinario/PanelVeterinario';
 import DashboardCliente from './pages/Cliente/DashboardCliente';
 import MisCitas from './pages/Cliente/MisCitas';
 import MisMascotas from './pages/Cliente/MisMascotas';
+import MisCompras from './pages/Cliente/MisCompras';
+import Factura from './pages/Cliente/Factura';
 import HistorialClinico from './pages/Cliente/HistorialClinico';
 import Vacunas from './pages/Cliente/Vacunas';
 import Reportes from './pages/Cliente/Reportes';
@@ -42,6 +44,8 @@ function App() {
           <Route path="/cliente" element={<DashboardCliente />} />
           <Route path="/cliente/mis-citas" element={<MisCitas />} />
           <Route path="/cliente/mis-mascotas" element={<MisMascotas />} />
+          <Route path="/cliente/mis-compras" element={<MisCompras />} />
+          <Route path="/cliente/mis-compras/:idOrden" element={<Factura />} />
           <Route path="/cliente/historial-clinico" element={<HistorialClinico />} />
           <Route path="/cliente/atenciones-externas" element={<AtencionesExternas />} />
           <Route path="/cliente/emergencia" element={<SolicitarEmergencia />} />

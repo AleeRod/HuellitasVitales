@@ -180,6 +180,36 @@
     color: var(--text-md, #3d5248);
 }
 
+.vacioAcciones {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.vacioBotonSecundario {
+    display: inline-block;
+    padding: 0.75rem 1.6rem;
+    border-radius: 30px;
+    background: transparent;
+    border: 1.5px solid var(--pine, #1B4332);
+    color: var(--pine, #1B4332);
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.vacioBotonSecundario:hover {
+    background: var(--pine, #1B4332);
+    color: var(--white, #ffffff);
+}
+
+.vacioBotonSecundario:focus-visible {
+    outline: 3px solid var(--mint, #40c088);
+    outline-offset: 2px;
+}
+
 .vacioBoton {
     display: inline-block;
     padding: 0.75rem 1.6rem;

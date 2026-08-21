@@ -23,20 +23,55 @@ namespace HuellitasVitalesAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> Crear([FromBody] CrearOrdenRequest request)
         {
-            var subClaim = User.FindFirst("sub")?.Value
-                          ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
             // La orden se asocia al usuario del token, nunca a un id que mande
             // el navegador: si no, cualquiera podría comprar a nombre de otro.
-            if (!long.TryParse(subClaim, out var idUsuario))
+            if (!TryObtenerIdUsuario(out var idUsuario))
                 return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
 
-            var resultado = await _ordenService.CrearOrdenAsync(idUsuario, request?.Items ?? new List<ItemOrdenRequest>());
+            var resultado = await _ordenService.CrearOrdenAsync(
+                idUsuario, request?.Items ?? new List<ItemOrdenRequest>(), request?.MetodoPago);
 
             if (!resultado.Exito)
                 return StatusCode(resultado.Codigo, new { success = false, mensaje = resultado.Mensaje });
 
             return Ok(new { success = true, mensaje = resultado.Mensaje, orden = resultado.Orden });
+        }
+
+        // GET api/orden
+        // "Mis compras": historial de órdenes del usuario autenticado.
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> MisOrdenes()
+        {
+            if (!TryObtenerIdUsuario(out var idUsuario))
+                return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
+
+            var ordenes = await _ordenService.ObtenerMisOrdenesAsync(idUsuario);
+            return Ok(new { success = true, ordenes });
+        }
+
+        // GET api/orden/{id}
+        // Recibo/factura interna de una orden puntual, siempre y cuando sea del usuario del token.
+        [Authorize]
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> Factura(int id)
+        {
+            if (!TryObtenerIdUsuario(out var idUsuario))
+                return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
+
+            var factura = await _ordenService.ObtenerFacturaAsync(idUsuario, id);
+
+            if (factura == null)
+                return NotFound(new { success = false, mensaje = "No encontramos esa compra." });
+
+            return Ok(new { success = true, factura });
+        }
+
+        private bool TryObtenerIdUsuario(out long idUsuario)
+        {
+            var subClaim = User.FindFirst("sub")?.Value
+                          ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return long.TryParse(subClaim, out idUsuario);
         }
     }
 }

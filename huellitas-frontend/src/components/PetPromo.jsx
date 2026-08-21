@@ -5,8 +5,20 @@ import { Dog } from 'lucide-react';
 const PetPromo = () => {
   const navigate = useNavigate();
 
+  // Si ya hay sesión, el botón lleva directo a agregar la mascota (mismo criterio de
+  // localStorage que usa el resto de la app: token_huellitas es la clave canónica). Si no hay
+  // sesión, primero hay que crear la cuenta — antes SIEMPRE mandaba a /register, incluso ya
+  // logueado, lo cual era un paso de más (y confuso) para quien ya tenía cuenta.
+  const haySesion = () => !!localStorage.getItem('token_huellitas');
+
   const handleRegisterClick = (e) => {
     e.preventDefault();
+
+    if (haySesion()) {
+      navigate('/cliente/mis-mascotas', { state: { abrirFormulario: true } });
+      return;
+    }
+
     navigate('/register', {
       state: {
         infoMessage: "¡Para registrar a tu mascota y su expediente, primero debes crear tu cuenta de dueño!"
@@ -90,7 +102,9 @@ const PetPromo = () => {
               <span className="anim-float-emoji" style={{ fontSize: '1.1rem' }}>✨</span>
               &nbsp;Crear Perfil de Mascota Gratis
             </button>
-            <span className="action-hint">Serás redirigido a crear tu cuenta principal primero.</span>
+            <span className="action-hint">
+              {haySesion() ? 'Te llevamos directo a agregar tu mascota.' : 'Serás redirigido a crear tu cuenta principal primero.'}
+            </span>
           </div>
         </div>
 

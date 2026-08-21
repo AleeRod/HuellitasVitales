@@ -2,6 +2,11 @@ import React, { useState, useEffect } from "react";
 import { X, Plus, Pencil, Trash2, Package, Search, DollarSign, Tag, UploadCloud, Store, ImageOff } from "lucide-react";
 import styles from "./PanelProductos.module.css";
 import { resolverImagen } from "../../../api/config"; // ⚠️ ajustá esta ruta según dónde esté tu config.js
+import { ToastContainer } from "../../Toast/Toast";
+import { useToast } from "../../Toast/useToast";
+import { useConfirm } from "../../ConfirmModal/useConfirm";
+import SelectorVeterinaria from "../../Cliente/SelectorVeterinaria/SelectorVeterinaria";
+import CustomSelect from "../../CustomSelect/CustomSelect";
 
 const API_URL = "http://localhost:5010/api/Producto"; 
 
@@ -21,6 +26,9 @@ const FORM_VACIO = {
 };
 
 const PanelProductos = ({ esAdmin = true }) => {
+  const { toasts, showToast, removeToast } = useToast();
+  const { pedirConfirmacion, ConfirmacionModal } = useConfirm();
+
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [especies, setEspecies] = useState([]);
@@ -277,24 +285,31 @@ const PanelProductos = ({ esAdmin = true }) => {
     }
   };
 
-  const eliminarProducto = async (id) => {
-    if (window.confirm("¿Estás seguro de desactivar este producto del inventario?")) {
-      try {
-        const res = await fetch(`${API_URL}/${id}`, {
-          method: "DELETE",
-          headers: getHeaders()
-        });
-        const data = await res.json();
+  const eliminarProducto = (id) => {
+    pedirConfirmacion({
+      titulo: "Desactivar producto",
+      mensaje: "¿Estás seguro de desactivar este producto del inventario?",
+      textoConfirmar: "Sí, desactivar",
+      onConfirmar: async () => {
+        try {
+          const res = await fetch(`${API_URL}/${id}`, {
+            method: "DELETE",
+            headers: getHeaders()
+          });
+          const data = await res.json();
 
-        if (res.ok && data.success) {
-          recargarProductos();
-        } else {
-          alert(data.mensaje || "Error al eliminar producto.");
+          if (res.ok && data.success) {
+            showToast("Producto desactivado correctamente.", "success");
+            recargarProductos();
+          } else {
+            showToast(data.mensaje || "Error al eliminar producto.", "error");
+          }
+        } catch (error) {
+          console.error(error);
+          showToast("Error de conexión con el servidor.", "error");
         }
-      } catch (error) {
-        alert("Error de conexión con el servidor.");
       }
-    }
+    });
   };
 
   const productosFiltrados = productos.filter(p => 
@@ -338,13 +353,12 @@ const PanelProductos = ({ esAdmin = true }) => {
         </div>
 
         {!esAdmin && almacenes.length > 1 && (
-          <div className={styles.selectorComercio}>
-            <Store size={16} />
-            <select value={idComercioAutenticado || ""} onChange={(e) => cambiarComercioActivo(e.target.value)}>
-              {almacenes.map(a => (
-                <option key={a.idComercio} value={a.idComercio}>{a.nombreComercial}</option>
-              ))}
-            </select>
+          <div style={{ minWidth: '220px' }}>
+            <SelectorVeterinaria
+              opciones={almacenes}
+              valor={idComercioAutenticado || ""}
+              onSeleccionar={cambiarComercioActivo}
+            />
           </div>
         )}
       </div>
@@ -460,17 +474,13 @@ const PanelProductos = ({ esAdmin = true }) => {
               {(esAdmin || almacenes.length > 1) && (
                 <label className={styles.campo}>
                   <span>Almacén de destino *</span>
-                  <select 
-                    value={form.idComercio} 
-                    onChange={(e) => setForm({ ...form, idComercio: e.target.value })} 
-                    disabled={editando}
-                    required
-                  >
-                    <option value="">Seleccione el almacén...</option>
-                    {almacenes.map(a => (
-                      <option key={a.idComercio} value={a.idComercio}>{a.nombreComercial}</option>
-                    ))}
-                  </select>
+                  <SelectorVeterinaria
+                    opciones={almacenes}
+                    valor={form.idComercio}
+                    onSeleccionar={(valor) => setForm({ ...form, idComercio: valor })}
+                    deshabilitado={editando}
+                    placeholder="Seleccione el almacén..."
+                  />
                 </label>
               )}
 
@@ -488,24 +498,30 @@ const PanelProductos = ({ esAdmin = true }) => {
               <div className={styles.campoFila3}>
                 <label className={styles.campo}>
                   <span>Categoría *</span>
-                  <select value={form.idCategoria} onChange={(e) => setForm({ ...form, idCategoria: e.target.value })} required>
-                    <option value="">Seleccione...</option>
-                    {categorias.map(c => <option key={c.idCategoria} value={c.idCategoria}>{c.nombre}</option>)}
-                  </select>
+                  <CustomSelect
+                    value={form.idCategoria}
+                    onChange={(valor) => setForm({ ...form, idCategoria: valor })}
+                    placeholder="Seleccione..."
+                    opciones={categorias.map(c => ({ value: c.idCategoria, label: c.nombre }))}
+                  />
                 </label>
                 <label className={styles.campo}>
                   <span>Especie (Opcional)</span>
-                  <select value={form.idEspecie} onChange={(e) => setForm({ ...form, idEspecie: e.target.value })}>
-                    <option value="">Todas / N/A</option>
-                    {especies.map(e => <option key={e.idEspecie} value={e.idEspecie}>{e.nombre}</option>)}
-                  </select>
+                  <CustomSelect
+                    value={form.idEspecie}
+                    onChange={(valor) => setForm({ ...form, idEspecie: valor })}
+                    placeholder="Todas / N/A"
+                    opciones={especies.map(e => ({ value: e.idEspecie, label: e.nombre }))}
+                  />
                 </label>
                 <label className={styles.campo}>
                   <span>Marca (Opcional)</span>
-                  <select value={form.idMarca} onChange={(e) => setForm({ ...form, idMarca: e.target.value })}>
-                    <option value="">Genérico / N/A</option>
-                    {marcas.map(m => <option key={m.idMarca} value={m.idMarca}>{m.nombre}</option>)}
-                  </select>
+                  <CustomSelect
+                    value={form.idMarca}
+                    onChange={(valor) => setForm({ ...form, idMarca: valor })}
+                    placeholder="Genérico / N/A"
+                    opciones={marcas.map(m => ({ value: m.idMarca, label: m.nombre }))}
+                  />
                 </label>
               </div>
 
@@ -582,6 +598,9 @@ const PanelProductos = ({ esAdmin = true }) => {
           </div>
         </div>
       )}
+
+      {ConfirmacionModal}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };

@@ -157,6 +157,70 @@ namespace HuellitasVitalesAPI.Controllers
             }
         }
 
+        // ─── Actualizar ícono de avatar del perfil ───
+        // PUT api/usuario/avatar
+        [Authorize]
+        [HttpPut("avatar")]
+        public async Task<IActionResult> ActualizarAvatar([FromBody] ActualizarAvatarDTO dto)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst("sub")?.Value
+                            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idUsuario))
+                {
+                    return Unauthorized(new { success = false, mensaje = "Token inválido o no proporcionado." });
+                }
+
+                var (exito, mensaje) = await _usuarioService.ActualizarAvatarAsync(idUsuario, dto?.Icono ?? string.Empty);
+
+                if (!exito)
+                {
+                    return BadRequest(new { success = false, mensaje });
+                }
+
+                return Ok(new { success = true, mensaje });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error interno al actualizar el ícono de perfil.");
+                return StatusCode(500, new { success = false, mensaje = "Ocurrió un error interno al actualizar el ícono de perfil." });
+            }
+        }
+
+        // ─── Cambiar contraseña del usuario autenticado ───
+        // PUT api/usuario/password
+        [Authorize]
+        [HttpPut("password")]
+        public async Task<IActionResult> CambiarPassword([FromBody] CambiarPasswordDTO dto)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst("sub")?.Value
+                            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idUsuario))
+                {
+                    return Unauthorized(new { success = false, mensaje = "Token inválido o no proporcionado." });
+                }
+
+                var (exito, mensaje) = await _usuarioService.CambiarPasswordAsync(idUsuario, dto);
+
+                if (!exito)
+                {
+                    return BadRequest(new { success = false, mensaje });
+                }
+
+                return Ok(new { success = true, mensaje });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error interno al cambiar la contraseña del usuario.");
+                return StatusCode(500, new { success = false, mensaje = "Ocurrió un error interno al cambiar la contraseña." });
+            }
+        }
+
         // ─── NUEVO: Registro Rápido ───
         [HttpPost("registro-rapido")]
         public async Task<IActionResult> RegistroRapido([FromBody] RegistroRapidoDTO request)
@@ -305,6 +369,75 @@ namespace HuellitasVitalesAPI.Controllers
             }
         }
 
+        // ─── Vincular Google a partir de un access token (switch de Configuración) ───
+        // POST api/usuario/vincular-google-token
+        [Authorize]
+        [HttpPost("vincular-google-token")]
+        public async Task<IActionResult> VincularGoogleConToken([FromBody] VincularGoogleTokenDTO dto)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst("sub")?.Value
+                            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idUsuario))
+                {
+                    return Unauthorized(new { success = false, mensaje = "Token inválido o no proporcionado." });
+                }
+
+                if (dto == null || string.IsNullOrEmpty(dto.AccessToken))
+                {
+                    return BadRequest(new { success = false, mensaje = "El token de acceso de Google es obligatorio." });
+                }
+
+                var resultado = await _usuarioService.VincularGoogleConAccessTokenAsync(idUsuario, dto.AccessToken);
+
+                if (!resultado.Exito)
+                {
+                    return BadRequest(new { success = false, mensaje = resultado.Mensaje });
+                }
+
+                return Ok(new { success = true, mensaje = resultado.Mensaje });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al vincular Google (access token) con el usuario.");
+                return StatusCode(500, new { success = false, mensaje = "Ocurrió un error al vincular la cuenta de Google." });
+            }
+        }
+
+        // ─── Desvincular Google o Facebook de la cuenta autenticada ───
+        // DELETE api/usuario/proveedores-vinculados/{proveedor}
+        [Authorize]
+        [HttpDelete("proveedores-vinculados/{proveedor}")]
+        public async Task<IActionResult> DesvincularProveedor(string proveedor)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst("sub")?.Value
+                            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idUsuario))
+                {
+                    return Unauthorized(new { success = false, mensaje = "Token inválido o no proporcionado." });
+                }
+
+                var resultado = await _usuarioService.DesvincularProveedorAsync(idUsuario, proveedor);
+
+                if (!resultado.Exito)
+                {
+                    return BadRequest(new { success = false, mensaje = resultado.Mensaje });
+                }
+
+                return Ok(new { success = true, mensaje = resultado.Mensaje });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al desvincular un proveedor del usuario.");
+                return StatusCode(500, new { success = false, mensaje = "Ocurrió un error al desvincular la cuenta." });
+            }
+        }
+
         [Authorize]
         [HttpGet("proveedores-vinculados")]
         public async Task<IActionResult> ObtenerProveedoresVinculados()
@@ -359,12 +492,139 @@ namespace HuellitasVitalesAPI.Controllers
             var subClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(subClaim, out var idUsuario))
                 return Unauthorized(new { success = false, mensaje = "Token inválido." });
- 
+
             var perfil = await _usuarioService.ObtenerPerfilConComercioAsync(idUsuario);
             if (perfil == null)
                 return NotFound(new { success = false, mensaje = "Usuario no encontrado." });
- 
+
             return Ok(new { success = true, usuario = perfil });
+        }
+
+        // ─── Panel de Administración: gestión de cualquier usuario de la plataforma ───
+        // POST api/usuario — el admin crea una cuenta nueva con el rol que elija.
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> CrearUsuarioComoAdmin([FromBody] CrearUsuarioAdminDTO dto)
+        {
+            if (!EsUsuarioAdmin())
+                return StatusCode(403, new { success = false, mensaje = "Acceso denegado. Se requieren permisos de Administrador." });
+
+            var (exito, mensaje) = await _usuarioService.CrearUsuarioComoAdminAsync(dto);
+            if (!exito)
+                return BadRequest(new { success = false, mensaje });
+
+            return StatusCode(201, new { success = true, mensaje });
+        }
+
+        // GET api/usuario?rol=&estado=&busqueda=
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> ListarUsuarios([FromQuery] byte? rol, [FromQuery] byte? estado, [FromQuery] string? busqueda)
+        {
+            if (!EsUsuarioAdmin())
+                return StatusCode(403, new { success = false, mensaje = "Acceso denegado. Se requieren permisos de Administrador." });
+
+            var usuarios = await _usuarioService.ListarUsuariosAsync(rol, estado, busqueda);
+            return Ok(new { success = true, usuarios });
+        }
+
+        // GET api/usuario/estadisticas
+        [Authorize]
+        [HttpGet("estadisticas")]
+        public async Task<IActionResult> ObtenerEstadisticasUsuarios()
+        {
+            if (!EsUsuarioAdmin())
+                return StatusCode(403, new { success = false, mensaje = "Acceso denegado. Se requieren permisos de Administrador." });
+
+            var estadisticas = await _usuarioService.ObtenerEstadisticasUsuariosAsync();
+            return Ok(new { success = true, estadisticas });
+        }
+
+        // GET api/usuario/estadisticas/registros?periodo=semanal|mensual|anual
+        [Authorize]
+        [HttpGet("estadisticas/registros")]
+        public async Task<IActionResult> ObtenerRegistrosPorPeriodo([FromQuery] string? periodo)
+        {
+            if (!EsUsuarioAdmin())
+                return StatusCode(403, new { success = false, mensaje = "Acceso denegado. Se requieren permisos de Administrador." });
+
+            var puntos = await _usuarioService.ObtenerRegistrosPorPeriodoAsync(periodo);
+            return Ok(new { success = true, puntos });
+        }
+
+        // GET api/usuario/{id}
+        [Authorize]
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> ObtenerUsuarioPorId(int id)
+        {
+            if (!EsUsuarioAdmin())
+                return StatusCode(403, new { success = false, mensaje = "Acceso denegado. Se requieren permisos de Administrador." });
+
+            var usuario = await _usuarioService.ObtenerUsuarioAdminAsync(id);
+            if (usuario == null)
+                return NotFound(new { success = false, mensaje = "El usuario no existe." });
+
+            return Ok(new { success = true, usuario });
+        }
+
+        // PUT api/usuario/{id}
+        [Authorize]
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> ActualizarUsuarioComoAdmin(int id, [FromBody] ActualizarPerfilDTO dto)
+        {
+            if (!EsUsuarioAdmin())
+                return StatusCode(403, new { success = false, mensaje = "Acceso denegado. Se requieren permisos de Administrador." });
+
+            var (exito, mensaje) = await _usuarioService.ActualizarPerfilComoAdminAsync(id, dto);
+            if (!exito)
+                return BadRequest(new { success = false, mensaje });
+
+            return Ok(new { success = true, mensaje });
+        }
+
+        // PUT api/usuario/{id}/rol
+        [Authorize]
+        [HttpPut("{id:int}/rol")]
+        public async Task<IActionResult> CambiarRol(int id, [FromBody] CambiarRolDTO dto)
+        {
+            if (!EsUsuarioAdmin())
+                return StatusCode(403, new { success = false, mensaje = "Acceso denegado. Se requieren permisos de Administrador." });
+
+            var (exito, mensaje) = await _usuarioService.CambiarRolAsync(id, dto?.IdRol ?? 0);
+            if (!exito)
+                return BadRequest(new { success = false, mensaje });
+
+            return Ok(new { success = true, mensaje });
+        }
+
+        // PUT api/usuario/{id}/estado
+        [Authorize]
+        [HttpPut("{id:int}/estado")]
+        public async Task<IActionResult> CambiarEstadoCuenta(int id, [FromBody] CambiarEstadoCuentaDTO dto)
+        {
+            if (!EsUsuarioAdmin())
+                return StatusCode(403, new { success = false, mensaje = "Acceso denegado. Se requieren permisos de Administrador." });
+
+            var (exito, mensaje) = await _usuarioService.CambiarEstadoCuentaAsync(id, dto?.IdEstadoCuenta ?? 0);
+            if (!exito)
+                return BadRequest(new { success = false, mensaje });
+
+            return Ok(new { success = true, mensaje });
+        }
+
+        private bool EsUsuarioAdmin()
+        {
+            var rolUsuario = User.FindFirst("rol")?.Value
+                            ?? User.FindFirst(ClaimTypes.Role)?.Value
+                            ?? User.FindFirst("IdRol")?.Value
+                            ?? User.FindFirst("idRol")?.Value
+                            ?? User.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+
+            if (string.IsNullOrEmpty(rolUsuario)) return false;
+
+            return rolUsuario == "1"
+                || string.Equals(rolUsuario, "ADMINISTRADOR", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(rolUsuario, "Admin", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

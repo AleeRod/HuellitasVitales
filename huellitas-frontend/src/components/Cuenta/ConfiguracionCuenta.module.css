@@ -1,0 +1,491 @@
+.panel {
+    --pine: #1B4332;
+    --pine-dk: #112b21;
+    --mint: #52B788;
+    --mint-lt: #95d5b2;
+    --cream: #FEFAE0;
+    --text-md: #4a5568;
+    --line: #dde3d8;
+    --danger: #c0392b;
+    --amber: #a3720a;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    max-width: 880px;
+}
+
+.seccion {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.4rem 1.6rem;
+    box-shadow: 0 8px 20px rgba(27, 67, 50, 0.05);
+}
+
+.seccionHead {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.35rem;
+}
+
+.seccionIcono {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(82, 183, 136, 0.14);
+    color: var(--pine);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.seccionTitulo {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine-dk);
+    font-size: 1.15rem;
+    margin: 0;
+}
+
+.seccionSub {
+    color: var(--text-md);
+    font-size: 0.87rem;
+    margin: 0.15rem 0 1.1rem;
+}
+
+/* --- ÍCONO DE PERFIL --- */
+.avatarActual {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+}
+
+.avatarActualIcono {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--mint-lt), var(--mint));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 8px 18px rgba(27, 67, 50, 0.18);
+}
+
+.avatarActualTexto strong {
+    display: block;
+    color: var(--pine-dk);
+    font-size: 1rem;
+}
+
+.avatarActualTexto span {
+    color: var(--text-md);
+    font-size: 0.82rem;
+}
+
+.avatarGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+    gap: 0.7rem;
+}
+
+.avatarBtn {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 16px;
+    border: 2px solid var(--line);
+    background: #fbfdfb;
+    color: var(--pine);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.avatarBtn:hover:not(:disabled) {
+    border-color: var(--mint-lt);
+    transform: translateY(-1px);
+}
+
+.avatarBtn:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+.avatarBtnActivo {
+    border-color: var(--mint);
+    background: rgba(82, 183, 136, 0.14);
+    color: var(--pine-dk);
+}
+
+.avatarBtnCheck {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--mint);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+}
+
+/* --- FORMULARIO DE DATOS --- */
+.formGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--pine-dk);
+}
+
+.inputConIcono {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Solo el ícono guía (el de la izquierda, hijo directo del wrapper) se posiciona absoluto acá
+   — antes esta regla también agarraba el svg del ojo mostrar/ocultar contraseña (anidado
+   dentro de su propio <button>, más adelante en este mismo archivo), sacándolo del centrado
+   flex de su botón y dejándolo mal ubicado. */
+.inputConIcono > svg {
+    position: absolute;
+    left: 0.75rem;
+    color: var(--mint);
+    pointer-events: none;
+}
+
+.inputConIcono input {
+    width: 100%;
+    font-family: inherit;
+    font-weight: 400;
+    font-size: 0.92rem;
+    color: var(--pine-dk);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.65rem 0.8rem 0.65rem 2.4rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.inputConIcono input:focus {
+    border-color: var(--mint);
+}
+
+.inputConIcono button {
+    position: absolute;
+    top: 50%;
+    right: 0.55rem;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.2rem;
+}
+
+.formAcciones {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.2rem;
+}
+
+.btnPrimario {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--mint);
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.4rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btnPrimario:hover:not(:disabled) {
+    background: var(--pine);
+    transform: translateY(-1px);
+}
+
+.btnPrimario:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* --- CUENTAS VINCULADAS --- */
+.cuentaFila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+}
+
+.cuentaFila:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.cuentaInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.cuentaIcono {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.cuentaIconoGoogle {
+    background: linear-gradient(135deg, #4285F4, #34A853);
+}
+
+.cuentaIconoFacebook {
+    background: #1877F2;
+}
+
+.cuentaTexto strong {
+    display: block;
+    color: var(--pine-dk);
+    font-size: 0.95rem;
+}
+
+.cuentaTexto span {
+    font-size: 0.82rem;
+    color: var(--text-md);
+}
+
+/* Switch on/off para vincular/desvincular Google y Facebook. */
+.switch {
+    position: relative;
+    width: 46px;
+    height: 26px;
+    border-radius: 50px;
+    border: none;
+    background: #d7dcd6;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+    transition: background 0.2s ease;
+}
+
+.switch:hover:not(:disabled) {
+    background: #c3cac1;
+}
+
+.switch:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.switchActivo {
+    background: var(--mint);
+}
+
+.switchActivo:hover:not(:disabled) {
+    background: var(--pine);
+}
+
+.switchThumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--mint);
+    transition: transform 0.2s ease;
+}
+
+.switchActivo .switchThumb {
+    transform: translateX(20px);
+}
+
+.fbAviso {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: var(--amber);
+    font-size: 0.78rem;
+    margin-top: 0.4rem;
+    max-width: 320px;
+}
+
+/* --- CONTRASEÑA --- */
+.avisoSinPassword {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    background: rgba(230, 168, 23, 0.12);
+    border: 1px solid rgba(230, 168, 23, 0.3);
+    color: var(--amber);
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    margin-bottom: 1.1rem;
+}
+
+.mensajeAyuda {
+    color: var(--text-md);
+    font-size: 0.78rem;
+    font-weight: 400;
+    margin-top: -0.1rem;
+}
+
+.mensajeError {
+    color: var(--danger);
+    font-size: 0.78rem;
+    font-weight: 400;
+    margin-top: -0.1rem;
+}
+
+/* --- MODAL DE CONTRASEÑA --- */
+.overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 9999 !important;
+}
+
+.modal {
+    background: #fff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 460px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    padding: 1.6rem;
+}
+
+.modalConfirmacion {
+    max-width: 400px;
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
+}
+
+.modalHeader h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine-dk);
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.modalSub {
+    color: var(--text-md);
+    font-size: 0.85rem;
+    margin: 0 0 1.1rem;
+}
+
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-top: 1.3rem;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.btnSecundario {
+    padding: 0.6rem 1.1rem;
+    border-radius: 10px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--text-md);
+}
+
+.btnSecundario:hover:not(:disabled) {
+    border-color: var(--pine);
+    color: var(--pine);
+}
+
+.btnSecundario:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btnPeligro {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    background: var(--danger);
+    color: #fff;
+    transition: background 0.2s ease;
+}
+
+.btnPeligro:hover:not(:disabled) {
+    background: #a3312a;
+}
+
+.btnPeligro:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+    .cuentaFila {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

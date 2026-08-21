@@ -11,39 +11,47 @@ import {
   Settings,
   LogOut,
   Search,
-  CheckCircle2,
-  Eye,
-  Pencil,
-  Trash2,
-  Plus,
   Tags,
   Package,
-  ClipboardCheck,
+  Store,
   Briefcase,
   ArrowLeftRight,
   AlertTriangle,
+  Globe,
 } from 'lucide-react';
+import { IconoDePerfil } from '../../components/Cliente/AvatarIconos';
+import { API_BASE } from '../../api/config';
 import PanelServicios from '../../components/ComercioAdmin/PanelServicios/PanelServicios';
 import PanelProductos from '../../components/ComercioAdmin/PanelProductos/PanelProductos';
-import PanelSolicitudesPendientes from '../../components/Admin/PanelSolicitudes/PanelSolicitudesPendientes';
+import PanelComercios from '../../components/Admin/PanelComercios/PanelComercios';
 import PanelEmpleados from '../../components/ComercioAdmin/PanelEmpleados/PanelEmpleados';
 import PanelVeterinarios from '../../components/ComercioAdmin/PanelVeterinarios/PanelVeterinarios';
 import PanelSolicitudesTraslado from '../../components/ComercioAdmin/PanelSolicitudesTraslado/PanelSolicitudesTraslado';
 import PanelEmergencias from '../../components/ComercioAdmin/PanelEmergencias/PanelEmergencias';
 import PanelReportes from '../../components/ComercioAdmin/PanelReportes/PanelReportes';
+import PanelDashboardAdmin from '../../components/Admin/PanelDashboard/PanelDashboardAdmin';
+import PanelUsuarios from '../../components/Admin/PanelUsuarios/PanelUsuarios';
+import PanelMascotasAdmin from '../../components/Admin/PanelMascotas/PanelMascotasAdmin';
+import PanelCitasAdmin from '../../components/Admin/PanelCitas/PanelCitasAdmin';
+import PanelRolesPermisos from '../../components/Admin/PanelRolesPermisos/PanelRolesPermisos';
+import PanelConfiguracionAdmin from '../../components/Admin/PanelConfiguracion/PanelConfiguracionAdmin';
 import NotificacionesBell from '../../components/Notificaciones/NotificacionesBell';
 
 import styles from './DashboardAdmin.module.css';
 
-const SECCIONES_VALIDAS = ['usuarios', 'veterinarios', 'reportes', 'tiposServicio', 'PanelProductos', 'solicitudesComercio', 'empleados', 'traslados', 'emergencias'];
+const SECCIONES_VALIDAS = [
+  'dashboard', 'usuarios', 'mascotas', 'citas', 'veterinarios', 'reportes', 'tiposServicio', 'PanelProductos',
+  'solicitudesComercio', 'empleados', 'traslados', 'emergencias', 'roles', 'configuracion'
+];
 
 const DashboardAdmin = () => {
   const [searchParams] = useSearchParams();
   // Permite llegar directo a una sección desde afuera (p. ej. al tocar una notificación de
-  // emergencia: /admin?seccion=emergencias) en vez de aterrizar siempre en Usuarios.
-  const seccionInicial = SECCIONES_VALIDAS.includes(searchParams.get('seccion')) ? searchParams.get('seccion') : 'usuarios';
+  // emergencia: /admin?seccion=emergencias) en vez de aterrizar siempre en el Dashboard.
+  const seccionInicial = SECCIONES_VALIDAS.includes(searchParams.get('seccion')) ? searchParams.get('seccion') : 'dashboard';
   const [seccionActiva, setSeccionActiva] = useState(seccionInicial);
   const [usuario, setUsuario] = useState(null);
+  const [avatarIcono, setAvatarIcono] = useState(null);
   const navigate = useNavigate();
 
   // Si el admin ya está en este panel (no se vuelve a montar) y toca una notificación que
@@ -64,6 +72,23 @@ const DashboardAdmin = () => {
     } catch (err) {
       console.error('No se pudo leer el usuario guardado', err);
     }
+  }, []);
+
+  // El ícono de avatar elegido no viaja en el localStorage guardado al iniciar sesión, así que
+  // se refresca desde el propio perfil (mismo patrón que ClienteLayout).
+  useEffect(() => {
+    let activo = true;
+    const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+    if (!token) return undefined;
+
+    fetch(`${API_BASE}/usuario/perfil`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (activo && data?.avatarIcono) setAvatarIcono(data.avatarIcono);
+      })
+      .catch(() => {});
+
+    return () => { activo = false; };
   }, []);
 
   const nombreUsuario = usuario?.nombre || usuario?.Nombre || usuario?.nombreCompleto || 'Administrador';
@@ -97,20 +122,26 @@ const DashboardAdmin = () => {
 
             <div className={styles.sidebarSection}>Panel global</div>
             <button
-              className={`${styles.navLinkAdmin} ${seccionActiva === 'usuarios' ? styles.active : ''}`}
-              onClick={() => setSeccionActiva('usuarios')}
+              className={`${styles.navLinkAdmin} ${seccionActiva === 'dashboard' ? styles.active : ''}`}
+              onClick={() => setSeccionActiva('dashboard')}
             >
               <Home size={18} className={styles.navIcon} />
               Dashboard
             </button>
-            <a href="#usuarios" className={styles.navLinkAdmin} onClick={(e) => { e.preventDefault(); setSeccionActiva('usuarios'); }}>
+            <button
+              className={`${styles.navLinkAdmin} ${seccionActiva === 'usuarios' ? styles.active : ''}`}
+              onClick={() => setSeccionActiva('usuarios')}
+            >
               <Users size={18} className={styles.navIcon} />
               Usuarios
-            </a>
-            <a href="#mascotas" className={styles.navLinkAdmin} onClick={(e) => e.preventDefault()}>
+            </button>
+            <button
+              className={`${styles.navLinkAdmin} ${seccionActiva === 'mascotas' ? styles.active : ''}`}
+              onClick={() => setSeccionActiva('mascotas')}
+            >
               <PawPrint size={18} className={styles.navIcon} />
               Mascotas
-            </a>
+            </button>
             <button
               className={`${styles.navLinkAdmin} ${seccionActiva === 'veterinarios' ? styles.active : ''}`}
               onClick={() => setSeccionActiva('veterinarios')}
@@ -118,10 +149,13 @@ const DashboardAdmin = () => {
               <Stethoscope size={18} className={styles.navIcon} />
               Veterinarios
             </button>
-            <a href="#citas" className={styles.navLinkAdmin} onClick={(e) => e.preventDefault()}>
+            <button
+              className={`${styles.navLinkAdmin} ${seccionActiva === 'citas' ? styles.active : ''}`}
+              onClick={() => setSeccionActiva('citas')}
+            >
               <Calendar size={18} className={styles.navIcon} />
               Citas
-            </a>
+            </button>
             <button
               className={`${styles.navLinkAdmin} ${seccionActiva === 'reportes' ? styles.active : ''}`}
               onClick={() => setSeccionActiva('reportes')}
@@ -152,8 +186,8 @@ const DashboardAdmin = () => {
               className={`${styles.navLinkAdmin} ${seccionActiva === 'solicitudesComercio' ? styles.active : ''}`}
               onClick={() => setSeccionActiva('solicitudesComercio')}
             >
-              <ClipboardCheck size={18} className={styles.navIcon} />
-              Solicitudes
+              <Store size={18} className={styles.navIcon} />
+              Comercios
             </button>
 
             <button
@@ -180,19 +214,34 @@ const DashboardAdmin = () => {
               Emergencias
             </button>
 
-            <a href="#roles" className={styles.navLinkAdmin} onClick={(e) => e.preventDefault()}>
+            <button
+              className={`${styles.navLinkAdmin} ${seccionActiva === 'roles' ? styles.active : ''}`}
+              onClick={() => setSeccionActiva('roles')}
+            >
               <ShieldCheck size={18} className={styles.navIcon} />
               Roles y permisos
-            </a>
-            <a href="#configuracion" className={styles.navLinkAdmin} onClick={(e) => e.preventDefault()}>
-              <Settings size={18} className="nav-icon" />
+            </button>
+            <button
+              className={`${styles.navLinkAdmin} ${seccionActiva === 'configuracion' ? styles.active : ''}`}
+              onClick={() => setSeccionActiva('configuracion')}
+            >
+              <Settings size={18} className={styles.navIcon} />
               Configuración
-            </a>
+            </button>
+
+            <button
+              onClick={() => navigate('/')}
+              className={styles.navLinkAdmin}
+              style={{ marginTop: '10px' }}
+            >
+              <Globe size={18} className={styles.navIcon} />
+              Volver al inicio
+            </button>
 
             <button
               onClick={handleCerrarSesion}
               className={styles.navLinkAdmin}
-              style={{ marginTop: '10px', color: '#ff4d4d' }}
+              style={{ color: '#ff4d4d' }}
             >
               <LogOut size={18} className={styles.navIcon} />
               Cerrar sesión
@@ -235,7 +284,9 @@ const DashboardAdmin = () => {
               </div>
 
               <div className={styles.profileMini}>
-                <div className={styles.profileAvatar}>{inicialAvatar}</div>
+                <div className={styles.profileAvatar}>
+                  {avatarIcono ? <IconoDePerfil icono={avatarIcono} size={18} /> : inicialAvatar}
+                </div>
                 <div>
                   <div className={styles.profileName}>{nombreUsuario}</div>
                   <div className={styles.profileRole}>{rolUsuario}</div>
@@ -244,191 +295,17 @@ const DashboardAdmin = () => {
             </div>
           </section>
 
-          {seccionActiva === 'usuarios' && (
-            <>
-              {/* STATS */}
-              <section className={styles.statGrid}>
-                <article className={styles.statCard}>
-                  <div className={styles.statTop}>
-                    <div className={styles.statIcon}><Users size={20} /></div>
-                    <div className={styles.statChip}>+12</div>
-                  </div>
-                  <div className={styles.statLabel}>Total de usuarios</div>
-                  <div className={styles.statNumber}>152</div>
-                  <div className={styles.statNote}>Usuarios registrados en la plataforma</div>
-                </article>
+          {seccionActiva === 'dashboard' && <PanelDashboardAdmin />}
 
-                <article className={styles.statCard}>
-                  <div className={styles.statTop}>
-                    <div className={styles.statIcon}><CheckCircle2 size={20} /></div>
-                    <div className={styles.statChip}>91%</div>
-                  </div>
-                  <div className={styles.statLabel}>Usuarios activos</div>
-                  <div className={styles.statNumber}>139</div>
-                  <div className={styles.statNote}>Cuentas habilitadas actualmente</div>
-                </article>
+          {seccionActiva === 'usuarios' && <PanelUsuarios />}
 
-                <article className={styles.statCard}>
-                  <div className={styles.statTop}>
-                    <div className={styles.statIcon}><Stethoscope size={20} /></div>
-                    <div className={styles.statChip}>Equipo</div>
-                  </div>
-                  <div className={styles.statLabel}>Profesionales</div>
-                  <div className={styles.statNumber}>18</div>
-                  <div className={styles.statNote}>Personal médico registrado</div>
-                </article>
+          {seccionActiva === 'mascotas' && <PanelMascotasAdmin />}
 
-                <article className={styles.statCard}>
-                  <div className={styles.statTop}>
-                    <div className={styles.statIcon}><ShieldCheck size={20} /></div>
-                    <div className={styles.statChip}>Admin</div>
-                  </div>
-                  <div className={styles.statLabel}>Administradores</div>
-                  <div className={styles.statNumber}>5</div>
-                  <div className={styles.statNote}>Usuarios con permisos globales</div>
-                </article>
-              </section>
+          {seccionActiva === 'citas' && <PanelCitasAdmin />}
 
-              {/* TABLE CARD */}
-              <section className={styles.contentCard}>
-                <div className={styles.cardTop}>
-                  <div>
-                    <h2 className={styles.cardTitle}>Gestión de usuarios</h2>
-                    <p className={styles.cardSubtitle}>
-                      Maquetación de tabla administrativa para consultar, filtrar, editar y controlar usuarios.
-                    </p>
-                  </div>
+          {seccionActiva === 'roles' && <PanelRolesPermisos />}
 
-                  <button className={styles.btnMain} data-bs-toggle="modal" data-bs-target="#userModal">
-                    <Plus size={16} /> Nuevo usuario
-                  </button>
-                </div>
-
-                <div className={styles.toolbar}>
-                  <div className={styles.searchField}>
-                    <Search size={16} />
-                    <input type="text" placeholder="Buscar por nombre, correo o ID..." />
-                  </div>
-
-                  <select className={styles.filterField} style={{ maxWidth: '190px' }}>
-                    <option>Todos los roles</option>
-                    <option>Admin</option>
-                    <option>Profesional</option>
-                    <option>Cliente</option>
-                  </select>
-
-                  <select className={styles.filterField} style={{ maxWidth: '190px' }}>
-                    <option>Todos los estados</option>
-                    <option>Activo</option>
-                    <option>Inactivo</option>
-                    <option>Bloqueado</option>
-                  </select>
-
-                  <button className={styles.btnSoft}>Exportar</button>
-                </div>
-
-                <div className={styles.tableWrap}>
-                  <div className={styles.tableResponsive}>
-                    <table className={`table ${styles.table} align-middle`}>
-                      <thead>
-                        <tr>
-                          <th>Usuario</th>
-                          <th>Correo</th>
-                          <th>Rol</th>
-                          <th>Estado</th>
-                          <th>Registro</th>
-                          <th>Último acceso</th>
-                          <th>Acciones</th>
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        <tr>
-                          <td>
-                            <div className={styles.userInfo}>
-                              <div className={styles.userAvatar}>AM</div>
-                              <div>
-                                <div className={styles.userName}>Ana Mora</div>
-                                <div className={styles.userId}>ID: USR-001</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td>ana.mora@email.com</td>
-                          <td><span className={`${styles.roleBadge} ${styles.roleAdmin}`}><ShieldCheck size={14} /> Admin</span></td>
-                          <td><span className={`${styles.statusBadge} ${styles.statusActive}`}>● Activo</span></td>
-                          <td>29/06/2026</td>
-                          <td>Hoy, 8:30 a.m.</td>
-                          <td>
-                            <div className={styles.actionGroup}>
-                              <button className={styles.actionBtn} title="Ver"><Eye size={16} /></button>
-                              <button className={styles.actionBtn} title="Editar"><Pencil size={16} /></button>
-                              <button className={`${styles.actionBtn} ${styles.danger}`} title="Eliminar"><Trash2 size={16} /></button>
-                            </div>
-                          </td>
-                        </tr>
-
-                        <tr>
-                          <td>
-                            <div className={styles.userInfo}>
-                              <div className={styles.userAvatar}>CR</div>
-                              <div>
-                                <div className={styles.userName}>Carlos Rojas</div>
-                                <div className={styles.userId}>ID: USR-002</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td>carlos.rojas@email.com</td>
-                          <td><span className={`${styles.roleBadge} ${styles.roleVet}`}><Stethoscope size={14} /> Profesional</span></td>
-                          <td><span className={`${styles.statusBadge} ${styles.statusActive}`}>● Activo</span></td>
-                          <td>20/06/2026</td>
-                          <td>Ayer, 5:12 p.m.</td>
-                          <td>
-                            <div className={styles.actionGroup}>
-                              <button className={styles.actionBtn} title="Ver"><Eye size={16} /></button>
-                              <button className={styles.actionBtn} title="Editar"><Pencil size={16} /></button>
-                              <button className={`${styles.actionBtn} ${styles.danger}`} title="Eliminar"><Trash2 size={16} /></button>
-                            </div>
-                          </td>
-                        </tr>
-
-                        <tr>
-                          <td>
-                            <div className={styles.userInfo}>
-                              <div className={styles.userAvatar}>LP</div>
-                              <div>
-                                <div className={styles.userName}>Laura Pérez</div>
-                                <div className={styles.userId}>ID: USR-003</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td>laura.perez@email.com</td>
-                          <td><span className={`${styles.roleBadge} ${styles.roleClient}`}><PawPrint size={14} /> Cliente</span></td>
-                          <td><span className={`${styles.statusBadge} ${styles.statusActive}`}>● Activo</span></td>
-                          <td>18/06/2026</td>
-                          <td>Hoy, 10:45 a.m.</td>
-                          <td>
-                            <div className={styles.actionGroup}>
-                              <button className={styles.actionBtn} title="Ver"><Eye size={16} /></button>
-                              <button className={styles.actionBtn} title="Editar"><Pencil size={16} /></button>
-                              <button className={`${styles.actionBtn} ${styles.danger}`} title="Eliminar"><Trash2 size={16} /></button>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                <div className={styles.paginationBar}>
-                  <div>Mostrando 3 de 152 usuarios registrados</div>
-                  <div>
-                    <button className={styles.btnSoft} style={{ padding: '.55rem .8rem' }}>Anterior</button>
-                    <button className={styles.btnMain} style={{ padding: '.55rem .8rem' }}>Siguiente</button>
-                  </div>
-                </div>
-              </section>
-            </>
-          )}
+          {seccionActiva === 'configuracion' && <PanelConfiguracionAdmin />}
 
           {seccionActiva === 'tiposServicio' && (
             <div style={{ width: '100%' }}>
@@ -451,7 +328,7 @@ const DashboardAdmin = () => {
 
           {seccionActiva === 'solicitudesComercio' && (
             <div style={{ width: '100%' }}>
-              <PanelSolicitudesPendientes />
+              <PanelComercios />
             </div>
           )}
 
@@ -480,70 +357,6 @@ const DashboardAdmin = () => {
           )}
 
         </main>
-      </div>
-
-      {/* MODAL */}
-      <div className="modal fade" id="userModal" tabIndex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className={styles.modalContent}>
-            <div className={styles.modalHeader}>
-              <div>
-                <h5 className={styles.modalTitle} id="userModalLabel">Registrar nuevo usuario</h5>
-                <div style={{ fontSize: '.78rem', color: 'rgba(255, 255, 255, .62)' }}>
-                  Formulario visual para alta de usuarios administrativos.
-                </div>
-              </div>
-              <button type="button" className="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-
-            <div className={styles.modalBody}>
-              <div className="row g-3">
-                <div className="col-md-6">
-                  <label className={styles.formLabel}>Nombre</label>
-                  <input type="text" className={styles.formControl} placeholder="Nombre" />
-                </div>
-
-                <div className="col-md-6">
-                  <label className={styles.formLabel}>Apellido</label>
-                  <input type="text" className={styles.formControl} placeholder="Apellido" />
-                </div>
-
-                <div className="col-12">
-                  <label className={styles.formLabel}>Correo electrónico</label>
-                  <input type="email" className={styles.formControl} placeholder="correo@email.com" />
-                </div>
-
-                <div className="col-md-6">
-                  <label className={styles.formLabel}>Rol</label>
-                  <select className={styles.formSelect}>
-                    <option>Cliente</option>
-                    <option>Profesional</option>
-                    <option>Admin</option>
-                  </select>
-                </div>
-
-                <div className="col-md-6">
-                  <label className={styles.formLabel}>Estado</label>
-                  <select className={styles.formSelect}>
-                    <option>Activo</option>
-                    <option>Inactivo</option>
-                    <option>Bloqueado</option>
-                  </select>
-                </div>
-
-                <div className="col-12">
-                  <label className={styles.formLabel}>Observaciones</label>
-                  <textarea className={styles.formControl} rows="3" placeholder="Notas internas del usuario"></textarea>
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.modalFooter}>
-              <button type="button" className={styles.btnSoft} data-bs-dismiss="modal">Cancelar</button>
-              <button type="button" className={styles.btnMain}>Guardar usuario</button>
-            </div>
-          </div>
-        </div>
       </div>
     </>
   );

@@ -1,21 +1,34 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Package, LogOut, Store, Stethoscope, Users, ArrowLeftRight } from "lucide-react";
+import { Package, LogOut, Store, Stethoscope, Users, ArrowLeftRight, Globe, Briefcase, Settings } from "lucide-react";
 import { API_BASE } from "../../api/config";
 import PanelProductos from "../../components/ComercioAdmin/PanelProductos/PanelProductos"; // ⚠️ ajustá la ruta según dónde tengas PanelProductos
 import PanelServicios from "../../components/ComercioAdmin/PanelServicios/PanelServicios";
 import PanelVeterinarios from "../../components/ComercioAdmin/PanelVeterinarios/PanelVeterinarios";
 import PanelSolicitudesTraslado from "../../components/ComercioAdmin/PanelSolicitudesTraslado/PanelSolicitudesTraslado";
+import PanelEmpleados from "../../components/ComercioAdmin/PanelEmpleados/PanelEmpleados";
+import ConfiguracionCuenta from "../../components/Cuenta/ConfiguracionCuenta";
 import NotificacionesBell from "../../components/Notificaciones/NotificacionesBell";
+import { IconoDePerfil } from "../../components/Cliente/AvatarIconos";
 import styles from "./DashboardFuncionario.module.css";
 
 const TIPO_COMERCIO_VETERINARIA = 1;
 const TIPO_COMERCIO_ALMACEN = 2;
 
-const SECCIONES_VALIDAS = ["productos", "servicios", "veterinarios", "traslados"];
+const SECCIONES_VALIDAS = ["productos", "servicios", "veterinarios", "traslados", "empleados", "configuracion"];
+
+const TITULOS_SECCION = {
+  productos: { badge: "Gestión de comercio", hero: "Productos", sub: "Administrá el stock, catálogo y precios de tu almacén." },
+  servicios: { badge: "Gestión de comercio", hero: "Servicios", sub: "Administrá los servicios que ofrece tu veterinaria." },
+  veterinarios: { badge: "Gestión de comercio", hero: "Veterinarios", sub: "Vinculá y gestioná los veterinarios de tu clínica." },
+  traslados: { badge: "Gestión de comercio", hero: "Solicitudes de traslado", sub: "Expedientes que otras personas quieren trasladar a tu veterinaria." },
+  empleados: { badge: "Gestión de comercio", hero: "Empleados", sub: "Gestioná quién trabaja en tu comercio y qué cargo tiene." },
+  configuracion: { badge: "Mi cuenta", hero: "Configuración", sub: "Gestioná los datos y ajustes de tu cuenta." },
+};
 
 const DashboardFuncionario = () => {
   const [usuario, setUsuario] = useState(null);
+  const [avatarIcono, setAvatarIcono] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [searchParams] = useSearchParams();
   // Permite llegar directo a una sección desde afuera (p. ej. al tocar una notificación de
@@ -85,6 +98,23 @@ const DashboardFuncionario = () => {
     cargarPerfil();
   }, [navigate, seccionDesdeUrl]);
 
+  // El ícono de avatar elegido no viene en la respuesta de /api/usuario/me (esa solo trae los
+  // comercios) — se pide aparte, mismo patrón que ClienteLayout/DashboardAdmin/PanelVeterinario.
+  useEffect(() => {
+    let activo = true;
+    const token = localStorage.getItem("token_huellitas");
+    if (!token) return undefined;
+
+    fetch(`${API_BASE}/usuario/perfil`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (activo && data?.avatarIcono) setAvatarIcono(data.avatarIcono);
+      })
+      .catch(() => {});
+
+    return () => { activo = false; };
+  }, []);
+
   const cerrarSesion = () => {
     localStorage.removeItem("token_huellitas");
     localStorage.removeItem("usuario_huellitas");
@@ -120,20 +150,20 @@ const DashboardFuncionario = () => {
     );
   }
 
-  const nombreEncabezado = comercioAlmacen?.nombreComercial || comercioVeterinaria?.nombreComercial || "Tu comercio";
+  const nombreUsuario = usuario?.nombre || "Funcionario";
+  const inicialAvatar = nombreUsuario.charAt(0).toUpperCase();
+  const seccionInfo = TITULOS_SECCION[seccionActiva] || TITULOS_SECCION.productos;
 
   return (
     <div className={styles.layout}>
       <aside className={styles.sidebar}>
-        <div className={styles.marca} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-            <Store size={22} />
-            <div>
-              <strong>{nombreEncabezado}</strong>
-              <span>Panel de funcionario</span>
-            </div>
+        <div className={styles.sidebarContent}>
+        <div className={styles.brandCard}>
+          <img src="/Imagenes/logo-huellitas.png" alt="Logo Huellitas Vitales" />
+          <div>
+            <div className={styles.brandName}>Huellitas Vitales</div>
+            <span className={styles.brandLabel}>Panel de Funcionario</span>
           </div>
-          <NotificacionesBell size={20} />
         </div>
 
         <nav className={styles.nav}>
@@ -169,14 +199,53 @@ const DashboardFuncionario = () => {
               <ArrowLeftRight size={18} /> Traslados
             </button>
           )}
+          <button
+            className={seccionActiva === "empleados" ? styles.navItemActivo : styles.navItem}
+            onClick={() => setSeccionActiva("empleados")}
+          >
+            <Briefcase size={18} /> Empleados
+          </button>
+          <button
+            className={seccionActiva === "configuracion" ? styles.navItemActivo : styles.navItem}
+            onClick={() => setSeccionActiva("configuracion")}
+          >
+            <Settings size={18} /> Configuración
+          </button>
         </nav>
+
+        <button className={styles.navItem} onClick={() => navigate("/")}>
+          <Globe size={18} /> Volver al inicio
+        </button>
 
         <button className={styles.btnSalir} onClick={cerrarSesion}>
           <LogOut size={18} /> Cerrar sesión
         </button>
+        </div>
       </aside>
 
       <main className={styles.contenido}>
+        <section className={styles.topbar}>
+          <div>
+            <h1 className={styles.heroTitle}>{seccionInfo.hero}</h1>
+            <p className={styles.heroSub}>{seccionInfo.sub}</p>
+          </div>
+
+          <div className={styles.topActions}>
+            <div className={styles.iconButton}>
+              <NotificacionesBell size={18} />
+            </div>
+            <div className={styles.profileMini}>
+              <div className={styles.profileAvatar}>
+                {avatarIcono ? <IconoDePerfil icono={avatarIcono} size={18} /> : inicialAvatar}
+              </div>
+              <div>
+                <div className={styles.profileName}>{nombreUsuario}</div>
+                <div className={styles.profileRole}>Funcionario</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {seccionActiva === "productos" && comercioAlmacen && (
           comercioAlmacen.aprobado ? (
             <PanelProductos esAdmin={false} />
@@ -216,6 +285,10 @@ const DashboardFuncionario = () => {
             </div>
           )
         )}
+
+        {seccionActiva === "empleados" && <PanelEmpleados />}
+
+        {seccionActiva === "configuracion" && <ConfiguracionCuenta />}
       </main>
     </div>
   );

@@ -1009,6 +1009,21 @@ html, body {
     border-radius: 12px;
     margin-bottom: 1rem;
     border: 1px dashed rgba(82,183,136,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--mint);
+}
+
+/* Imagen real del producto (catálogo conectado a la base de datos) — mismo tamaño que el
+   placeholder de arriba, para que el layout no salte según si el producto tiene foto o no. */
+.prod-img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    display: block;
 }
 
 .marketplace-product-card h4 {
@@ -1049,6 +1064,15 @@ html, body {
 .marketplace-product-card:hover .prod-add-btn {
     background: var(--mint);
     transform: scale(1.1) rotate(90deg);
+}
+
+.prod-add-btn:disabled {
+    background: #c7d0c9;
+    cursor: not-allowed;
+}
+
+.marketplace-product-card:hover .prod-add-btn:disabled {
+    transform: none;
 }
 
 /* ==========================================================================

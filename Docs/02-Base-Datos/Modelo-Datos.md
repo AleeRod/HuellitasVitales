@@ -17,8 +17,15 @@ Este documento resume las entidades persistentes definidas en `HuellasVitalesAPI
 | `IdEstadoCuenta` | `smallint` | Obligatorio, FK a `ESTADO_CUENTA_CAT` |
 | `IdRol` | `smallint` | Obligatorio, FK a `ROL` |
 | `FechaRegistro` | `timestamp` | NULL, valor predeterminado `now()` |
+| `AvatarIcono` | `varchar(30)` | NULL |
 
 **Relaciones:** un usuario puede tener un rol, varias mascotas, varias citas, varios comercios como funcionario, varios carritos y varias órdenes. También puede tener registros de autenticación externa y resolver solicitudes de comercio.
+
+> `AvatarIcono` guarda la clave de uno de los íconos predefinidos que el cliente puede elegir
+> como avatar de perfil (ver `UsuarioService.IconosPerfilValidos`, que es la lista blanca contra
+> la que se valida — el endpoint nunca acepta un valor libre). Columna nueva: falta correr en la
+> Supabase real `ALTER TABLE public."USUARIO" ADD COLUMN "AvatarIcono" varchar(30) NULL;` (ver
+> [[MEJORAS]]).
 
 ## USUARIO_PROVEEDOR_AUTH
 
@@ -330,10 +337,17 @@ la que se pidió; su estado usa el mismo catálogo `ESTADO_SOLICITUD_CAT` que ya
 | `IdEstadoOrden` | `smallint` | Obligatorio, FK a `ESTADO_ORDEN_CAT` |
 | `Total` | `numeric` | Obligatorio |
 | `FechaOrden` | `timestamp with time zone` | Obligatorio, valor predeterminado `now()` |
+| `MetodoPago` | `varchar` | NULL |
 
 **Relaciones:** pertenece a un usuario, tiene un estado y contiene muchos detalles mediante `ORDEN_DETALLE`.
 
 > `IdUsuario` es `bigint` en esta tabla, mientras que `USUARIO.IdUsuario` es `integer`.
+
+> `MetodoPago` guarda el texto libre elegido en la simulación de checkout del carrito
+> (`"tarjeta"`, `"sinpe"` o `"efectivo"` — ver `ModalMetodoPago.jsx`). No valida contra ningún
+> catálogo: como todo el pago es simulado (no hay pasarela real), es solo el dato que se
+> muestra en el recibo/factura de "Mis compras". Columna ya corrida en la Supabase real
+> (`ALTER TABLE public."ORDEN" ADD COLUMN "MetodoPago" varchar NULL;`, ver [[MEJORAS]]).
 
 ## ORDEN_DETALLE
 
@@ -412,13 +426,168 @@ la que se pidió; su estado usa el mismo catálogo `ESTADO_SOLICITUD_CAT` que ya
 
 **Relaciones:** pertenece a un usuario, una mascota, un veterinario, un servicio y un estado de cita.
 
+## EXPEDIENTE
+
+| Campo | Tipo | Restricciones |
+|---|---|---|
+| `IdExpediente` | `integer` | PK |
+| `IdMascota` | `integer` | Obligatorio, único, FK a `MASCOTA` |
+| `IdComercioActual` | `integer` | NULL, FK a `COMERCIO` |
+| `FechaApertura` | `timestamp with time zone` | Obligatorio, valor predeterminado `now()` |
+| `Activo` | `boolean` | Obligatorio, valor predeterminado `true` |
+
+**Relaciones:** un expediente pertenece a una única mascota (relación 1 a 1, `IdMascota` es único) y acumula historial en `EXPEDIENTE_COMERCIO`, `SOLICITUD_TRASLADO_EXPEDIENTE`, `ATENCION_EXTERNA` y `EMERGENCIA`.
+
+> `IdComercioActual` es nullable a propósito (originalmente era `NOT NULL`; se corrió
+> `ALTER TABLE public."EXPEDIENTE" ALTER COLUMN "IdComercioActual" DROP NOT NULL;` en Supabase).
+> Una mascota que nunca tuvo una cita no tiene ninguna veterinaria de la que "partir", pero
+> igual necesita poder abrir su expediente: `ExpedienteService.ObtenerOCrearAsync` lo crea solo
+> cuando encuentra una cita previa (resuelve la veterinaria vía `CITA → SERVICIO → COMERCIO`,
+> porque `CITA` no tiene FK directa a `COMERCIO`); si no hay cita, el cliente puede abrirlo
+> igual eligiendo una veterinaria puntual (`AbrirEligiendoVeterinariaAsync`, usado por
+> Emergencia y Traslado) o sin elegir ninguna (`AbrirSinVeterinariaAsync`, usado por Atenciones
+> Externas, que por definición no tiene relación con ninguna veterinaria de la plataforma).
+
+## EXPEDIENTE_COMERCIO
+
+| Campo | Tipo | Restricciones |
+|---|---|---|
+| `IdExpedienteComercio` | `integer` | PK |
+| `IdExpediente` | `integer` | Obligatorio, FK a `EXPEDIENTE` |
+| `IdComercio` | `integer` | Obligatorio, FK a `COMERCIO` |
+| `PuedeConsultar` | `boolean` | Obligatorio, valor predeterminado `true` |
+| `PuedeModificar` | `boolean` | Obligatorio, valor predeterminado `false` |
+| `FechaDesde` | `timestamp with time zone` | Obligatorio, valor predeterminado `now()` |
+| `FechaHasta` | `timestamp with time zone` | NULL — `NULL` significa acceso vigente |
+| — | — | `UNIQUE (IdExpediente, IdComercio, FechaHasta)` |
+
+**Relaciones:** es el historial de qué veterinaria(s) tuvieron acceso a un expediente y con qué permisos. Se siembra automáticamente al abrir el expediente (`PuedeConsultar`/`PuedeModificar` en `true`) y se actualiza al aceptar un traslado: la fila del origen se cierra (`FechaHasta = now()`, `PuedeModificar = false`) y se crea una fila nueva para el destino.
+
+> `ExpedienteService.EvaluarAccesoAsync` es la única fuente de verdad de permisos sobre un
+> expediente: dueño de la mascota (solo consulta), Admin (ambos siempre), o una veterinaria con
+> fila vigente aquí (`FechaHasta IS NULL`) para ese comercio — sea dueño vía `PERSONA_LEGAL` o
+> funcionario activo vía `COMERCIO_FUNCIONARIO`.
+
+## SOLICITUD_TRASLADO_EXPEDIENTE
+
+| Campo | Tipo | Restricciones |
+|---|---|---|
+| `IdSolicitudTraslado` | `integer` | PK |
+| `IdExpediente` | `integer` | Obligatorio, FK a `EXPEDIENTE` |
+| `IdComercioOrigen` | `integer` | Obligatorio, FK a `COMERCIO` |
+| `IdComercioDestino` | `integer` | Obligatorio, FK a `COMERCIO` |
+| `IdUsuarioSolicitante` | `integer` | Obligatorio, FK a `USUARIO` |
+| `Estado` | `varchar(20)` | Obligatorio, `CHECK IN ('Pendiente','Aceptada','Rechazada','Cancelada')`, predeterminado `'Pendiente'` |
+| `Motivo` | `varchar(1000)` | NULL |
+| `Respuesta` | `varchar(1000)` | NULL |
+| `FechaSolicitud` | `timestamp with time zone` | Obligatorio, valor predeterminado `now()` |
+| `FechaResolucion` | `timestamp with time zone` | NULL |
+| `IdUsuarioResuelve` | `integer` | NULL, FK a `USUARIO` |
+| — | — | `CHECK (IdComercioOrigen <> IdComercioDestino)`; índice único parcial: una sola solicitud `Pendiente` por expediente |
+
+**Relaciones:** pertenece al expediente que se quiere trasladar, referencia la veterinaria de origen y destino, y al usuario (siempre el dueño de la mascota) que la solicitó.
+
+> Requiere que el expediente ya tenga `IdComercioActual` (no se puede solicitar un traslado
+> "desde ningún lado" — `TrasladoExpedienteService.SolicitarAsync` lo rechaza con 400 si es
+> `NULL`). Al aceptar, la veterinaria destino queda con acceso vigente en `EXPEDIENTE_COMERCIO`
+> y `EXPEDIENTE.IdComercioActual` se actualiza — todo dentro de una transacción.
+
+## NOTIFICACION
+
+| Campo | Tipo | Restricciones |
+|---|---|---|
+| `IdNotificacion` | `integer` | PK |
+| `IdUsuario` | `integer` | Obligatorio, FK a `USUARIO` |
+| `Titulo` | `varchar(150)` | Obligatorio |
+| `Mensaje` | `varchar(1000)` | Obligatorio |
+| `Tipo` | `varchar(40)` | Obligatorio — hoy solo `"Emergencia"` o `"TrasladoExpediente"` |
+| `Leida` | `boolean` | Obligatorio, valor predeterminado `false` |
+| `FechaCreacion` | `timestamp with time zone` | Obligatorio, valor predeterminado `now()` |
+| `ReferenciaTipo` | `varchar(50)` | NULL — `"Emergencia"` o `"SolicitudTraslado"` |
+| `ReferenciaId` | `integer` | NULL — el `IdEmergencia` o `IdSolicitudTraslado` referenciado |
+
+**Relaciones:** cada notificación pertenece a un usuario; `ReferenciaTipo`/`ReferenciaId` apuntan (sin FK real, es polimórfico) al registro que la originó.
+
+> `Tipo` es lo que usa la campanita del frontend (`NotificacionesBell.jsx`) para decidir a dónde
+> redirigir al usuario al hacer clic — ver [[Diagrama-Componentes]] § Notificaciones.
+
+## ATENCION_EXTERNA
+
+| Campo | Tipo | Restricciones |
+|---|---|---|
+| `IdAtencionExterna` | `integer` | PK |
+| `IdExpediente` | `integer` | Obligatorio, FK a `EXPEDIENTE` |
+| `IdUsuarioRegistro` | `integer` | Obligatorio, FK a `USUARIO` (siempre el dueño de la mascota) |
+| `NombreVeterinaria` | `varchar(200)` | Obligatorio — texto libre, no referencia `COMERCIO` |
+| `NombreProfesional` | `varchar(200)` | NULL |
+| `FechaAtencion` | `timestamp with time zone` | Obligatorio |
+| `Motivo` | `varchar(1000)` | Obligatorio |
+| `Diagnostico` | `varchar(4000)` | NULL |
+| `Tratamiento` | `varchar(4000)` | NULL |
+| `FechaRegistro` | `timestamp with time zone` | Obligatorio, valor predeterminado `now()` |
+
+**Relaciones:** pertenece a un expediente y puede tener varios comprobantes adjuntos mediante `DOCUMENTO_ATENCION_EXTERNA`.
+
+> Autorreportada por el cliente sobre una consulta que pasó **fuera** de Huellitas Vitales — por
+> eso `NombreVeterinaria`/`NombreProfesional` son texto libre en vez de FK: no hay ninguna
+> veterinaria de la plataforma involucrada.
+
+## DOCUMENTO_ATENCION_EXTERNA
+
+| Campo | Tipo | Restricciones |
+|---|---|---|
+| `IdDocumentoAtencionExterna` | `integer` | PK |
+| `IdAtencionExterna` | `integer` | Obligatorio, FK a `ATENCION_EXTERNA`, `ON DELETE CASCADE` |
+| `NombreOriginal` | `varchar(255)` | Obligatorio |
+| `RutaArchivo` | `varchar(500)` | Obligatorio — ruta relativa bajo `wwwroot/uploads/atenciones-externas/` |
+| `TipoContenido` | `varchar(100)` | Obligatorio (MIME type) |
+| `TamanoBytes` | `bigint` | Obligatorio |
+| `FechaCarga` | `timestamp with time zone` | Obligatorio, valor predeterminado `now()` |
+
+**Relaciones:** cada documento pertenece a una atención externa (PDF/imagen del comprobante, factura, etc.).
+
+## EMERGENCIA
+
+| Campo | Tipo | Restricciones |
+|---|---|---|
+| `IdEmergencia` | `integer` | PK |
+| `IdExpediente` | `integer` | Obligatorio, FK a `EXPEDIENTE` |
+| `IdUsuarioSolicitante` | `integer` | Obligatorio, FK a `USUARIO` |
+| `IdComercio` | `integer` | NULL, FK a `COMERCIO` |
+| `IdVeterinario` | `integer` | NULL, FK a `VETERINARIO` |
+| `Estado` | `varchar(20)` | Obligatorio, `CHECK IN ('Solicitada','Aceptada','EnAtencion','Finalizada','Cancelada')`, predeterminado `'Solicitada'` |
+| `Ubicacion` | `varchar(500)` | Obligatorio |
+| `Motivo` | `varchar(500)` | Obligatorio |
+| `Descripcion` | `varchar(4000)` | NULL |
+| `FechaSolicitud` | `timestamp with time zone` | Obligatorio, valor predeterminado `now()` |
+| `FechaInicio` | `timestamp with time zone` | NULL |
+| `FechaFinalizacion` | `timestamp with time zone` | NULL |
+| `Diagnostico` | `varchar(4000)` | NULL |
+| `Tratamiento` | `varchar(4000)` | NULL |
+| `EsAtencionExterna` | `boolean` | Obligatorio, valor predeterminado `false` |
+| `NombreVeterinarioExterno` | `varchar(200)` | NULL |
+| `NombreClinicaExterna` | `varchar(200)` | NULL |
+
+**Relaciones:** pertenece a un expediente y al usuario que la solicitó; opcionalmente a un comercio y a un veterinario (el que la acepta). El teléfono de contacto **no** se guarda aquí: se resuelve en el momento vía `USUARIO.Telefono` del solicitante (join en `EmergenciaService.PendientesAsync`/`EnCursoAsync`), para que la veterinaria siempre vea el número vigente en vez de una copia vieja.
+
+> `IdComercio` es nullable a propósito: es el mecanismo de **broadcast**. Si el cliente no
+> elige una veterinaria puntual, la emergencia se crea con `IdComercio = NULL` y se notifica a
+> **todas** las veterinarias aprobadas; la primera que acepta (`EmergenciaService.AceptarAsync`)
+> "reclama" la emergencia asignándole el comercio de quien aceptó, para que los reportes de esa
+> clínica la reconozcan después. No hay bloqueo optimista sobre el `Estado`, así que en teoría
+> dos aceptaciones simultáneas podrían pisarse — riesgo aceptado dado el volumen esperado, ver
+> [[MEJORAS]].
+
 ## Resumen de relaciones
 
 - `USUARIO` se relaciona con `ROL`, `VETERINARIO`, `PERSONA_LEGAL`, `COMERCIO_FUNCIONARIO`, `MASCOTA`, `CITA`, `CARRITO`, `ORDEN` y `USUARIO_PROVEEDOR_AUTH`.
 - `COMERCIO` se relaciona con `PERSONA_LEGAL`, `TIPO_COMERCIO_CAT`, `ESTADO_SOLICITUD_CAT`, `PRODUCTO`, `SERVICIO` y `COMERCIO_FUNCIONARIO`.
 - `PRODUCTO` se relaciona con `CATEGORIA_PRODUCTO_CAT`, `ESPECIE_CAT`, `MARCA_CAT`, `CARRITO_ITEM` y `ORDEN_DETALLE`.
 - `VETERINARIO` se relaciona con `USUARIO`, `COMERCIO`, `HORARIO_VETERINARIO`, `SERVICIO` y `CITA`.
-- `MASCOTA` se relaciona con `USUARIO`, `ESPECIE_CAT` y `CITA`.
+- `MASCOTA` se relaciona con `USUARIO`, `ESPECIE_CAT`, `CITA` y `EXPEDIENTE` (1 a 1).
 - `CARRITO` se relaciona con `CARRITO_ITEM`; `ORDEN` se relaciona con `ORDEN_DETALLE`.
+- `EXPEDIENTE` se relaciona con `MASCOTA` (1 a 1), `COMERCIO` (veterinaria actual, opcional), y con su propio historial en `EXPEDIENTE_COMERCIO`, `SOLICITUD_TRASLADO_EXPEDIENTE`, `ATENCION_EXTERNA` y `EMERGENCIA`.
+- `EMERGENCIA` se relaciona con `EXPEDIENTE`, `USUARIO` (solicitante), `COMERCIO` (opcional, `NULL` = broadcast a todas) y `VETERINARIO` (quien acepta).
+- `NOTIFICACION` se relaciona con `USUARIO`; referencia de forma polimórfica (`ReferenciaTipo`/`ReferenciaId`, sin FK) una `EMERGENCIA` o `SOLICITUD_TRASLADO_EXPEDIENTE`.
 
 Las relaciones se identifican principalmente mediante campos FK escalares. Solo algunas entidades declaran propiedades de navegación en C# (`UsuarioProveedorAuth.Usuario`, `Carrito.Items`, `CarritoItem.Carrito`, `Orden.Detalles` y `OrdenDetalle.Orden`).

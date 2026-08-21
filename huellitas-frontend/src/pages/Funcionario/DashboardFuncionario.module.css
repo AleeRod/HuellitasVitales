@@ -1,66 +1,132 @@
-.layout {
-    display: flex;
-    min-height: 100vh;
-    background: #FEFAE0;
+:root {
+    --pine: #1B4332;
+    --pine-dk: #112b21;
+    --pine-soft: #2d6a4f;
+    --mint: #52B788;
+    --mint-lt: #95d5b2;
+    --amber: #DDA15E;
+    --line: #dde3d8;
 }
 
+/* Fondo propio de este panel (leve variante cálida/"almacén" respecto a los demás, para poder
+   distinguir de un vistazo en qué zona de la plataforma estás) — igual receta radial que el
+   resto (menta arriba-izquierda, ámbar abajo-derecha), solo cambia el tono base. */
+.layout {
+    min-height: 100vh;
+    display: flex;
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+    background:
+        radial-gradient(circle at top left, rgba(82, 183, 136, .16), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(221, 161, 94, .16), transparent 28%),
+        #F3EFE3;
+    color: #1a1a1a;
+    overflow-x: hidden;
+}
+
+/* SIDEBAR — mismo patrón que Admin/Cliente/Veterinario: position:fixed (no sticky) con un
+   wrapper interno que hace su propio scroll, para que nunca se corte ni se desalinee del resto
+   de la página al hacer scroll. */
 .sidebar {
-    width: 260px;
-    flex-shrink: 0;
-    background: linear-gradient(180deg, #112b21, #1B4332);
+    width: 280px;
+    height: 100vh;
+    background: linear-gradient(155deg, var(--pine-dk) 0%, var(--pine) 56%, var(--pine-soft) 100%);
     color: #fff;
-    padding: 1.5rem 1.25rem;
+    padding: 1.25rem;
+    position: fixed;
+    left: 0;
+    top: 0;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.sidebar::before {
+    content: '';
+    position: absolute;
+    width: 360px;
+    height: 360px;
+    border-radius: 50%;
+    border: 2px solid rgba(82, 183, 136, .13);
+    top: -110px;
+    right: -150px;
+}
+
+.sidebar::after {
+    content: '';
+    position: absolute;
+    width: 230px;
+    height: 230px;
+    border-radius: 50%;
+    border: 2px solid rgba(82, 183, 136, .10);
+    bottom: -70px;
+    left: -80px;
+}
+
+.sidebarContent {
+    position: relative;
+    z-index: 2;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
-    position: sticky;
-    top: 0;
-    height: 100vh;
     overflow-y: auto;
     overflow-x: hidden;
+    padding-right: 4px;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
 }
 
-/* Scrollbar fina y estética (mismo estilo que el resto de los paneles) */
-.sidebar::-webkit-scrollbar {
+.sidebarContent::-webkit-scrollbar {
     width: 5px;
 }
 
-.sidebar::-webkit-scrollbar-track {
+.sidebarContent::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
 }
 
-.sidebar::-webkit-scrollbar-thumb {
+.sidebarContent::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 10px;
 }
 
-.sidebar::-webkit-scrollbar-thumb:hover {
+.sidebarContent::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.4);
 }
 
-.marca {
+/* Marca — igual que el resto de los paneles: logo + "Huellitas Vitales", no el nombre del
+   comercio (antes decía "Almacén Prueba" acá, fuera de la convención del resto de la app). */
+.brandCard {
     display: flex;
     align-items: center;
-    gap: .7rem;
+    gap: .8rem;
+    padding: .9rem;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .08);
+    border: 1px solid rgba(255, 255, 255, .15);
+    backdrop-filter: blur(6px);
+    margin-bottom: 1.35rem;
 }
 
-.marca div {
-    display: flex;
-    flex-direction: column;
+.brandCard img {
+    width: 50px;
+    height: 40px;
+    object-fit: contain;
 }
 
-.marca strong {
+.brandName {
     font-family: 'Playfair Display', serif;
-    font-size: 1.05rem;
-    line-height: 1.2;
+    font-size: 1.15rem;
+    line-height: 1.15;
+    font-weight: 700;
 }
 
-.marca span {
-    font-size: .72rem;
-    color: rgba(255,255,255,.6);
+.brandLabel {
+    display: block;
+    color: var(--mint-lt);
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-top: .2rem;
 }
 
 .nav {
@@ -120,8 +186,9 @@
 }
 
 .contenido {
-    flex: 1;
-    padding: 2rem;
+    margin-left: 280px;
+    width: calc(100% - 280px);
+    padding: 1.35rem 1.6rem 2rem;
     overflow-x: hidden;
 }
 
@@ -157,4 +224,116 @@
     border: 1px solid #dde3d8;
     border-radius: 18px;
     padding: 2rem;
+}
+
+/* --- TOPBAR (notificaciones + perfil), mismo patrón que el resto de los paneles --- */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.6rem;
+}
+
+.heroTitle {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.7rem;
+    color: #1B4332;
+    margin: .3rem 0;
+}
+
+.heroSub {
+    color: #718096;
+    margin: 0;
+    font-size: .92rem;
+}
+
+.topActions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.iconButton {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid #dde3d8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1B4332;
+}
+
+.profileMini {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    background: #fff;
+    border: 1px solid #dde3d8;
+    border-radius: 14px;
+    padding: .5rem .9rem .5rem .5rem;
+}
+
+.profileAvatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #52B788, #1B4332);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.profileName {
+    font-weight: 700;
+    color: #1B4332;
+    font-size: .88rem;
+    line-height: 1.2;
+}
+
+.profileRole {
+    font-size: .74rem;
+    color: #718096;
+}
+
+@media (max-width: 900px) {
+    .layout {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        min-height: auto;
+        border-radius: 0 0 24px 24px;
+    }
+
+    .contenido {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+
+@media (max-width: 620px) {
+    .contenido {
+        padding: 1rem;
+    }
+
+    .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: .75rem;
+    }
+
+    .heroTitle {
+        font-size: 1.5rem;
+    }
 }

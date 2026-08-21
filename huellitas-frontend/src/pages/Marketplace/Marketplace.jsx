@@ -4,7 +4,6 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { useCarrito } from '../../hooks/useCarrito';
 import { ToastContainer } from '../../components/Toast/Toast';
 import useToast from '../../components/Toast/useToast';
-import CarritoIcono from '../../components/CarritoIcono/CarritoIcono';
 import { API_BASE, resolverImagen } from '../../api/config';
 import ModalRegistroRapido from '../../components/ModalRegistroRapido/ModalRegistroRapido'; // 👈 Asegúrate de ajustar la ruta según donde guardaste el modal
 import { 
@@ -259,7 +258,7 @@ const Marketplace = () => {
     const handleConfirmarCita = async (datosCita) => {
         const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
         if (!token) {
-            alert('Debes iniciar sesión para agendar una cita.');
+            showToast('Debes iniciar sesión para agendar una cita.', 'warning');
             setModalCitaOpen(false);
             return;
         }
@@ -290,9 +289,9 @@ const Marketplace = () => {
             }
 
             setModalCitaOpen(false);
-            alert(data?.mensaje || 'Cita agendada correctamente.');
+            showToast(data?.mensaje || 'Cita agendada correctamente.', 'success');
         } catch (error) {
-            alert(error.message || 'Ocurrió un error al agendar la cita.');
+            showToast(error.message || 'Ocurrió un error al agendar la cita.', 'error');
         }
     };
 
@@ -356,7 +355,6 @@ const Marketplace = () => {
                         <div className={styles.badgeContainer}>
                             <ShoppingCart className={styles.badgeIcon} size={18} />
                             <span className={styles.badge}>Marketplace</span>
-                            <CarritoIcono />
                         </div>
                         
                         <div>
@@ -428,11 +426,13 @@ const Marketplace = () => {
                                     <div className={styles.checkboxList}>
                                         {categoriasDisponibles.map(cat => (
                                             <label key={cat.id} className={styles.checkboxItem}>
-                                                <input 
-                                                    type="checkbox" 
+                                                <input
+                                                    type="checkbox"
+                                                    className={styles.checkboxInput}
                                                     checked={filtrosAvanzados.categoriasIds.includes(cat.id)}
                                                     onChange={() => toggleCategoria(cat.id)}
                                                 />
+                                                <span className={styles.checkboxVisual} aria-hidden="true"></span>
                                                 <span>{cat.nombre}</span>
                                             </label>
                                         ))}
@@ -446,11 +446,13 @@ const Marketplace = () => {
                                     <div className={styles.checkboxList}>
                                         {marcasDisponibles.map(marca => (
                                             <label key={marca.id} className={styles.checkboxItem}>
-                                                <input 
-                                                    type="checkbox" 
+                                                <input
+                                                    type="checkbox"
+                                                    className={styles.checkboxInput}
                                                     checked={filtrosAvanzados.marcasIds.includes(marca.id)}
                                                     onChange={() => toggleMarca(marca.id)}
                                                 />
+                                                <span className={styles.checkboxVisual} aria-hidden="true"></span>
                                                 <span>{marca.nombre}</span>
                                             </label>
                                         ))}
@@ -464,11 +466,13 @@ const Marketplace = () => {
                                     <div className={styles.checkboxList}>
                                         {tiposServicioDisponibles.map(tipo => (
                                             <label key={tipo.id} className={styles.checkboxItem}>
-                                                <input 
-                                                    type="checkbox" 
+                                                <input
+                                                    type="checkbox"
+                                                    className={styles.checkboxInput}
                                                     checked={filtrosAvanzados.tiposServicioIds.includes(tipo.id)}
                                                     onChange={() => toggleTipoServicio(tipo.id)}
                                                 />
+                                                <span className={styles.checkboxVisual} aria-hidden="true"></span>
                                                 <span>{tipo.nombre}</span>
                                             </label>
                                         ))}
@@ -600,7 +604,7 @@ const Marketplace = () => {
                 onClose={() => setModalCheckoutAbierto(false)}
                 onRegistroExitoso={() => {
                     setModalCheckoutAbierto(false);
-                    alert('¡Datos de contacto guardados correctamente! Aquí el sistema pasaría a la pasarela de pago.');
+                    showToast('¡Datos de contacto guardados correctamente! Aquí el sistema pasaría a la pasarela de pago.', 'success');
                 }}
             />
 

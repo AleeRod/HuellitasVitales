@@ -48,3 +48,11 @@
    * `3` = Cliente
    * `4` = Funcionario
 
+## Convenciones de Frontend (Portal Cliente y componentes compartidos)
+
+* **`ClienteLayout.jsx`** (`src/components/Cliente/ClienteLayout/`) es el único lugar donde vive el sidebar/topbar del portal cliente. Las 10 páginas de `src/pages/Cliente/` lo envuelven en vez de copiar su propio sidebar — antes cada página tenía una copia pegada, así que un link nuevo en el menú solo aparecía donde alguien se acordara de agregarlo a mano.
+* **Selects nativos:** `src/styles/dropdowns.css` (importado una sola vez en `App.jsx`) le da a **todos** los `<select>` del sitio una flecha propia, hover, foco y estado disabled consistentes, incluso a los que no tienen ninguna clase propia. Los estilos de cada panel (`.formSelect`, `.filterField`, etc.) siguen ganando por especificidad para lo que ya definían (bordes, colores); esta hoja solo completa lo que ninguno resolvía.
+* **`SelectorVeterinaria.jsx`** (`src/components/Cliente/SelectorVeterinaria/`) reemplaza al `<select>` nativo específicamente para elegir veterinaria (Emergencia, Traslado): un `<select>` no puede mostrar nombre + ubicación por opción ni tener su propio hover — este componente sí.
+* **`NotificacionesBell.jsx`** (`src/components/Notificaciones/`) es la campanita de notificaciones compartida por todos los paneles (Cliente, Veterinario, Admin, Funcionario). Al detectar un 401 (sesión expirada) limpia el `localStorage` y redirige a `/login` en vez de fallar en silencio — ver `manejarSesionExpirada` en `src/api/config.js`.
+* **Paneles con pestañas internas** (`PanelVeterinario.jsx`, `DashboardAdmin.jsx`, `DashboardFuncionario.jsx`) manejan su sección activa con estado local (`useState`), no con rutas — por eso leen un query param (`?vista=`/`?seccion=`) al montar y lo siguen escuchando mientras están abiertos, para poder deep-linkear a una pestaña puntual desde una notificación.
+

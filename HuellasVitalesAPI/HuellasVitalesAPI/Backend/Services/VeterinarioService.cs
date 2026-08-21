@@ -14,8 +14,10 @@ namespace HuellitasVitalesAPI.Services
     /// </summary>
     public class VeterinarioService
     {
-        private const byte ROL_CLIENTE = 3;
+        private const byte ROL_ADMINISTRADOR = 1;
         private const byte ROL_VETERINARIO = 2;
+        private const byte ROL_CLIENTE = 3;
+        private const byte ROL_FUNCIONARIO = 4;
 
         private readonly ConexionDB _context;
         private readonly ComercioValidacionService _validacion;
@@ -105,6 +107,12 @@ namespace HuellitasVitalesAPI.Services
                 var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Correo.ToLower() == normalizado);
                 if (usuario == null)
                     return (false, "No existe ningún usuario registrado con ese correo. Pídele que se registre primero.", 404);
+
+                // No se puede vincular como veterinario a alguien que ya es Administrador o
+                // Funcionario de otro comercio — evita mezclar roles administrativos con el
+                // rol clínico de un veterinario.
+                if (usuario.IdRol == ROL_ADMINISTRADOR || usuario.IdRol == ROL_FUNCIONARIO)
+                    return (false, "No se puede vincular como veterinario a un usuario que ya tiene rol de Administrador o Funcionario.", 400);
 
                 var veterinario = await _context.Veterinarios.FirstOrDefaultAsync(v => v.IdUsuario == usuario.IdUsuario);
 

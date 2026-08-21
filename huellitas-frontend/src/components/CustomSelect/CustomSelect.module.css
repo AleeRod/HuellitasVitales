@@ -1,0 +1,155 @@
+/* Mismo lenguaje visual que SelectorVeterinaria/PerfilMenu: botón + panel
+   flotante pine/mint, pensado como reemplazo genérico de un <select> nativo
+   de una sola línea (sin la fila de nombre+dirección de SelectorVeterinaria). */
+
+.wrap {
+    --pine: #1B4332;
+    --pine-dk: #112b21;
+    --mint: #52B788;
+    --line: #dde3d8;
+    --text-md: #4a5568;
+    position: relative;
+    display: inline-block;
+    min-width: 160px;
+}
+
+.boton {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    background: #fff;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 0.6rem 0.85rem;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--pine-dk);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.boton:hover:not(:disabled) {
+    border-color: var(--mint);
+}
+
+.boton[aria-expanded='true'] {
+    border-color: var(--mint);
+    box-shadow: 0 0 0 3px rgba(82, 183, 136, 0.15);
+}
+
+.boton:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    background-color: #f4f6f4;
+}
+
+.botonIcono {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--pine);
+    flex-shrink: 0;
+}
+
+.botonTexto {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.placeholder {
+    flex: 1;
+    min-width: 0;
+    color: #9aa39a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chevron {
+    flex-shrink: 0;
+    color: var(--text-md);
+    transition: transform 0.18s ease;
+}
+
+.chevronAbierto {
+    transform: rotate(180deg);
+}
+
+.panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    min-width: max-content;
+    max-height: 260px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
+    z-index: 40;
+    padding: 0.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    transform-origin: top;
+    animation: aparecer 0.15s ease-out;
+}
+
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: scaleY(0.96) translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: scaleY(1) translateY(0);
+    }
+}
+
+.opcion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-radius: 9px;
+    padding: 0.55rem 0.65rem;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    font-size: 0.87rem;
+    color: var(--pine-dk);
+    white-space: nowrap;
+    transition: background-color 0.12s ease;
+}
+
+.opcion:hover {
+    background: rgba(82, 183, 136, 0.1);
+}
+
+.opcionActiva {
+    background: rgba(82, 183, 136, 0.14);
+    font-weight: 700;
+}
+
+.opcionCheck {
+    color: var(--mint);
+    flex-shrink: 0;
+}
+
+.vacio {
+    padding: 0.8rem 0.65rem;
+    text-align: center;
+    color: var(--text-md);
+    font-size: 0.82rem;
+    white-space: normal;
+}

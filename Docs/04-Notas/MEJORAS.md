@@ -96,3 +96,195 @@ Hasta que se corra el `CREATE TABLE`, `/api/tiposervicio/solicitar` y todo lo ba
 ### Estado
 Pendiente solo el `CREATE TABLE` en Supabase. El resto —flujo completo de solicitud, revisión,
 aprobación/rechazo, y la UI en el panel de Servicios— ya está implementado.
+
+---
+
+# Mejora-04
+
+## Pendientes que quedaron de la épica de Expedientes/Traslado/Atenciones Externas/Emergencias
+
+Al implementar [[HU-200-Expediente-Clinico-Digital]] y las historias relacionadas quedaron
+algunos cabos sueltos, ninguno bloqueante, que vale la pena registrar para no perderlos:
+
+1. **Buscador de expedientes para el veterinario.** El panel del veterinario
+   ([[HU-206-Panel-Veterinario-Funcional]]) tiene una pestaña "Expedientes" que hoy muestra
+   "Próximamente" — listar y abrir el detalle de cualquier expediente que su veterinaria
+   administre (reutilizando `EXPEDIENTE_COMERCIO` y el mismo `GET /api/expediente/{id}` que ya
+   existe) quedó fuera de este alcance por tiempo, no por falta de datos para construirlo.
+2. **Control de vacunas.** Sigue sin existir ninguna tabla `VACUNA` en la base de datos. Tanto
+   el portal del cliente como el panel del veterinario muestran un estado "Próximamente"
+   honesto en vez de datos inventados. Si se prioriza, hace falta diseñar la tabla desde cero
+   (no hay ninguna base previa de la que partir, a diferencia de las otras historias de esta
+   épica).
+3. **Concurrencia al aceptar una emergencia en broadcast.** `EmergenciaService.AceptarAsync`
+   verifica `Estado == "Solicitada"` pero no usa bloqueo optimista ni una transacción — en
+   teoría, dos veterinarias podrían aceptar la misma emergencia de broadcast casi al mismo
+   tiempo y una de las dos pisaría a la otra. Riesgo aceptado dado el volumen esperado de
+   emergencias simultáneas, pero si se prioriza, la solución más simple sería envolver el
+   `SaveChangesAsync` en una transacción con una verificación `WHERE Estado = 'Solicitada'` a
+   nivel de UPDATE (mismo patrón que ya usa `TrasladoExpedienteService.ResolverAsync`).
+4. **El Funcionario ve emergencias que no puede aceptar, y no tiene dónde ir desde una
+   notificación.** `EmergenciaService.PendientesAsync` deja que un Funcionario vea las
+   emergencias en broadcast de su veterinaria en su lista de pendientes, pero
+   `AceptarAsync` solo permite rol Administrador o Veterinario — así que el Funcionario ve algo
+   que después no puede tomar. Además, su panel (`DashboardFuncionario.jsx`) no tiene ninguna
+   pestaña de Emergencias, así que si le llega una notificación de tipo `"Emergencia"`, hoy no
+   lo lleva a ningún lado (`rutaDestino` en `NotificacionesBell.jsx` devuelve `null` para ese
+   caso). Si se decide que el Funcionario sí pueda gestionar emergencias, hay que: permitir su
+   rol en `AceptarAsync`/`CambiarEstadoAsync`, agregar la pestaña en `DashboardFuncionario.jsx`,
+   y actualizar `rutaDestino` para incluirla — los tres pasos, no solo uno.
+
+### Contexto relacionado
+- [[HU-200-Expediente-Clinico-Digital]], [[HU-203-Emergencia-Veterinaria]],
+  [[HU-206-Panel-Veterinario-Funcional]], [[HU-205-Notificaciones-Internas]].
+- [[Modelo-Datos]] § EMERGENCIA — nota sobre el riesgo de concurrencia.
+
+### Estado
+Pendiente. Ninguno bloquea el uso normal de la plataforma; son mejoras de alcance futuro.
+
+---
+
+# Mejora-05
+
+## Correr en Supabase el ALTER TABLE de USUARIO.AvatarIcono
+
+Al rediseñar la sección de Configuración del portal cliente se agregó la posibilidad de elegir
+un ícono de perfil predefinido (`PUT /api/usuario/avatar`, ver [[Diagrama-Componentes]] §
+Usuarios y Perfil). El código ya espera la columna nueva (`Usuario.AvatarIcono` en EF,
+`UsuarioService.ActualizarAvatarAsync`/`ObtenerPerfilAsync`), pero falta correr en la Supabase
+real:
+
+```sql
+ALTER TABLE public."USUARIO" ADD COLUMN "AvatarIcono" varchar(30) NULL;
+```
+
+Hasta que se corra este `ALTER TABLE`, tanto `GET /api/usuario/perfil` como
+`PUT /api/usuario/avatar` van a fallar con un error de columna inexistente — es decir, toda la
+sección de Configuración del cliente queda rota, no solo el selector de ícono.
+
+### Contexto relacionado
+- [[Modelo-Datos]] § USUARIO — detalle de la columna y la lista blanca de claves válidas.
+- [[Diagrama-Componentes]] § Usuarios y Perfil.
+
+### Estado
+Pendiente solo el `ALTER TABLE` en Supabase. El resto —selector de ícono, cuentas vinculadas con
+Google/Facebook (ya eran funcionales, solo no tenían UI en el portal cliente) y cambio de
+contraseña autenticado (`PUT /api/usuario/password`, nuevo)— ya está implementado.
+
+---
+
+# Mejora-06
+
+## Un empleado vinculado por COMERCIO_FUNCIONARIO no puede hacer nada con su propia cuenta
+
+Al agregar la pestaña "Empleados" al panel de Funcionario (`DashboardFuncionario.jsx` →
+`PanelEmpleados`) se encontró que **el sistema solo reconoce como "dueño" de un comercio al
+usuario que lo registró originalmente** (`PersonaLegal.IdUsuario`, promovido a rol
+Funcionario(4) automáticamente al aprobarse el comercio — ver `ComercioService.
+AprobarComercioAsync`). Tres puntos distintos verifican pertenencia a un comercio consultando
+**únicamente** esa relación, sin mirar nunca la tabla `COMERCIO_FUNCIONARIO`:
+
+- `UsuarioService.ObtenerPerfilConComercioAsync` (`GET /api/usuario/me`, de donde
+  `DashboardFuncionario.jsx` saca qué comercio mostrar).
+- `ComercioService.ListarMiosAsync` (`GET /api/comercio/mios`).
+- `ComercioValidacionService.ValidarComercioHabilitadoAsync` /
+  `ValidarPropietarioComercioAsync` (usado por Producto, Servicio y el propio
+  `ComercioFuncionarioService` para autorizar creación/edición).
+
+En la práctica: cuando el dueño original vincula a un segundo empleado desde "Empleados"
+(`POST /api/comercio funcionario`), ese registro en `COMERCIO_FUNCIONARIO` se crea
+correctamente — pero si esa persona después inicia sesión con su propia cuenta,
+`/api/usuario/me` no le muestra ningún comercio, y si intentara crear un producto/servicio o
+gestionar más empleados, `Validar...ComercioAsync` lo rechazaría con 403 "no estás vinculado a
+este comercio" — aunque sí lo esté. Solo el dueño original puede usar el panel de Funcionario
+con todas sus funciones hoy.
+
+También se detectó, de paso, que `ComercioFuncionarioController.EsUsuarioAdmin()` lee el claim
+`"role"`/`ClaimTypes.Role`, que no existe — el JWT emite el rol bajo la clave `"rol"` (ver
+`UsuarioService.GenerarTokenJWT`, y el mismo patrón en `EsUsuarioAdmin()` de
+`ServicioController`/`AdminController`/etc.). Por esto, ningún request a este controller
+específico es tratado como Admin, sin importar el rol real de quien lo llama.
+
+### Contexto relacionado
+- [[Modelo-Datos]] § COMERCIO_FUNCIONARIO.
+- [[Diagrama-Componentes]] § Empleados de Comercio (`/api/comerciofuncionario`).
+
+### Estado
+Pendiente. No bloquea al dueño original de un comercio (el caso más común y el único
+verificado en producción hasta ahora), pero si se prioriza, la solución es agregar un chequeo
+adicional `_context.ComerciosFuncionarios.AnyAsync(f => f.IdComercio == idComercio && f.IdUsuario
+== idUsuario && f.Activo)` (mismo patrón que ya usan `TrasladoExpedienteService`/
+`EmergenciaService`) a los tres puntos listados arriba, y corregir el claim de rol en
+`ComercioFuncionarioController.EsUsuarioAdmin()` de `"role"` a `"rol"`.
+
+---
+
+# Mejora-07
+
+## Correr en Supabase el ALTER TABLE de ORDEN.MetodoPago
+
+Al agregar la simulación de método de pago al checkout del carrito (`ModalMetodoPago.jsx`) y el
+recibo de "Mis compras" del cliente, se agregó una columna nueva para poder mostrar qué método
+se "usó" en cada compra. El código ya espera la columna nueva (`Orden.MetodoPago` en EF,
+`OrdenService.CrearOrdenAsync`/`ObtenerMisOrdenesAsync`/`ObtenerFacturaAsync`), pero falta correr
+en la Supabase real:
+
+```sql
+ALTER TABLE public."ORDEN" ADD COLUMN "MetodoPago" varchar NULL;
+```
+
+Hasta que se corra este `ALTER TABLE`, `POST /api/orden` (completar una compra),
+`GET /api/orden` (Mis compras) y `GET /api/orden/{id}` (factura) van a fallar con un error de
+columna inexistente — es decir, todo el checkout del carrito queda roto, no solo el recibo.
+
+Nota aparte: `ESTADO_ORDEN_CAT` sigue sin tener entidad ni `DbSet` propio (igual que
+`ESTADO_CUENTA_CAT`/`ESTADO_SOLICITUD_CAT`). Como el checkout es una simulación donde el "pago"
+ya ocurrió antes de crear la orden, `OrdenService` solo produce hoy el estado `1` y lo traduce a
+mano como `"Completada"` — mismo criterio hardcodeado que ya usa el proyecto para `ESPECIE_CAT`
+en `UsuarioService`. Si en el futuro se agrega un flujo real de cancelación/reembolso de
+órdenes, hay que revisar ese mapeo a mano.
+
+### Contexto relacionado
+- [[Modelo-Datos]] § ORDEN — detalle completo de la columna.
+- [[Diagrama-Componentes]] — endpoints de `/api/orden`.
+
+### Estado
+Resuelto. El `ALTER TABLE` ya se corrió contra la Supabase real (columna `MetodoPago`
+confirmada como `character varying NULL` en `information_schema.columns`) — esto era la causa
+del `500 Internal Server Error` que reportaba `POST /api/orden` al intentar completar cualquier
+compra desde el carrito. Verificado que la columna existe y el checkout vuelve a guardar
+órdenes correctamente.
+
+---
+
+# Mejora-08
+
+## La sección "Comercios" del Admin no puede desactivar un comercio ya aprobado (no existe ese estado)
+
+Al convertir la sección "Solicitudes" del panel Admin en "Comercios" (pestañas "Solicitudes
+pendientes" + "Todos los comercios", con edición y eliminación) se confirmó contra la Supabase
+real que `ESTADO_SOLICITUD_CAT` solo tiene 3 filas: `1=PENDIENTE, 2=APROBADO, 3=RECHAZADO`. No
+existe ningún estado "Desactivado"/"Suspendido" para un comercio que ya estaba aprobado y se
+quiere dar de baja sin decir que su solicitud fue "rechazada" (semánticamente son cosas
+distintas: rechazar es resolver una solicitud pendiente, dar de baja es retirar a un comercio
+que ya operaba).
+
+Mientras tanto, `ComercioService.EliminarAsync` (usado por `DELETE /api/comercio/{id}`, botón
+"Eliminar" de "Todos los comercios") reutiliza el mismo valor Rechazado(3) — que en la práctica
+ya saca al comercio del marketplace (`BuscarComerciosAprobadosAsync` filtra por estado == 2) —
+pero la tabla de "Todos los comercios" termina mostrando ese comercio como "Rechazado" en vez de
+algo más preciso como "Desactivado".
+
+Si se prioriza una distinción real, la solución es:
+1. Insertar una fila nueva en la Supabase real: `INSERT INTO public."ESTADO_SOLICITUD_CAT" ("Nombre") VALUES ('DESACTIVADO');` (va a tomar el siguiente id disponible, probablemente 4 — confirmarlo antes de hardcodearlo en el código).
+2. Actualizar `ComercioService.EliminarAsync` para usar ese nuevo id en vez de 3.
+3. Sumar el nuevo estado a `NombreEstadoSolicitud()` (traducción a texto) y al filtro de estados del frontend (`TodosLosComercios` en `PanelComercios.jsx`).
+
+### Contexto relacionado
+- [[Modelo-Datos]] § COMERCIO / ESTADO_SOLICITUD_CAT.
+- [[Diagrama-Componentes]] § Comercio y Solicitudes.
+
+### Estado
+Pendiente. No bloquea el uso normal — "Eliminar" sí saca al comercio del marketplace, solo que
+el estado que queda mostrado ("Rechazado") no es 100% preciso para un comercio que en algún
+momento sí estuvo aprobado.

@@ -23,6 +23,11 @@ namespace HuellasVitalesAPI.Backend.Models.Entidades
         [Column("FechaOrden")]
         public DateTime FechaOrden { get; set; }
 
+        // Método de pago elegido en la simulación de checkout ("tarjeta", "sinpe" o
+        // "efectivo"). Nullable porque las órdenes creadas antes de esta columna no lo tienen.
+        [Column("MetodoPago")]
+        public string? MetodoPago { get; set; }
+
         public List<OrdenDetalle> Detalles { get; set; } = new();
     }
 }
