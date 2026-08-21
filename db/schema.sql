@@ -246,3 +246,93 @@ CREATE TABLE public.TIPO_SERVICIO_CAT (
   Activo boolean NOT NULL DEFAULT true,
   CONSTRAINT TIPO_SERVICIO_CAT_pkey PRIMARY KEY (IdTipoServicio)
 );
+
+-- Gestión de expedientes veterinarios, traslados, atenciones externas,
+-- emergencias y notificaciones internas (Sprint 4).
+CREATE TABLE public."EXPEDIENTE" (
+  "IdExpediente" integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  "IdMascota" integer NOT NULL UNIQUE REFERENCES public."MASCOTA"("IdMascota"),
+  "IdComercioActual" integer NOT NULL REFERENCES public."COMERCIO"("IdComercio"),
+  "FechaApertura" timestamp with time zone NOT NULL DEFAULT now(),
+  "Activo" boolean NOT NULL DEFAULT true
+);
+CREATE TABLE public."EXPEDIENTE_COMERCIO" (
+  "IdExpedienteComercio" integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  "IdExpediente" integer NOT NULL REFERENCES public."EXPEDIENTE"("IdExpediente"),
+  "IdComercio" integer NOT NULL REFERENCES public."COMERCIO"("IdComercio"),
+  "PuedeConsultar" boolean NOT NULL DEFAULT true,
+  "PuedeModificar" boolean NOT NULL DEFAULT false,
+  "FechaDesde" timestamp with time zone NOT NULL DEFAULT now(),
+  "FechaHasta" timestamp with time zone,
+  CONSTRAINT "EXPEDIENTE_COMERCIO_unico" UNIQUE ("IdExpediente", "IdComercio", "FechaHasta")
+);
+CREATE TABLE public."SOLICITUD_TRASLADO_EXPEDIENTE" (
+  "IdSolicitudTraslado" integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  "IdExpediente" integer NOT NULL REFERENCES public."EXPEDIENTE"("IdExpediente"),
+  "IdComercioOrigen" integer NOT NULL REFERENCES public."COMERCIO"("IdComercio"),
+  "IdComercioDestino" integer NOT NULL REFERENCES public."COMERCIO"("IdComercio"),
+  "IdUsuarioSolicitante" integer NOT NULL REFERENCES public."USUARIO"("IdUsuario"),
+  "Estado" character varying(20) NOT NULL DEFAULT 'Pendiente' CHECK ("Estado" IN ('Pendiente', 'Aceptada', 'Rechazada', 'Cancelada')),
+  "Motivo" character varying(1000),
+  "Respuesta" character varying(1000),
+  "FechaSolicitud" timestamp with time zone NOT NULL DEFAULT now(),
+  "FechaResolucion" timestamp with time zone,
+  "IdUsuarioResuelve" integer REFERENCES public."USUARIO"("IdUsuario"),
+  CONSTRAINT "SOLICITUD_TRASLADO_distinto_destino" CHECK ("IdComercioOrigen" <> "IdComercioDestino")
+);
+CREATE UNIQUE INDEX "SOLICITUD_TRASLADO_pendiente_unica"
+  ON public."SOLICITUD_TRASLADO_EXPEDIENTE" ("IdExpediente") WHERE "Estado" = 'Pendiente';
+CREATE TABLE public."NOTIFICACION" (
+  "IdNotificacion" integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  "IdUsuario" integer NOT NULL REFERENCES public."USUARIO"("IdUsuario"),
+  "Titulo" character varying(150) NOT NULL,
+  "Mensaje" character varying(1000) NOT NULL,
+  "Tipo" character varying(40) NOT NULL,
+  "Leida" boolean NOT NULL DEFAULT false,
+  "FechaCreacion" timestamp with time zone NOT NULL DEFAULT now(),
+  "ReferenciaTipo" character varying(50),
+  "ReferenciaId" integer
+);
+CREATE TABLE public."ATENCION_EXTERNA" (
+  "IdAtencionExterna" integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  "IdExpediente" integer NOT NULL REFERENCES public."EXPEDIENTE"("IdExpediente"),
+  "IdUsuarioRegistro" integer NOT NULL REFERENCES public."USUARIO"("IdUsuario"),
+  "NombreVeterinaria" character varying(200) NOT NULL,
+  "NombreProfesional" character varying(200),
+  "FechaAtencion" timestamp with time zone NOT NULL,
+  "Motivo" character varying(1000) NOT NULL,
+  "Diagnostico" character varying(4000),
+  "Tratamiento" character varying(4000),
+  "FechaRegistro" timestamp with time zone NOT NULL DEFAULT now()
+);
+CREATE TABLE public."DOCUMENTO_ATENCION_EXTERNA" (
+  "IdDocumentoAtencionExterna" integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  "IdAtencionExterna" integer NOT NULL REFERENCES public."ATENCION_EXTERNA"("IdAtencionExterna") ON DELETE CASCADE,
+  "NombreOriginal" character varying(255) NOT NULL,
+  "RutaArchivo" character varying(500) NOT NULL,
+  "TipoContenido" character varying(100) NOT NULL,
+  "TamanoBytes" bigint NOT NULL,
+  "FechaCarga" timestamp with time zone NOT NULL DEFAULT now()
+);
+CREATE TABLE public."EMERGENCIA" (
+  "IdEmergencia" integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  "IdExpediente" integer NOT NULL REFERENCES public."EXPEDIENTE"("IdExpediente"),
+  "IdUsuarioSolicitante" integer NOT NULL REFERENCES public."USUARIO"("IdUsuario"),
+  "IdComercio" integer REFERENCES public."COMERCIO"("IdComercio"),
+  "IdVeterinario" integer REFERENCES public."VETERINARIO"("IdVeterinario"),
+  "Estado" character varying(20) NOT NULL DEFAULT 'Solicitada' CHECK ("Estado" IN ('Solicitada', 'Aceptada', 'EnAtencion', 'Finalizada', 'Cancelada')),
+  "Ubicacion" character varying(500) NOT NULL,
+  "Motivo" character varying(500) NOT NULL,
+  "Descripcion" character varying(4000),
+  "FechaSolicitud" timestamp with time zone NOT NULL DEFAULT now(),
+  "FechaInicio" timestamp with time zone,
+  "FechaFinalizacion" timestamp with time zone,
+  "Diagnostico" character varying(4000),
+  "Tratamiento" character varying(4000),
+  "EsAtencionExterna" boolean NOT NULL DEFAULT false,
+  "NombreVeterinarioExterno" character varying(200),
+  "NombreClinicaExterna" character varying(200)
+);
+CREATE INDEX "NOTIFICACION_usuario_no_leida" ON public."NOTIFICACION" ("IdUsuario", "Leida", "FechaCreacion" DESC);
+CREATE INDEX "ATENCION_EXTERNA_expediente" ON public."ATENCION_EXTERNA" ("IdExpediente", "FechaAtencion" DESC);
+CREATE INDEX "EMERGENCIA_expediente" ON public."EMERGENCIA" ("IdExpediente", "FechaSolicitud" DESC);

@@ -1,0 +1,176 @@
+.wrap {
+    --pine: #1B4332;
+    --pine-dk: #112b21;
+    --mint: #52B788;
+    --line: #dde3d8;
+    --text-md: #4a5568;
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+}
+
+.boton {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: #fff;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 0.55rem 0.9rem;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.boton:hover:not(:disabled) {
+    border-color: var(--mint);
+}
+
+.boton:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.botonIcono {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: rgba(82, 183, 136, 0.14);
+    color: var(--pine);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.botonTexto {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.botonNombre {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--pine-dk);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.botonDireccion {
+    font-size: 0.76rem;
+    color: var(--text-md);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.placeholder {
+    font-size: 0.88rem;
+    color: #9aa39a;
+}
+
+.chevron {
+    flex-shrink: 0;
+    color: var(--text-md);
+    transition: transform 0.18s ease;
+}
+
+.chevronAbierto {
+    transform: rotate(180deg);
+}
+
+.panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    max-height: 280px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
+    z-index: 30;
+    padding: 0.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    transform-origin: top;
+    animation: aparecer 0.15s ease-out;
+}
+
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: scaleY(0.96) translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: scaleY(1) translateY(0);
+    }
+}
+
+.opcion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    padding: 0.6rem 0.7rem;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    transition: background-color 0.12s ease;
+}
+
+.opcion:hover {
+    background: rgba(82, 183, 136, 0.1);
+}
+
+.opcionActiva {
+    background: rgba(82, 183, 136, 0.14);
+}
+
+.opcionInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.opcionNombre {
+    font-weight: 700;
+    font-size: 0.87rem;
+    color: var(--pine-dk);
+}
+
+.opcionDireccion {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.76rem;
+    color: var(--text-md);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.opcionCheck {
+    color: var(--mint);
+    flex-shrink: 0;
+}
+
+.vacio {
+    padding: 0.9rem 0.7rem;
+    text-align: center;
+    color: var(--text-md);
+    font-size: 0.85rem;
+}

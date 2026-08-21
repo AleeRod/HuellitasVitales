@@ -1,162 +1,149 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './DashboardCliente.css';
-import { 
-  Home, PawPrint, CalendarDays, Activity, Syringe, FileText, 
-  Settings, LogOut, Bell, AlertCircle
-} from 'lucide-react';
+import { Save } from 'lucide-react';
 
+import ClienteLayout from '../../components/Cliente/ClienteLayout/ClienteLayout';
+import { API_BASE } from '../../api/config';
 import { ToastContainer } from '../../components/Toast/Toast';
 import { useToast } from '../../components/Toast/useToast';
 
 const Configuracion = () => {
-  const [usuario, setUsuario] = useState(null);
-  const { toasts, removeToast } = useToast();
-  const navigate = useNavigate();
+  const [form, setForm] = useState({ nombre: '', apellidos: '', correo: '', telefono: '' });
+  const [cargando, setCargando] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+  const { toasts, showToast, removeToast } = useToast();
+
+  const obtenerToken = () => localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+
+  const cargarPerfil = async () => {
+    const token = obtenerToken();
+    if (!token) return;
+
+    try {
+      setCargando(true);
+      const res = await fetch(`${API_BASE}/usuario/perfil`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo cargar tu perfil.');
+      setForm({
+        nombre: data.nombre || '',
+        apellidos: data.apellidos || '',
+        correo: data.correo || '',
+        telefono: data.telefono || ''
+      });
+    } catch (error) {
+      console.error(error);
+      showToast(error.message || 'Error al cargar tu perfil.', 'error');
+    } finally {
+      setCargando(false);
+    }
+  };
 
   useEffect(() => {
-    try {
-      const guardado = localStorage.getItem('usuario_huellitas') || localStorage.getItem('usuario') || localStorage.getItem('user');
-      if (guardado) {
-        setUsuario(JSON.parse(guardado));
-      }
-    } catch (err) {
-      console.error('No se pudo leer el usuario guardado', err);
-    }
+    cargarPerfil();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const nombreUsuario = usuario?.nombre || usuario?.Nombre || usuario?.nombreCompleto || 'Cliente';
-  const rolUsuario = usuario?.rol?.nombre || usuario?.rolNombre || usuario?.rol || 'Cliente';
-  const inicialAvatar = nombreUsuario.charAt(0).toUpperCase();
-
-  const handleCerrarSesion = (e) => {
+  const guardar = async (e) => {
     e.preventDefault();
-    localStorage.removeItem('usuario_huellitas');
-    localStorage.removeItem('usuario');
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    localStorage.removeItem('token_huellitas');
-    localStorage.removeItem('jwt');
-    localStorage.removeItem('huellitas_token');
-    navigate('/');
+    const token = obtenerToken();
+    if (!token) {
+      showToast('Debes iniciar sesión para editar tu perfil.', 'warning');
+      return;
+    }
+    if (!form.nombre.trim() || !form.apellidos.trim()) {
+      showToast('Nombre y apellidos son obligatorios.', 'error');
+      return;
+    }
+
+    setGuardando(true);
+    try {
+      const res = await fetch(`${API_BASE}/usuario/perfil`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          nombre: form.nombre.trim(),
+          apellidos: form.apellidos.trim(),
+          correo: form.correo.trim(),
+          telefono: form.telefono?.trim() || null
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo guardar los cambios.');
+
+      showToast(data?.mensaje || 'Perfil actualizado correctamente.', 'success');
+    } catch (error) {
+      showToast(error.message || 'Error al guardar los cambios.', 'error');
+    } finally {
+      setGuardando(false);
+    }
   };
 
   return (
-    <div className="client-shell">
-      <aside className="sidebar">
-        <div className="sidebar-content">
-          <div className="brand-card">
-            <img src="/Imagenes/logo.png" alt="Logo Huellitas Vitales" />
+    <ClienteLayout activo="configuracion">
+      <section className="dashboard-grid" style={{ gridTemplateColumns: '1fr' }}>
+        <div className="content-card">
+          <div className="card-head">
             <div>
-              <div className="brand-name">Huellitas Vitales</div>
-              <div className="brand-label">Portal Cliente</div>
+              <h2 className="card-title">Datos de la cuenta</h2>
+              <p className="card-subtitle">Actualizá tu información personal de contacto.</p>
             </div>
           </div>
 
-          <div className="nav-section">Mi cuenta</div>
-          <a href="#dashboard" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente'); }}>
-            <span className="nav-icon"><Home size={18} /></span>
-            Dashboard
-          </a>
-          <a href="#mascotas" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/mis-mascotas'); }}>
-            <span className="nav-icon"><PawPrint size={18} /></span>
-            Mis mascotas
-          </a>
-          <a href="#citas" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/mis-citas'); }}>
-            <span className="nav-icon"><CalendarDays size={18} /></span>
-            Mis citas
-          </a>
-          <a href="#historial" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/historial-clinico'); }}>
-            <span className="nav-icon"><Activity size={18} /></span>
-            Historial clínico
-          </a>
-          <a href="#vacunas" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/vacunas'); }}>
-            <span className="nav-icon"><Syringe size={18} /></span>
-            Vacunas
-          </a>
-          <a href="#reportes" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/reportes'); }}>
-            <span className="nav-icon"><FileText size={18} /></span>
-            Reportes
-          </a>
-
-          <div className="nav-section">Sistema</div>
-          <a href="#configuracion" className="nav-link-client active" onClick={(e) => e.preventDefault()}>
-            <span className="nav-icon"><Settings size={18} /></span>
-            Configuración
-          </a>
-          
-          <button 
-            onClick={handleCerrarSesion} 
-            className="nav-link-client" 
-            style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', color: '#ff4d4d', cursor: 'pointer' }}
-          >
-            <span className="nav-icon"><LogOut size={18} /></span>
-            Cerrar sesión
-          </button>
-
-          <div className="sidebar-pet-card">
-            <div className="pet-mini">
-              <div className="pet-avatar"><AlertCircle size={16} color="#4a4a4a" /></div>
-              <div>
-                <div className="pet-name">Configuración</div>
-                <div className="pet-text">Opciones de cuenta</div>
+          {cargando ? (
+            <div className="appointment" style={{ display: 'block' }}>Cargando tu perfil…</div>
+          ) : (
+            <form onSubmit={guardar} style={{ maxWidth: 520 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginTop: 6 }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Nombre</label>
+                  <input
+                    value={form.nombre}
+                    onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #dfe6e9', borderRadius: 10 }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Apellidos</label>
+                  <input
+                    value={form.apellidos}
+                    onChange={(e) => setForm({ ...form, apellidos: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #dfe6e9', borderRadius: 10 }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Correo</label>
+                  <input
+                    type="email"
+                    value={form.correo}
+                    onChange={(e) => setForm({ ...form, correo: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #dfe6e9', borderRadius: 10 }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Teléfono</label>
+                  <input
+                    value={form.telefono}
+                    onChange={(e) => setForm({ ...form, telefono: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #dfe6e9', borderRadius: 10 }}
+                    placeholder="Opcional"
+                  />
+                </div>
               </div>
-            </div>
-          </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
+                <button className="btn-main" disabled={guardando}>
+                  <Save size={16} style={{ marginRight: 6 }} />
+                  {guardando ? 'Guardando…' : 'Guardar cambios'}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
-      </aside>
-
-      <main className="main-content">
-        <section className="topbar">
-          <div>
-            <div className="hero-badge">
-              <svg width="9" height="9" viewBox="0 0 10 10">
-                <circle cx="5" cy="5" r="5" fill="#52B788" />
-              </svg>
-              Configuración
-            </div>
-            <h1 className="hero-title">Preferencias y configuración ⚙️</h1>
-            <p className="hero-sub">Gestiona los ajustes de tu cuenta y privacidad.</p>
-          </div>
-
-          <div className="top-actions">
-            <button className="icon-button" title="Notificaciones">
-              <Bell size={20} />
-            </button>
-            <div className="profile-mini">
-              <div className="profile-avatar">{inicialAvatar}</div>
-              <div>
-                <div className="profile-name">{nombreUsuario}</div>
-                <div className="profile-role">{rolUsuario}</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="dashboard-grid" style={{ gridTemplateColumns: '1fr' }}>
-          <div className="content-card">
-            <div className="card-head">
-              <div>
-                <h2 className="card-title">Configuración</h2>
-                <p className="card-subtitle">Administra tu cuenta y preferencias.</p>
-              </div>
-            </div>
-
-            <div className="appointment-list">
-              <div className="appointment" style={{ display: 'block', textAlign: 'center', padding: '3rem 1rem' }}>
-                <AlertCircle size={48} style={{ color: '#dde3d8', marginBottom: '1rem' }} />
-                <strong style={{ color: '#718096' }}>Configuración en desarrollo</strong>
-                <p style={{ color: '#cbd5e0', fontSize: '.9rem', marginTop: '.5rem' }}>
-                  Las opciones de configuración estarán disponibles en breve. Podrás modificar datos de tu cuenta, preferencias de notificaciones y privacidad.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
+      </section>
 
       <ToastContainer toasts={toasts} removeToast={removeToast} />
-    </div>
+    </ClienteLayout>
   );
 };
 

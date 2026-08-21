@@ -79,6 +79,11 @@ html, body {
 }
 
 /* Scrollbar fina y estética para el sidebar */
+.sidebarInner {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+}
+
 .sidebarInner::-webkit-scrollbar {
     width: 5px;
 }
@@ -766,6 +771,7 @@ html, body {
     .sidebar {
         position: relative;
         width: 100%;
+        height: auto;
         min-height: auto;
         border-radius: 0 0 24px 24px;
     }

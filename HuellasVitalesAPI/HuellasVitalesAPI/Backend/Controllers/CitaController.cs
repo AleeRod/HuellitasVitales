@@ -132,6 +132,23 @@ namespace HuellitasVitalesAPI.Controllers
             return Ok(new { success = true, mensaje = resultado.Mensaje, cita = resultado.Cita });
         }
 
+        // Cierra la cita con la nota clínica del día (panel del veterinario).
+        [HttpPut("{id:int}/completar")]
+        [Authorize]
+        public async Task<IActionResult> CompletarCita(int id, [FromBody] CompletarCitaRequest? request = null)
+        {
+            var usuarioId = ObtenerUsuarioActual();
+            if (usuarioId is null) return Unauthorized(new { success = false, mensaje = "Token inválido o sin identificador de usuario." });
+
+            var rol = ObtenerRolUsuario();
+            var resultado = await _citaService.CompletarAsync(id, request?.Notas, usuarioId.Value, rol);
+
+            if (!resultado.Exito)
+                return StatusCode(resultado.Codigo, new { success = false, mensaje = resultado.Mensaje });
+
+            return Ok(new { success = true, mensaje = resultado.Mensaje, cita = resultado.Cita });
+        }
+
         private int? ObtenerUsuarioActual()
         {
             var subClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -155,5 +172,10 @@ namespace HuellitasVitalesAPI.Controllers
     public class CancelarCitaRequest
     {
         public string? Motivo { get; set; }
+    }
+
+    public class CompletarCitaRequest
+    {
+        public string? Notas { get; set; }
     }
 }

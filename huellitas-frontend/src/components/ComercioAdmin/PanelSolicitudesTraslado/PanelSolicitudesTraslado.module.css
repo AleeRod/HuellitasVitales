@@ -1,0 +1,309 @@
+.panel {
+    --pine: #1B4332;
+    --pine-dk: #112b21;
+    --mint: #52B788;
+    --mint-lt: #95d5b2;
+    --cream: #FEFAE0;
+    --text-md: #4a5568;
+    --line: #dde3d8;
+    --danger: #c0392b;
+    width: 100%;
+}
+
+.headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.titulo {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine);
+    font-size: 1.6rem;
+    margin: 0 0 0.3rem;
+}
+
+.subtitulo {
+    color: var(--text-md);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.estadoBox {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-md);
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    border: 1px dashed var(--mint-lt);
+}
+
+.estadoBox h3 {
+    color: var(--pine);
+    margin: 0.6rem 0 0.4rem;
+}
+
+.linkBtn {
+    background: none;
+    border: none;
+    color: var(--mint);
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.seccionSubtitulo {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 700;
+    color: var(--pine);
+    font-size: 0.95rem;
+    margin: 0 0 0.7rem;
+}
+
+.contadorPill {
+    background: rgba(82, 183, 136, 0.14);
+    color: var(--pine);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.1rem 0.55rem;
+    border-radius: 50px;
+}
+
+.card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 1.1rem 1.3rem;
+    box-shadow: 0 8px 20px rgba(27, 67, 50, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.cardTop {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.avatar {
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--mint), var(--pine));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cardInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.cardMascota {
+    font-weight: 700;
+    color: var(--pine-dk);
+    font-size: 1.02rem;
+    font-family: 'Playfair Display', serif;
+}
+
+.cardMetaRow {
+    display: flex;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+    margin-top: 0.15rem;
+}
+
+.cardMeta {
+    font-size: 0.8rem;
+    color: var(--text-md);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.cardMotivo {
+    font-size: 0.85rem;
+    color: var(--text-md);
+    max-width: 420px;
+}
+
+.cardAcciones {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.btnVer, .btnAceptar, .btnRechazar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 0.95rem;
+    border-radius: 10px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    background: #fff;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btnVer { color: var(--pine); }
+.btnVer:hover { background: var(--pine); color: #fff; border-color: var(--pine); }
+
+.btnAceptar { color: var(--mint); }
+.btnAceptar:hover { background: var(--mint); color: #fff; border-color: var(--mint); }
+
+.btnRechazar { color: var(--danger); }
+.btnRechazar:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+/* --- MODAL --- */
+.overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 9999 !important;
+}
+
+.modal {
+    background: #fff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.3rem 1.5rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.modalHeader h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine);
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-md);
+    cursor: pointer;
+    display: flex;
+    padding: 0.2rem;
+}
+
+.closeBtn:hover { color: var(--pine-dk); }
+
+.modalBody {
+    padding: 1.4rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.filaDato {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.88rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eef2eb;
+}
+
+.filaDato span:first-child { color: var(--text-md); }
+.filaDato span:last-child { color: var(--pine-dk); font-weight: 700; }
+
+.seccionTitulo {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: var(--text-md);
+    margin: 0.2rem 0 0;
+}
+
+.miniLista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.84rem;
+    color: var(--text-md);
+}
+
+.textarea {
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--pine-dk);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.6rem 0.75rem;
+    outline: none;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.textarea:focus { border-color: var(--mint); }
+
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.7rem;
+    padding: 1.1rem 1.5rem;
+    border-top: 1px solid var(--line);
+}
+
+.btnPrimario, .btnSecundario {
+    padding: 0.65rem 1.3rem;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.btnPrimario { background: var(--danger); color: #fff; }
+.btnPrimario:hover { opacity: 0.9; }
+.btnPrimario:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btnSecundario {
+    background: transparent;
+    color: var(--text-md);
+    border: 1px solid var(--line);
+}
+.btnSecundario:hover { background: #f7faf7; }
+
+@media (max-width: 700px) {
+    .card { flex-direction: column; align-items: flex-start; }
+    .cardAcciones { width: 100%; }
+}

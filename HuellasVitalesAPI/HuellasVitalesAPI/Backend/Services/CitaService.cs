@@ -325,6 +325,35 @@ namespace HuellitasVitalesAPI.Services
             return (true, "Cita cancelada correctamente.", 200, dto);
         }
 
+        // ─── COMPLETAR (nota clínica rápida del panel del veterinario) ───
+        // Solo el veterinario a cargo (o un admin) puede cerrar la cita, y solo si ya fue
+        // confirmada — no tiene sentido "completar" algo que ni siquiera se atendió.
+        public async Task<(bool Exito, string Mensaje, int Codigo, CitaDTO? Cita)> CompletarAsync(
+            int idCita, string? notas, int idUsuarioActual, byte rolUsuario)
+        {
+            var cita = await _context.Citas.FirstOrDefaultAsync(c => c.IdCita == idCita);
+            if (cita == null)
+                return (false, "La cita indicada no existe.", 404, null);
+
+            if (!await TienePermisoParaGestionarCitaAsync(cita, idUsuarioActual, rolUsuario, permitirClientePropietario: false))
+                return (false, "No tienes permisos para completar esta cita.", 403, null);
+
+            if (cita.IdEstadoCita == ESTADO_CANCELADA)
+                return (false, "No se puede completar una cita cancelada.", 400, null);
+
+            if (cita.IdEstadoCita == ESTADO_COMPLETADA)
+                return (false, "La cita ya se encuentra completada.", 400, null);
+
+            cita.IdEstadoCita = ESTADO_COMPLETADA;
+            if (!string.IsNullOrWhiteSpace(notas))
+                cita.Notas = string.IsNullOrWhiteSpace(cita.Notas) ? notas.Trim() : cita.Notas + " | " + notas.Trim();
+
+            await _context.SaveChangesAsync();
+
+            var dto = await ObtenerDTOAsync(idCita);
+            return (true, "Cita marcada como completada.", 200, dto);
+        }
+
         private async Task<bool> TienePermisoParaGestionarCitaAsync(Cita cita, int idUsuarioActual, byte rolUsuario, bool permitirClientePropietario)
         {
             if (rolUsuario == 1)

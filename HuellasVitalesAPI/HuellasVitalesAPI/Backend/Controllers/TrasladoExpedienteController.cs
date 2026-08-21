@@ -31,6 +31,16 @@ public class TrasladoExpedienteController : ControllerBase
         return Ok(new { success = true, solicitudes = await _service.PendientesAsync(usuario.Value, RolActual()) });
     }
 
+    // GET api/trasladoexpediente/mis-solicitudes
+    // El cliente ve el estado de las solicitudes que él mismo envió.
+    [HttpGet("mis-solicitudes")]
+    public async Task<IActionResult> MisSolicitudes()
+    {
+        var usuario = UsuarioActual();
+        if (usuario is null) return Unauthorized(new { success = false, mensaje = "Token inválido." });
+        return Ok(new { success = true, solicitudes = await _service.ObtenerMisSolicitudesAsync(usuario.Value) });
+    }
+
     [HttpPut("solicitudes/{idSolicitud:int}/aceptar")]
     public Task<IActionResult> Aceptar(int idSolicitud, ResolverTrasladoExpedienteRequest request) => Resolver(idSolicitud, true, request);
 

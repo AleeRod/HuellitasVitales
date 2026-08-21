@@ -1,0 +1,48 @@
+.card {
+    --pine: #1B4332;
+    --pine-dk: #112b21;
+    --mint: #52B788;
+    --line: #dde3d8;
+    --text-md: #4a5568;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 0.9rem 1.1rem;
+}
+
+.icono {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: rgba(82, 183, 136, 0.14);
+    color: var(--pine);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.titulo {
+    font-weight: 700;
+    color: var(--pine-dk);
+    font-size: 0.95rem;
+}
+
+.meta {
+    font-size: 0.8rem;
+    color: var(--text-md);
+}
+
+.cargando {
+    color: var(--text-md);
+    font-size: 0.85rem;
+}

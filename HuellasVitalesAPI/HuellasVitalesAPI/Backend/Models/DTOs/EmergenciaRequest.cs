@@ -12,3 +12,10 @@ public class CerrarEmergenciaRequest
     [Required, StringLength(4000)] public string Diagnostico { get; set; } = string.Empty;
     [Required, StringLength(4000)] public string Tratamiento { get; set; } = string.Empty;
 }
+public class RegistrarEmergenciaExternaRequest
+{
+    [Required, StringLength(200)] public string NombreVeterinarioExterno { get; set; } = string.Empty;
+    [Required, StringLength(200)] public string NombreClinicaExterna { get; set; } = string.Empty;
+    [Required, StringLength(4000)] public string Diagnostico { get; set; } = string.Empty;
+    [Required, StringLength(4000)] public string Tratamiento { get; set; } = string.Empty;
+}

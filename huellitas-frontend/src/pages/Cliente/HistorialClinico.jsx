@@ -1,162 +1,119 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './DashboardCliente.css';
-import { 
-  Home, PawPrint, CalendarDays, Activity, Syringe, FileText, 
-  Settings, LogOut, Bell, AlertCircle
-} from 'lucide-react';
+import { AlertCircle, Stethoscope, Paperclip, AlertTriangle } from 'lucide-react';
 
+import ClienteLayout from '../../components/Cliente/ClienteLayout/ClienteLayout';
+import { API_BASE } from '../../api/config';
 import { ToastContainer } from '../../components/Toast/Toast';
 import { useToast } from '../../components/Toast/useToast';
 
+const ICONO_TIPO = {
+  Cita: Stethoscope,
+  AtencionExterna: Paperclip,
+  Emergencia: AlertTriangle,
+};
+
+const ETIQUETA_TIPO = {
+  Cita: 'Consulta',
+  AtencionExterna: 'Atención externa',
+  Emergencia: 'Emergencia',
+};
+
 const HistorialClinico = () => {
-  const [usuario, setUsuario] = useState(null);
-  const { toasts, removeToast } = useToast();
-  const navigate = useNavigate();
+  const [historial, setHistorial] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const { toasts, showToast, removeToast } = useToast();
+
+  const cargarHistorial = async () => {
+    const token = localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      setCargando(true);
+      const res = await fetch(`${API_BASE}/reporte/historial-clinico`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo cargar el historial clínico.');
+      setHistorial(data.historial || []);
+    } catch (error) {
+      console.error(error);
+      showToast(error.message || 'Error al cargar el historial clínico.', 'error');
+    } finally {
+      setCargando(false);
+    }
+  };
 
   useEffect(() => {
-    try {
-      const guardado = localStorage.getItem('usuario_huellitas') || localStorage.getItem('usuario') || localStorage.getItem('user');
-      if (guardado) {
-        setUsuario(JSON.parse(guardado));
-      }
-    } catch (err) {
-      console.error('No se pudo leer el usuario guardado', err);
-    }
+    cargarHistorial();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const nombreUsuario = usuario?.nombre || usuario?.Nombre || usuario?.nombreCompleto || 'Cliente';
-  const rolUsuario = usuario?.rol?.nombre || usuario?.rolNombre || usuario?.rol || 'Cliente';
-  const inicialAvatar = nombreUsuario.charAt(0).toUpperCase();
-
-  const handleCerrarSesion = (e) => {
-    e.preventDefault();
-    localStorage.removeItem('usuario_huellitas');
-    localStorage.removeItem('usuario');
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    localStorage.removeItem('token_huellitas');
-    localStorage.removeItem('jwt');
-    localStorage.removeItem('huellitas_token');
-    navigate('/');
+  const formatFecha = (fechaISO) => {
+    if (!fechaISO) return '-';
+    return new Date(fechaISO).toLocaleDateString('es-CR', { day: '2-digit', month: 'long', year: 'numeric' });
   };
 
   return (
-    <div className="client-shell">
-      <aside className="sidebar">
-        <div className="sidebar-content">
-          <div className="brand-card">
-            <img src="/Imagenes/logo.png" alt="Logo Huellitas Vitales" />
+    <ClienteLayout activo="historial">
+      <section className="dashboard-grid" style={{ gridTemplateColumns: '1fr' }}>
+        <div className="content-card">
+          <div className="card-head">
             <div>
-              <div className="brand-name">Huellitas Vitales</div>
-              <div className="brand-label">Portal Cliente</div>
+              <h2 className="card-title">Historial clínico</h2>
+              <p className="card-subtitle">Consultas, atenciones externas y emergencias de todas tus mascotas.</p>
             </div>
           </div>
 
-          <div className="nav-section">Mi cuenta</div>
-          <a href="#dashboard" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente'); }}>
-            <span className="nav-icon"><Home size={18} /></span>
-            Dashboard
-          </a>
-          <a href="#mascotas" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/mis-mascotas'); }}>
-            <span className="nav-icon"><PawPrint size={18} /></span>
-            Mis mascotas
-          </a>
-          <a href="#citas" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/mis-citas'); }}>
-            <span className="nav-icon"><CalendarDays size={18} /></span>
-            Mis citas
-          </a>
-          <a href="#historial" className="nav-link-client active" onClick={(e) => e.preventDefault()}>
-            <span className="nav-icon"><Activity size={18} /></span>
-            Historial clínico
-          </a>
-          <a href="#vacunas" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/vacunas'); }}>
-            <span className="nav-icon"><Syringe size={18} /></span>
-            Vacunas
-          </a>
-          <a href="#reportes" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/reportes'); }}>
-            <span className="nav-icon"><FileText size={18} /></span>
-            Reportes
-          </a>
+          {cargando && (
+            <div className="appointment-list"><div className="appointment" style={{ display: 'block' }}>Cargando historial…</div></div>
+          )}
 
-          <div className="nav-section">Sistema</div>
-          <a href="#configuracion" className="nav-link-client" onClick={(e) => { e.preventDefault(); navigate('/cliente/configuracion'); }}>
-            <span className="nav-icon"><Settings size={18} /></span>
-            Configuración
-          </a>
-          
-          <button 
-            onClick={handleCerrarSesion} 
-            className="nav-link-client" 
-            style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', color: '#ff4d4d', cursor: 'pointer' }}
-          >
-            <span className="nav-icon"><LogOut size={18} /></span>
-            Cerrar sesión
-          </button>
-
-          <div className="sidebar-pet-card">
-            <div className="pet-mini">
-              <div className="pet-avatar"><AlertCircle size={16} color="#4a4a4a" /></div>
-              <div>
-                <div className="pet-name">Pendiente</div>
-                <div className="pet-text">Sin historial registrado</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      <main className="main-content">
-        <section className="topbar">
-          <div>
-            <div className="hero-badge">
-              <svg width="9" height="9" viewBox="0 0 10 10">
-                <circle cx="5" cy="5" r="5" fill="#52B788" />
-              </svg>
-              Historial clínico
-            </div>
-            <h1 className="hero-title">Historial clínico 📋</h1>
-            <p className="hero-sub">Consulta el historial médico de tus mascotas registrado por los veterinarios.</p>
-          </div>
-
-          <div className="top-actions">
-            <button className="icon-button" title="Notificaciones">
-              <Bell size={20} />
-            </button>
-            <div className="profile-mini">
-              <div className="profile-avatar">{inicialAvatar}</div>
-              <div>
-                <div className="profile-name">{nombreUsuario}</div>
-                <div className="profile-role">{rolUsuario}</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="dashboard-grid" style={{ gridTemplateColumns: '1fr' }}>
-          <div className="content-card">
-            <div className="card-head">
-              <div>
-                <h2 className="card-title">Historial clínico</h2>
-                <p className="card-subtitle">Registros médicos de tus mascotas.</p>
-              </div>
-            </div>
-
+          {!cargando && historial.length === 0 && (
             <div className="appointment-list">
               <div className="appointment" style={{ display: 'block', textAlign: 'center', padding: '3rem 1rem' }}>
                 <AlertCircle size={48} style={{ color: '#dde3d8', marginBottom: '1rem' }} />
                 <strong style={{ color: '#718096' }}>Sin datos disponibles</strong>
                 <p style={{ color: '#cbd5e0', fontSize: '.9rem', marginTop: '.5rem' }}>
-                  El historial clínico de tus mascotas aparecerá aquí cuando los veterinarios registren sus consultas.
+                  El historial clínico de tus mascotas aparecerá aquí en cuanto tengas citas completadas,
+                  registres una atención externa o se cierre una emergencia.
                 </p>
               </div>
             </div>
-          </div>
-        </section>
-      </main>
+          )}
+
+          {!cargando && historial.length > 0 && (
+            <div className="appointment-list">
+              {historial.map((item, index) => {
+                const Icon = ICONO_TIPO[item.tipo] || Stethoscope;
+                return (
+                  <div className="appointment" key={index} style={{ alignItems: 'flex-start' }}>
+                    <div className="date-box" style={{ background: 'rgba(27,67,50,.10)' }}>
+                      <Icon size={18} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                        <div className="appointment-title">{item.nombreMascota} — {item.titulo}</div>
+                        <span style={{ background: '#edf7f1', color: '#2d6a4f', borderRadius: 999, padding: '0.2rem 0.6rem', fontSize: '.72rem', fontWeight: 700 }}>
+                          {ETIQUETA_TIPO[item.tipo] || item.tipo}
+                        </span>
+                      </div>
+                      <div className="appointment-text">{formatFecha(item.fecha)} · {item.detalle}</div>
+                      {item.diagnostico && (
+                        <div className="appointment-text" style={{ marginTop: '.35rem', fontStyle: 'italic', color: '#718096' }}>
+                          Diagnóstico: {item.diagnostico}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
 
       <ToastContainer toasts={toasts} removeToast={removeToast} />
-    </div>
+    </ClienteLayout>
   );
 };
 

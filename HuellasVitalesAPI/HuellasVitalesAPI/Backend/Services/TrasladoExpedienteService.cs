@@ -32,6 +32,8 @@ public class TrasladoExpedienteService
         if (mascota == null) return (false, "La mascota asociada al expediente no existe o está inactiva.", 404, null);
         if (rol != RolAdministrador && mascota.IdUsuario != idUsuario)
             return (false, "Solo el propietario de la mascota puede solicitar el traslado.", 403, null);
+        if (expediente.IdComercioActual == null)
+            return (false, "Tu mascota todavía no tiene una veterinaria asignada, así que no hay de dónde trasladarla. Elegí una veterinaria primero.", 400, null);
         if (request.IdComercioDestino == expediente.IdComercioActual)
             return (false, "La veterinaria de destino debe ser diferente a la actual.", 400, null);
 
@@ -43,7 +45,7 @@ public class TrasladoExpedienteService
         var solicitud = new SolicitudTrasladoExpediente
         {
             IdExpediente = idExpediente,
-            IdComercioOrigen = expediente.IdComercioActual,
+            IdComercioOrigen = expediente.IdComercioActual.Value,
             IdComercioDestino = request.IdComercioDestino,
             IdUsuarioSolicitante = idUsuario,
             Motivo = string.IsNullOrWhiteSpace(request.Motivo) ? null : request.Motivo.Trim(),
@@ -125,6 +127,32 @@ public class TrasladoExpedienteService
                       join c in _context.Comercios on s.IdComercioDestino equals c.IdComercio
                       select (object)new { s.IdSolicitudTraslado, s.IdExpediente, NombreMascota = m.Nombre,
                           s.FechaSolicitud, s.Motivo, IdComercioDestino = c.IdComercio, VeterinariaDestino = c.NombreComercial }).ToListAsync();
+    }
+
+    // ─── MIS SOLICITUDES (para el cliente que las envió) ───
+    // Antes el cliente enviaba una solicitud y nunca más sabía qué pasó con ella — no había
+    // ninguna forma de consultar si fue aceptada, rechazada, o seguía pendiente.
+    public async Task<List<object>> ObtenerMisSolicitudesAsync(int idUsuario)
+    {
+        return await (
+            from s in _context.SolicitudesTrasladoExpediente
+            where s.IdUsuarioSolicitante == idUsuario
+            join e in _context.Expedientes on s.IdExpediente equals e.IdExpediente
+            join m in _context.Mascotas on e.IdMascota equals m.IdMascota
+            join cd in _context.Comercios on s.IdComercioDestino equals cd.IdComercio
+            orderby s.FechaSolicitud descending
+            select (object)new
+            {
+                s.IdSolicitudTraslado,
+                NombreMascota = m.Nombre,
+                VeterinariaDestino = cd.NombreComercial,
+                s.Estado,
+                s.Motivo,
+                s.Respuesta,
+                s.FechaSolicitud,
+                s.FechaResolucion
+            }
+        ).ToListAsync();
     }
 
     private async Task<Comercio?> ObtenerComercioVeterinarioAsync(int idComercio) =>

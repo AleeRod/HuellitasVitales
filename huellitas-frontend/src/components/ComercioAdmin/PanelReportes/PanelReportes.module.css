@@ -1,0 +1,159 @@
+.panel {
+    --pine: #1B4332;
+    --pine-dk: #112b21;
+    --mint: #52B788;
+    --mint-lt: #95d5b2;
+    --cream: #FEFAE0;
+    --text-md: #4a5568;
+    --line: #dde3d8;
+    --danger: #c0392b;
+    width: 100%;
+}
+
+.headerRow {
+    margin-bottom: 1.5rem;
+}
+
+.titulo {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine);
+    font-size: 1.6rem;
+    margin: 0 0 0.3rem;
+}
+
+.subtitulo {
+    color: var(--text-md);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.estadoBox {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-md);
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    border: 1px dashed var(--mint-lt);
+}
+
+.linkBtn {
+    background: none;
+    border: none;
+    color: var(--mint);
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+/* --- STATS --- */
+.statGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.statCard {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.2rem 1.3rem;
+    box-shadow: 0 8px 20px rgba(27, 67, 50, 0.05);
+}
+
+.statIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(82, 183, 136, 0.14);
+    color: var(--pine);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.7rem;
+}
+
+.statLabel {
+    font-size: 0.8rem;
+    color: var(--text-md);
+    margin-bottom: 0.2rem;
+}
+
+.statNumber {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: var(--pine-dk);
+}
+
+.statNote {
+    font-size: 0.75rem;
+    color: #9aa39a;
+    margin-top: 0.2rem;
+}
+
+/* --- LISTAS DE ACTIVIDAD RECIENTE --- */
+.gridActividad {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.2rem;
+}
+
+.bloque {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.2rem 1.3rem;
+    box-shadow: 0 8px 20px rgba(27, 67, 50, 0.05);
+}
+
+.bloqueTitulo {
+    font-weight: 700;
+    color: var(--pine);
+    font-size: 0.95rem;
+    margin: 0 0 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.item {
+    padding: 0.7rem 0;
+    border-bottom: 1px solid #eef2eb;
+}
+
+.item:last-child { border-bottom: none; }
+
+.itemTitulo {
+    font-weight: 700;
+    color: var(--pine-dk);
+    font-size: 0.85rem;
+}
+
+.itemMeta {
+    font-size: 0.78rem;
+    color: var(--text-md);
+    margin-top: 0.15rem;
+}
+
+.itemVacio {
+    font-size: 0.85rem;
+    color: var(--text-md);
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 50px;
+    margin-left: 0.4rem;
+}
+
+.badgeOk { background: rgba(82, 183, 136, 0.14); color: var(--pine); }
+.badgeRechazado { background: rgba(192, 57, 43, 0.1); color: var(--danger); }
+.badgeExterna { background: rgba(230, 168, 23, 0.14); color: #a3720a; }
