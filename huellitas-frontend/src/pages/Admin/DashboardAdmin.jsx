@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Home,
   Users,
@@ -11,7 +11,6 @@ import {
   Settings,
   LogOut,
   Search,
-  Bell,
   CheckCircle2,
   Eye,
   Pencil,
@@ -21,19 +20,40 @@ import {
   Package,
   ClipboardCheck,
   Briefcase,
+  ArrowLeftRight,
+  AlertTriangle,
 } from 'lucide-react';
 import PanelServicios from '../../components/ComercioAdmin/PanelServicios/PanelServicios';
 import PanelProductos from '../../components/ComercioAdmin/PanelProductos/PanelProductos';
 import PanelSolicitudesPendientes from '../../components/Admin/PanelSolicitudes/PanelSolicitudesPendientes';
 import PanelEmpleados from '../../components/ComercioAdmin/PanelEmpleados/PanelEmpleados';
 import PanelVeterinarios from '../../components/ComercioAdmin/PanelVeterinarios/PanelVeterinarios';
+import PanelSolicitudesTraslado from '../../components/ComercioAdmin/PanelSolicitudesTraslado/PanelSolicitudesTraslado';
+import PanelEmergencias from '../../components/ComercioAdmin/PanelEmergencias/PanelEmergencias';
+import PanelReportes from '../../components/ComercioAdmin/PanelReportes/PanelReportes';
+import NotificacionesBell from '../../components/Notificaciones/NotificacionesBell';
 
 import styles from './DashboardAdmin.module.css';
 
+const SECCIONES_VALIDAS = ['usuarios', 'veterinarios', 'reportes', 'tiposServicio', 'PanelProductos', 'solicitudesComercio', 'empleados', 'traslados', 'emergencias'];
+
 const DashboardAdmin = () => {
-  const [seccionActiva, setSeccionActiva] = useState('usuarios');
+  const [searchParams] = useSearchParams();
+  // Permite llegar directo a una sección desde afuera (p. ej. al tocar una notificación de
+  // emergencia: /admin?seccion=emergencias) en vez de aterrizar siempre en Usuarios.
+  const seccionInicial = SECCIONES_VALIDAS.includes(searchParams.get('seccion')) ? searchParams.get('seccion') : 'usuarios';
+  const [seccionActiva, setSeccionActiva] = useState(seccionInicial);
   const [usuario, setUsuario] = useState(null);
   const navigate = useNavigate();
+
+  // Si el admin ya está en este panel (no se vuelve a montar) y toca una notificación que
+  // apunta acá con otra sección, el useState de arriba no alcanza — hay que escuchar el
+  // cambio de query param mientras el componente sigue vivo.
+  useEffect(() => {
+    const s = searchParams.get('seccion');
+    if (s && SECCIONES_VALIDAS.includes(s)) setSeccionActiva(s);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     try {
@@ -102,10 +122,13 @@ const DashboardAdmin = () => {
               <Calendar size={18} className={styles.navIcon} />
               Citas
             </a>
-            <a href="#reportes" className={styles.navLinkAdmin} onClick={(e) => e.preventDefault()}>
+            <button
+              className={`${styles.navLinkAdmin} ${seccionActiva === 'reportes' ? styles.active : ''}`}
+              onClick={() => setSeccionActiva('reportes')}
+            >
               <BarChart3 size={18} className={styles.navIcon} />
               Reportes
-            </a>
+            </button>
 
             <div className={styles.sidebarSection}>Administración</div>
 
@@ -139,6 +162,22 @@ const DashboardAdmin = () => {
             >
               <Briefcase size={18} className={styles.navIcon} />
               Empleados
+            </button>
+
+            <button
+              className={`${styles.navLinkAdmin} ${seccionActiva === 'traslados' ? styles.active : ''}`}
+              onClick={() => setSeccionActiva('traslados')}
+            >
+              <ArrowLeftRight size={18} className={styles.navIcon} />
+              Traslados
+            </button>
+
+            <button
+              className={`${styles.navLinkAdmin} ${seccionActiva === 'emergencias' ? styles.active : ''}`}
+              onClick={() => setSeccionActiva('emergencias')}
+            >
+              <AlertTriangle size={18} className={styles.navIcon} />
+              Emergencias
             </button>
 
             <a href="#roles" className={styles.navLinkAdmin} onClick={(e) => e.preventDefault()}>
@@ -191,9 +230,9 @@ const DashboardAdmin = () => {
                 <input type="text" placeholder="Buscar en el sistema..." />
               </div>
 
-              <button className={styles.iconButton} title="Notificaciones">
-                <Bell size={18} />
-              </button>
+              <div className={styles.iconButton}>
+                <NotificacionesBell size={18} />
+              </div>
 
               <div className={styles.profileMini}>
                 <div className={styles.profileAvatar}>{inicialAvatar}</div>
@@ -419,6 +458,24 @@ const DashboardAdmin = () => {
           {seccionActiva === 'empleados' && (
             <div style={{ width: '100%' }}>
               <PanelEmpleados />
+            </div>
+          )}
+
+          {seccionActiva === 'traslados' && (
+            <div style={{ width: '100%' }}>
+              <PanelSolicitudesTraslado />
+            </div>
+          )}
+
+          {seccionActiva === 'emergencias' && (
+            <div style={{ width: '100%' }}>
+              <PanelEmergencias />
+            </div>
+          )}
+
+          {seccionActiva === 'reportes' && (
+            <div style={{ width: '100%' }}>
+              <PanelReportes />
             </div>
           )}
 

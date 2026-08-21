@@ -4,7 +4,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using QuestPDF.Infrastructure;
 using System.Text;
+
+// Licencia Community de QuestPDF: gratuita para proyectos como este (ingresos anuales bajos /
+// uso educativo). Sin esto, cualquier PDF generado sale con una marca de agua.
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,6 +84,13 @@ builder.Services.AddScoped<ComercioFuncionarioService>();
 builder.Services.AddScoped<AgendaService>();
 builder.Services.AddScoped<CitaService>();
 builder.Services.AddScoped<VeterinarioService>();
+builder.Services.AddScoped<NotificacionService>();
+builder.Services.AddScoped<TrasladoExpedienteService>();
+builder.Services.AddScoped<AtencionExternaService>();
+builder.Services.AddScoped<ExpedienteService>();
+builder.Services.AddScoped<ExpedientePdfService>();
+builder.Services.AddScoped<EmergenciaService>();
+builder.Services.AddScoped<ReporteService>();
 
 var app = builder.Build();
 

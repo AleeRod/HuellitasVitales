@@ -1,20 +1,38 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Package, LogOut, Store, Stethoscope, Users } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Package, LogOut, Store, Stethoscope, Users, ArrowLeftRight } from "lucide-react";
 import { API_BASE } from "../../api/config";
 import PanelProductos from "../../components/ComercioAdmin/PanelProductos/PanelProductos"; // ⚠️ ajustá la ruta según dónde tengas PanelProductos
 import PanelServicios from "../../components/ComercioAdmin/PanelServicios/PanelServicios";
 import PanelVeterinarios from "../../components/ComercioAdmin/PanelVeterinarios/PanelVeterinarios";
+import PanelSolicitudesTraslado from "../../components/ComercioAdmin/PanelSolicitudesTraslado/PanelSolicitudesTraslado";
+import NotificacionesBell from "../../components/Notificaciones/NotificacionesBell";
 import styles from "./DashboardFuncionario.module.css";
 
 const TIPO_COMERCIO_VETERINARIA = 1;
 const TIPO_COMERCIO_ALMACEN = 2;
 
+const SECCIONES_VALIDAS = ["productos", "servicios", "veterinarios", "traslados"];
+
 const DashboardFuncionario = () => {
   const [usuario, setUsuario] = useState(null);
   const [cargando, setCargando] = useState(true);
-  const [seccionActiva, setSeccionActiva] = useState(null); // "productos" | "servicios"
+  const [searchParams] = useSearchParams();
+  // Permite llegar directo a una sección desde afuera (p. ej. al tocar una notificación de
+  // traslado: /funcionario?seccion=traslados) en vez de que la termine pisando la selección
+  // automática de más abajo.
+  const seccionDesdeUrl = SECCIONES_VALIDAS.includes(searchParams.get("seccion")) ? searchParams.get("seccion") : null;
+  const [seccionActiva, setSeccionActiva] = useState(seccionDesdeUrl); // "productos" | "servicios" | "traslados"
   const navigate = useNavigate();
+
+  // Si ya está en este panel (no se vuelve a montar) y toca una notificación que apunta acá
+  // con otra sección, el useState de arriba no alcanza — hay que escuchar el cambio de query
+  // param mientras el componente sigue vivo.
+  useEffect(() => {
+    const s = searchParams.get("seccion");
+    if (s && SECCIONES_VALIDAS.includes(s)) setSeccionActiva(s);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     const cargarPerfil = async () => {
@@ -49,9 +67,13 @@ const DashboardFuncionario = () => {
         const tieneAlmacenAprobado = comercios.some(c => c.idTipoComercio === TIPO_COMERCIO_ALMACEN && c.aprobado);
         const tieneVeterinariaAprobada = comercios.some(c => c.idTipoComercio === TIPO_COMERCIO_VETERINARIA && c.aprobado);
 
-        if (tieneAlmacenAprobado) setSeccionActiva("productos");
-        else if (tieneVeterinariaAprobada) setSeccionActiva("servicios");
-        else setSeccionActiva(null);
+        // Si ya llegó con una sección puntual desde la URL (notificación), se respeta esa en
+        // vez de pisarla con la selección automática.
+        if (!seccionDesdeUrl) {
+          if (tieneAlmacenAprobado) setSeccionActiva("productos");
+          else if (tieneVeterinariaAprobada) setSeccionActiva("servicios");
+          else setSeccionActiva(null);
+        }
 
       } catch (error) {
         navigate("/login");
@@ -61,7 +83,7 @@ const DashboardFuncionario = () => {
     };
 
     cargarPerfil();
-  }, [navigate]);
+  }, [navigate, seccionDesdeUrl]);
 
   const cerrarSesion = () => {
     localStorage.removeItem("token_huellitas");
@@ -103,12 +125,15 @@ const DashboardFuncionario = () => {
   return (
     <div className={styles.layout}>
       <aside className={styles.sidebar}>
-        <div className={styles.marca}>
-          <Store size={22} />
-          <div>
-            <strong>{nombreEncabezado}</strong>
-            <span>Panel de funcionario</span>
+        <div className={styles.marca} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            <Store size={22} />
+            <div>
+              <strong>{nombreEncabezado}</strong>
+              <span>Panel de funcionario</span>
+            </div>
           </div>
+          <NotificacionesBell size={20} />
         </div>
 
         <nav className={styles.nav}>
@@ -134,6 +159,14 @@ const DashboardFuncionario = () => {
               onClick={() => setSeccionActiva("veterinarios")}
             >
               <Users size={18} /> Veterinarios
+            </button>
+          )}
+          {comercioVeterinaria && (
+            <button
+              className={seccionActiva === "traslados" ? styles.navItemActivo : styles.navItem}
+              onClick={() => setSeccionActiva("traslados")}
+            >
+              <ArrowLeftRight size={18} /> Traslados
             </button>
           )}
         </nav>
@@ -167,6 +200,16 @@ const DashboardFuncionario = () => {
         {seccionActiva === "veterinarios" && comercioVeterinaria && (
           comercioVeterinaria.aprobado ? (
             <PanelVeterinarios esAdmin={false} />
+          ) : (
+            <div className={styles.avisoServicios}>
+              <p>"{comercioVeterinaria.nombreComercial}" todavía no fue aprobado por un administrador.</p>
+            </div>
+          )
+        )}
+
+        {seccionActiva === "traslados" && comercioVeterinaria && (
+          comercioVeterinaria.aprobado ? (
+            <PanelSolicitudesTraslado />
           ) : (
             <div className={styles.avisoServicios}>
               <p>"{comercioVeterinaria.nombreComercial}" todavía no fue aprobado por un administrador.</p>

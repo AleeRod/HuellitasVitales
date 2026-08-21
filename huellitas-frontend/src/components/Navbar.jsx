@@ -38,7 +38,7 @@ const Navbar = () => {
     } else if (rol === 4) {
       navigate('/funcionario');
     } else if (rol === 2) {
-      navigate('/profesional');
+      navigate('/veterinario');
     } else {
       navigate('/cliente');
     }
@@ -90,22 +90,9 @@ const Navbar = () => {
           <div className="user-dropdown-container" style={{ position: 'relative' }}>
             
             {/* Botón principal del perfil */}
-            <button 
-              onClick={() => setDropdownOpen(!dropdownOpen)} 
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
               className="user-menu-btn"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                background: 'rgba(82, 183, 136, 0.15)',
-                border: '1px solid #52B788',
-                padding: '6px 14px',
-                borderRadius: '30px',
-                cursor: 'pointer',
-                color: '#fff',
-                fontFamily: 'inherit',
-                fontWeight: '600'
-              }}
             >
               <div style={{
                 width: '32px',
@@ -122,27 +109,14 @@ const Navbar = () => {
                 {usuario.nombre ? usuario.nombre.charAt(0).toUpperCase() : 'U'}
               </div>
               <span>{usuario.nombre ? usuario.nombre.split(' ')[0] : 'Usuario'}</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg className={`chevron${dropdownOpen ? ' abierto' : ''}`} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="m6 9 6 6 6-6"/>
               </svg>
             </button>
 
             {/* Menú Desplegable (Dropdown) */}
             {dropdownOpen && (
-              <div className="dropdown-menu-custom" style={{
-                position: 'absolute',
-                right: 0,
-                top: '45px',
-                background: '#1a2e26',
-                border: '1px solid rgba(82, 183, 136, 0.3)',
-                borderRadius: '12px',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-                width: '230px',
-                padding: '8px 0',
-                zIndex: 1000,
-                display: 'flex',
-                flexDirection: 'column'
-              }}>
+              <div className="dropdown-menu-custom">
                 <div style={{ padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '5px' }}>
                   <p style={{ margin: 0, fontSize: '12px', color: '#a0aec0' }}>Conectado como</p>
                   <p style={{ margin: 0, fontSize: '13px', fontWeight: 'bold', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -151,10 +125,10 @@ const Navbar = () => {
                 </div>
 
                 {/* Opción: Mi Perfil */}
-                <Link 
-                  to="/perfil" 
+                <Link
+                  to="/perfil"
                   onClick={() => setDropdownOpen(false)}
-                  style={dropdownItemStyle}
+                  className="dropdown-item"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '10px', verticalAlign: 'middle' }}>
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -164,10 +138,7 @@ const Navbar = () => {
                 </Link>
 
                 {/* Opción: Ir al Panel */}
-                <button 
-                  onClick={irAlPanel}
-                  style={{ ...dropdownItemStyle, background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                >
+                <button onClick={irAlPanel} className="dropdown-item">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '10px' }}>
                     <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
                     <line x1="8" y1="21" x2="16" y2="21"></line>
@@ -179,10 +150,7 @@ const Navbar = () => {
                 <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.1)', margin: '5px 0' }}></div>
 
                 {/* Opción: Cerrar Sesión */}
-                <button 
-                  onClick={cerrarSesion}
-                  style={{ ...dropdownItemStyle, color: '#ff6b6b', background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                >
+                <button onClick={cerrarSesion} className="dropdown-item dropdown-item-danger">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '10px' }}>
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                     <polyline points="16 17 21 12 16 7"></polyline>
@@ -204,17 +172,6 @@ const Navbar = () => {
       </div>
     </nav>
   );
-};
-
-const dropdownItemStyle = {
-  padding: '10px 16px',
-  color: '#e2e8f0',
-  textDecoration: 'none',
-  fontSize: '14px',
-  display: 'flex',
-  alignItems: 'center',
-  transition: 'background 0.2s',
-  fontFamily: 'inherit'
 };
 
 export default Navbar;

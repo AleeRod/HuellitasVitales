@@ -1,0 +1,715 @@
+.panel {
+    --pine: #1B4332;
+    --pine-dk: #112b21;
+    --mint: #52B788;
+    --mint-lt: #95d5b2;
+    --cream: #FEFAE0;
+    --text-md: #4a5568;
+    --line: #dde3d8;
+    --danger: #c0392b;
+    --amber: #a3720a;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    max-width: 780px;
+}
+
+/* --- HERO DE EMERGENCIA --- */
+.hero {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: linear-gradient(135deg, #fff, #fff5f4);
+    border: 1px solid rgba(192, 57, 43, 0.25);
+    border-radius: 20px;
+    padding: 1.3rem 1.5rem;
+}
+
+.heroIcono {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: var(--danger);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.heroIcono::after {
+    content: "";
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 2px solid var(--danger);
+    animation: pulso 1.8s ease-out infinite;
+}
+
+@keyframes pulso {
+    0% { transform: scale(0.9); opacity: 0.8; }
+    100% { transform: scale(1.45); opacity: 0; }
+}
+
+.heroTitulo {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine-dk);
+    font-size: 1.4rem;
+    margin: 0 0 0.2rem;
+}
+
+.heroSub {
+    color: var(--text-md);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* --- SECCIONES / PASOS --- */
+.seccion {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.3rem 1.5rem;
+    box-shadow: 0 8px 20px rgba(27, 67, 50, 0.05);
+}
+
+.pasoLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--mint);
+    margin: 0 0 0.7rem;
+}
+
+.pasoNumero {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--mint);
+    color: #fff;
+    font-size: 0.68rem;
+}
+
+.seccionTitulo {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine-dk);
+    font-size: 1.05rem;
+    margin: 0 0 0.9rem;
+}
+
+/* --- SELECTOR DE VETERINARIA (mascota sin expediente todavía) --- */
+.flujoRow {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+/* --- BANNER DE DISPONIBILIDAD --- */
+.disponibilidad {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.9rem 1.1rem;
+    border-radius: 14px;
+    font-size: 0.87rem;
+    margin-top: 1rem;
+}
+
+.disponibleOk {
+    background: rgba(82, 183, 136, 0.12);
+    border: 1px solid rgba(82, 183, 136, 0.3);
+    color: var(--pine-dk);
+}
+
+.disponibleAviso {
+    background: rgba(230, 168, 23, 0.12);
+    border: 1px solid rgba(230, 168, 23, 0.35);
+    color: var(--amber);
+}
+
+/* --- FORMULARIO --- */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--pine-dk);
+}
+
+.campo input,
+.campo textarea {
+    font-family: inherit;
+    font-weight: 400;
+    font-size: 0.92rem;
+    color: var(--pine-dk);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.65rem 0.8rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+    resize: vertical;
+}
+
+.campo input:focus,
+.campo textarea:focus {
+    border-color: var(--mint);
+}
+
+/* chips de motivo rápido */
+.motivoChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.2rem;
+}
+
+.motivoChip {
+    padding: 0.4rem 0.8rem;
+    border-radius: 50px;
+    border: 1px solid var(--line);
+    background: #fbfbfb;
+    color: var(--text-md);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.motivoChip:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.motivoChipActivo {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
+}
+
+/* --- OPCIÓN SECUNDARIA: AVISARLE A UNA VETERINARIA PUNTUAL --- */
+/* Por defecto la emergencia se manda a todas las veterinarias disponibles (broadcast); esto
+   es la escotilla opcional para quien ya tiene una de confianza y prefiere avisarle solo a
+   ella, sin que le bloquee el flujo rápido a quien no la necesita. */
+.selectorVetOpcional {
+    display: flex;
+    flex-direction: column;
+    margin: -0.2rem 0 0.2rem;
+}
+
+.linkVetPuntual {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--mint);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.linkVetPuntual:hover {
+    color: var(--danger);
+}
+
+.btnEnviar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    align-self: flex-end;
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    padding: 0.85rem 1.6rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btnEnviar:hover:not(:disabled) {
+    background: #a3312a;
+    transform: translateY(-1px);
+}
+
+.btnEnviar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.estadoVacio {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text-md);
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 16px;
+    border: 1px dashed var(--mint-lt);
+}
+
+/* --- HISTORIAL DE EMERGENCIAS ---
+   Vive en su propio panel (más ancho que el formulario) para que se pueda leer y usar bien:
+   antes solo aparecía angosto y únicamente cuando había una mascota seleccionada. */
+.historialPanel {
+    max-width: 980px;
+}
+
+.historialHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-bottom: 1.1rem;
+}
+
+.historialTitulo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.historialTitulo h2 {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine-dk);
+    font-size: 1.35rem;
+    margin: 0;
+}
+
+.historialContador {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 0.5rem;
+    border-radius: 50px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.filtroTabs {
+    display: flex;
+    gap: 0.3rem;
+    background: #f4f6f4;
+    padding: 0.3rem;
+    border-radius: 50px;
+}
+
+.filtroTab {
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    border: none;
+    background: transparent;
+    color: var(--text-md);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.filtroTab:hover {
+    color: var(--pine);
+}
+
+.filtroTabActivo {
+    background: #fff;
+    color: var(--pine);
+    box-shadow: 0 3px 10px rgba(27, 67, 50, 0.12);
+}
+
+/* --- BOTÓN SOS: mantener presionado para abrir el modal ---
+   Vive fuera de .panel (ver JSX) para poder centrarse en todo el ancho de la página en vez de
+   quedar atado a la columna angosta del formulario. Sin tarjeta blanca rectangular detrás:
+   en su lugar, un disco blanco circular que resalta el botón rojo, más parecido a un botón de
+   pánico real que a un formulario. Bien separado del historial de abajo. */
+.sosSeccion {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.4rem;
+    padding: 2.2rem 1.5rem 1.6rem;
+    margin: 0.4rem 0 1.2rem;
+}
+
+.botonSosHalo {
+    width: 320px;
+    height: 320px;
+    max-width: 80vw;
+    max-height: 80vw;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 38% 32%, #ffffff, #fbfdfb 75%);
+    box-shadow: 0 30px 70px rgba(27, 67, 50, 0.14), 0 10px 24px rgba(192, 57, 43, 0.1);
+    border: 1px solid rgba(221, 227, 216, 0.8);
+}
+
+.botonSos {
+    position: relative;
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    border: none;
+    background: radial-gradient(circle at 32% 28%, #e0564a, var(--danger) 72%);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 16px 36px rgba(192, 57, 43, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+    user-select: none;
+}
+
+.botonSos::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+    border: 2px solid rgba(192, 57, 43, 0.35);
+    animation: sosPulso 2.2s ease-out infinite;
+}
+
+@keyframes sosPulso {
+    0% { transform: scale(0.92); opacity: 0.9; }
+    100% { transform: scale(1.28); opacity: 0; }
+}
+
+.botonSosPresionando {
+    animation: sosTemblor 0.32s ease-in-out infinite;
+    box-shadow: 0 10px 26px rgba(192, 57, 43, 0.45);
+}
+
+@keyframes sosTemblor {
+    0%, 100% { transform: scale(1.05) rotate(0deg); }
+    30% { transform: scale(1.05) rotate(-1.4deg); }
+    70% { transform: scale(1.05) rotate(1.4deg); }
+}
+
+.botonSosActivado {
+    animation: sosDestello 0.6s ease;
+}
+
+@keyframes sosDestello {
+    0% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.65); }
+    60% { box-shadow: 0 0 0 46px rgba(192, 57, 43, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); }
+}
+
+.botonSosRing {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+    pointer-events: none;
+}
+
+.botonSosRingFondo {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.2);
+    stroke-width: 6;
+}
+
+.botonSosRingRelleno {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 6;
+    stroke-linecap: round;
+    transition-property: stroke-dashoffset;
+    transition-timing-function: linear;
+}
+
+.botonSosNucleo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    color: #fff;
+    pointer-events: none;
+}
+
+.botonSosTexto {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+/* Pill animada en vez de texto plano — respira suavemente para llamar la atención sin
+   competir visualmente con el botón rojo (por eso el tono es menta/verde, no rojo). */
+.sosAyuda {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--pine-dk);
+    background: rgba(82, 183, 136, 0.13);
+    border: 1px solid rgba(82, 183, 136, 0.3);
+    padding: 0.6rem 1.2rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-align: center;
+    max-width: 360px;
+    animation: sosAyudaRespirar 2.4s ease-in-out infinite;
+}
+
+@keyframes sosAyudaRespirar {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(82, 183, 136, 0.28);
+    }
+    50% {
+        transform: scale(1.04);
+        box-shadow: 0 0 0 9px rgba(82, 183, 136, 0);
+    }
+}
+
+/* --- MODAL DE EMERGENCIA (más ancho que el de atención externa) --- */
+.modalEmergencia {
+    max-width: 560px;
+}
+
+.modalPaso {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 1.2rem;
+}
+
+/* --- LISTA DE MIS EMERGENCIAS --- */
+.lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.itemGrande {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    padding: 1.15rem 1.35rem;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: #fbfdfb;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.itemGrande:hover {
+    box-shadow: 0 12px 28px rgba(27, 67, 50, 0.09);
+    border-color: var(--mint-lt);
+}
+
+.itemGrandeTop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.itemGrandeInfo {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.itemGrandeIcono {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.itemGrandeMascota {
+    font-weight: 800;
+    color: var(--pine-dk);
+    font-size: 1.08rem;
+}
+
+.itemGrandeMotivo {
+    color: var(--text-md);
+    font-size: 0.9rem;
+    margin-top: 0.15rem;
+}
+
+.itemGrandeMetaRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-md);
+    margin-top: 0.45rem;
+}
+
+.itemGrandeMetaRow span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.itemGrandeAcciones {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-shrink: 0;
+}
+
+.itemGrandeDetalle {
+    border-top: 1px dashed var(--line);
+    padding-top: 0.8rem;
+    margin-top: 0.2rem;
+    display: grid;
+    gap: 0.5rem;
+    font-size: 0.87rem;
+    color: var(--text-md);
+    line-height: 1.5;
+}
+
+.itemGrandeDetalle strong {
+    color: var(--pine-dk);
+}
+
+.estadoBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 50px;
+    white-space: nowrap;
+}
+
+.estadoSolicitada { background: rgba(230, 168, 23, 0.14); color: var(--amber); }
+.estadoAceptada, .estadoEnAtencion { background: rgba(82, 183, 136, 0.14); color: var(--pine); }
+.estadoFinalizada { background: rgba(148, 163, 184, 0.16); color: #475569; }
+
+.btnAtencionExterna {
+    padding: 0.5rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--pine);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btnAtencionExterna:hover {
+    background: var(--pine);
+    color: #fff;
+    border-color: var(--pine);
+}
+
+/* --- MODAL --- */
+.overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 9999 !important;
+}
+
+.modal {
+    background: #fff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 460px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    padding: 1.6rem;
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
+}
+
+.modalHeader h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--pine-dk);
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.modalSub {
+    color: var(--text-md);
+    font-size: 0.85rem;
+    margin: 0 0 1.1rem;
+}
+
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-top: 1rem;
+}
+
+.btnSecundario {
+    padding: 0.6rem 1.1rem;
+    border-radius: 10px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--text-md);
+}
+
+.btnPrimario {
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    background: var(--mint);
+    color: #fff;
+}
+
+.btnPrimario:hover { background: var(--pine); }
+
+@media (max-width: 640px) {
+    .itemGrandeTop { flex-direction: column; align-items: flex-start; }
+    .itemGrandeAcciones { width: 100%; justify-content: space-between; }
+    .historialHeader { flex-direction: column; align-items: flex-start; }
+}

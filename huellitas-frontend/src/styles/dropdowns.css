@@ -1,0 +1,67 @@
+/*
+ * Rediseño global de los <select> del proyecto.
+ *
+ * Antes cada panel (Admin, Veterinario, ComercioAdmin, Cliente...) definía su propio
+ * border/padding/radius a mano, o directamente no definía nada — varios <select> de
+ * PanelProductos/PanelServicios/PanelEmpleados no tenían ninguna clase y se veían con el
+ * estilo crudo del navegador (sin flecha personalizada, sin cursor, sin hover, e inconsistente
+ * entre Chrome/Firefox/Edge). Ninguno de los paneles resolvía eso.
+ *
+ * Esta hoja se importa una sola vez de forma global (App.jsx) y define:
+ *   1. Una base decente para cualquier <select> sin clase propia.
+ *   2. Una flecha (chevron) e interacciones (hover, focus, disabled) para TODOS los <select>,
+ *      incluso los que ya tienen su propio módulo CSS — un selector de etiqueta siempre pierde
+ *      contra una clase, así que esto solo completa lo que cada panel no definía, sin pisar
+ *      los colores/bordes que cada uno ya tiene.
+ */
+
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23486a5a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    background-size: 13px;
+    /* !important a propósito, solo en esta propiedad: cada panel define su propio padding
+       (0.6–0.9rem parejo en los 4 lados) pensado para un <select> sin flecha propia. Sin
+       forzar el hueco derecho, el texto de la opción elegida quedaría pisando la flecha nueva
+       en varios paneles. El resto del padding (izquierda/arriba/abajo) sigue siendo el de cada
+       panel — esto solo reserva espacio a la derecha. */
+    padding-right: 2.5rem !important;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+/* Base para selects que llegaron sin ninguna clase propia. */
+select:not([class]) {
+    border: 1.5px solid #dde3d8;
+    border-radius: 12px;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.9rem;
+    color: #1a1a1a;
+    background-color: #fff;
+}
+
+select:not([class]):focus {
+    outline: none;
+    border-color: #52b788;
+    box-shadow: 0 0 0 3px rgba(82, 183, 136, 0.17);
+}
+
+select:hover:not(:disabled) {
+    border-color: #52b788;
+}
+
+select:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    background-color: #f4f6f4;
+}
+
+/* Para que las opciones abiertas no queden con colores heredados raros en algunos navegadores. */
+select option {
+    color: #1a1a1a;
+    background-color: #fff;
+}

@@ -12,3 +12,12 @@ export const resolverImagen = (imagenUrl) => {
   if (imagenUrl.startsWith("http")) return imagenUrl;
   return `${HOST_ARCHIVOS}${imagenUrl}`;
 };
+
+// Limpia la sesión y manda a login cuando un fetch autenticado devuelve 401 (token vencido o
+// inválido). Antes cada página fallaba en silencio con un toast genérico, o reventaba al
+// intentar parsear como JSON el 401 sin body que devuelve [Authorize] por defecto.
+export const manejarSesionExpirada = () => {
+  localStorage.removeItem("token_huellitas");
+  localStorage.removeItem("usuario_huellitas");
+  window.location.href = "/login";
+};

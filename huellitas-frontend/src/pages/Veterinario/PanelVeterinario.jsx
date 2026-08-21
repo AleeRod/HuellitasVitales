@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import styles from './PanelVeterinario.module.css';
 import {
   Home,
@@ -9,19 +10,60 @@ import {
   Receipt,
   BarChart3,
   LogOut,
-  Bell,
   AlertTriangle,
-  Download,
+  ArrowLeftRight,
+  CheckCircle2,
+  Clock,
 } from 'lucide-react';
 import PanelServicios from '../../components/ComercioAdmin/PanelServicios/PanelServicios';
-// Ajusta esta ruta según donde coloques el componente y su .module.css:
+import PanelSolicitudesTraslado from '../../components/ComercioAdmin/PanelSolicitudesTraslado/PanelSolicitudesTraslado';
+import PanelEmergencias from '../../components/ComercioAdmin/PanelEmergencias/PanelEmergencias';
+import PanelReportes from '../../components/ComercioAdmin/PanelReportes/PanelReportes';
+import NotificacionesBell from '../../components/Notificaciones/NotificacionesBell';
 import AgendaDiariaVeterinario from '../../components/Veterinario/AgendaDiariaVeterinario/AgendaDiariaVeterinario';
-// Si el logo está en src/assets descomenta la siguiente línea y cambia el src del img:
-// import logo from '../../assets/logo.png';
+import { API_BASE } from '../../api/config';
+import { ToastContainer } from '../../components/Toast/Toast';
+import { useToast } from '../../components/Toast/useToast';
+
+const ESTADO_CITA_INFO = {
+  1: { texto: 'Pendiente', clase: 'statusNext' },
+  2: { texto: 'Confirmada', clase: 'statusReady' },
+  3: { texto: 'Cancelada', clase: 'statusUrgent' },
+  4: { texto: 'Completada', clase: 'statusDone' },
+};
+
+const soloFecha = (valor) => (valor ? String(valor).slice(0, 10) : '');
+
+const VISTAS_VALIDAS = ['clinico', 'servicios', 'agenda', 'traslados', 'emergencias', 'pacientes', 'expedientes', 'vacunas', 'reportes'];
 
 const PanelVeterinario = () => {
-  const [vista, setVista] = useState('clinico'); // 'clinico' | 'servicios' | 'agenda'
+  const [searchParams] = useSearchParams();
+  // Permite llegar directo a una pestaña desde afuera (p. ej. al tocar una notificación de
+  // emergencia: /veterinario?vista=emergencias) en vez de aterrizar siempre en el panel clínico.
+  const vistaInicial = VISTAS_VALIDAS.includes(searchParams.get('vista')) ? searchParams.get('vista') : 'clinico';
+  const [vista, setVista] = useState(vistaInicial);
   const [usuario, setUsuario] = useState(null);
+
+  // Si el veterinario ya está en este panel (no se vuelve a montar) y toca una notificación
+  // que apunta acá con otra pestaña, el useState de arriba no alcanza — hay que escuchar el
+  // cambio de query param mientras el componente sigue vivo.
+  useEffect(() => {
+    const v = searchParams.get('vista');
+    if (v && VISTAS_VALIDAS.includes(v)) setVista(v);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+  const [citas, setCitas] = useState([]);
+  const [cargandoCitas, setCargandoCitas] = useState(true);
+  const [pendientesTraslados, setPendientesTraslados] = useState([]);
+  const [pendientesEmergencias, setPendientesEmergencias] = useState([]);
+  const [citaParaCompletar, setCitaParaCompletar] = useState('');
+  const [notaCompletar, setNotaCompletar] = useState('');
+  const [guardandoNota, setGuardandoNota] = useState(false);
+  const { toasts, showToast, removeToast } = useToast();
+  const navigate = useNavigate();
+
+  const token = () => localStorage.getItem('token_huellitas') || localStorage.getItem('jwt') || localStorage.getItem('token');
+  const headers = () => ({ Authorization: `Bearer ${token()}` });
 
   useEffect(() => {
     try {
@@ -31,6 +73,52 @@ const PanelVeterinario = () => {
       console.error('No se pudo leer el usuario guardado', err);
     }
   }, []);
+
+  const cargarCitas = async () => {
+    setCargandoCitas(true);
+    try {
+      const r = await fetch(`${API_BASE}/cita/veterinario`, { headers: headers() });
+      const d = await r.json().catch(() => ({}));
+      setCitas(Array.isArray(d.citas) ? d.citas : []);
+    } catch (err) {
+      console.error('No se pudo cargar la agenda del veterinario', err);
+      setCitas([]);
+    } finally {
+      setCargandoCitas(false);
+    }
+  };
+
+  const cargarPendientes = async () => {
+    try {
+      const [rt, re] = await Promise.all([
+        fetch(`${API_BASE}/trasladoexpediente/solicitudes/pendientes`, { headers: headers() }),
+        fetch(`${API_BASE}/emergencias/pendientes`, { headers: headers() }),
+      ]);
+      const dt = await rt.json().catch(() => ({}));
+      const de = await re.json().catch(() => ({}));
+      setPendientesTraslados(Array.isArray(dt.solicitudes) ? dt.solicitudes : []);
+      setPendientesEmergencias(Array.isArray(de.emergencias) ? de.emergencias : []);
+    } catch (err) {
+      // Son solo contadores del dashboard: si fallan, las secciones dedicadas (Traslados,
+      // Emergencias) igual cargan los suyos por su cuenta.
+      console.error('No se pudieron cargar los contadores de pendientes', err);
+    }
+  };
+
+  useEffect(() => {
+    cargarCitas();
+    cargarPendientes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const cerrarSesion = () => {
+    localStorage.removeItem('token_huellitas');
+    localStorage.removeItem('usuario_huellitas');
+    localStorage.removeItem('token');
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('huellitas_token');
+    navigate('/');
+  };
 
   // Fallbacks por si el campo viene con otro nombre desde el backend
   const nombreUsuario = usuario?.nombre || usuario?.Nombre || usuario?.nombreCompleto || 'Usuario';
@@ -42,22 +130,122 @@ const PanelVeterinario = () => {
     setVista(destino);
   };
 
+  const hoyISO = soloFecha(new Date().toISOString());
+
+  const citasHoy = useMemo(
+    () => citas.filter((c) => soloFecha(c.fecha) === hoyISO).sort((a, b) => (a.horaInicio || '').localeCompare(b.horaInicio || '')),
+    [citas, hoyISO]
+  );
+
+  const completadasHoy = citasHoy.filter((c) => c.idEstadoCita === 4).length;
+
+  const citasCompletables = useMemo(
+    () => citasHoy.filter((c) => c.idEstadoCita === 1 || c.idEstadoCita === 2),
+    [citasHoy]
+  );
+
+  const historialReciente = useMemo(
+    () =>
+      citas
+        .filter((c) => c.idEstadoCita === 4)
+        .sort((a, b) => (b.fecha || '').localeCompare(a.fecha || '') || (b.horaInicio || '').localeCompare(a.horaInicio || ''))
+        .slice(0, 8),
+    [citas]
+  );
+
+  const pacientes = useMemo(() => {
+    const mapa = new Map();
+    citas.forEach((c) => {
+      if (!mapa.has(c.idMascota)) {
+        mapa.set(c.idMascota, {
+          idMascota: c.idMascota,
+          nombre: c.nombreMascota,
+          especie: c.especie,
+          dueno: c.nombreCliente,
+          visitas: 0,
+          ultima: null,
+        });
+      }
+      const p = mapa.get(c.idMascota);
+      p.visitas += 1;
+      if (!p.ultima || (c.fecha || '') > p.ultima) p.ultima = c.fecha;
+    });
+    return Array.from(mapa.values()).sort((a, b) => (b.ultima || '').localeCompare(a.ultima || ''));
+  }, [citas]);
+
+  const completarCita = async (e) => {
+    e.preventDefault();
+    if (!citaParaCompletar) return showToast('Elegí una cita del día para completar.', 'warning');
+
+    setGuardandoNota(true);
+    try {
+      const r = await fetch(`${API_BASE}/cita/${citaParaCompletar}/completar`, {
+        method: 'PUT',
+        headers: { ...headers(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notas: notaCompletar }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.mensaje || 'No se pudo completar la cita.');
+
+      showToast('Cita marcada como completada.', 'success');
+      setCitaParaCompletar('');
+      setNotaCompletar('');
+      cargarCitas();
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setGuardandoNota(false);
+    }
+  };
+
+  const formatFecha = (fechaISO) => {
+    if (!fechaISO) return '-';
+    return new Date(fechaISO).toLocaleDateString('es-CR', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  const formatHora = (hhmmss) => {
+    if (!hhmmss) return '-';
+    const [h, m] = hhmmss.split(':');
+    const hora = Number(h);
+    const sufijo = hora >= 12 ? 'p.m.' : 'a.m.';
+    const hora12 = hora % 12 === 0 ? 12 : hora % 12;
+    return `${hora12}:${m} ${sufijo}`;
+  };
+
   const tituloVista = {
     clinico: 'Panel clínico',
     servicios: 'Gestión de servicios',
     agenda: 'Agenda diaria',
+    traslados: 'Traslados de expediente',
+    emergencias: 'Emergencias',
+    pacientes: 'Pacientes',
+    expedientes: 'Expedientes',
+    vacunas: 'Vacunas',
+    reportes: 'Reportes',
   }[vista];
 
   const heroTituloVista = {
     clinico: 'Agenda diaria del veterinario',
     servicios: 'Servicios de la clínica',
     agenda: 'Agenda diaria del veterinario',
+    traslados: 'Solicitudes de traslado',
+    emergencias: 'Emergencias veterinarias',
+    pacientes: 'Tus pacientes',
+    expedientes: 'Expedientes clínicos',
+    vacunas: 'Control de vacunas',
+    reportes: 'Reportes de actividad',
   }[vista];
 
   const heroSubVista = {
-    clinico: 'Consulta citas del día, pacientes, expedientes y notas clínicas.',
+    clinico: 'Consultá las citas del día, completá atenciones y revisá tu historial reciente.',
     servicios: 'Administrá las consultas, groomings y procedimientos que ofrecés.',
     agenda: 'Navegá por semana, filtrá por estado y confirmá, completá o cancelá citas.',
+    traslados: 'Aceptá o rechazá expedientes que otras personas quieren trasladar a tu veterinaria.',
+    emergencias: 'Aceptá, iniciá y cerrá las solicitudes de atención inmediata.',
+    pacientes: 'Mascotas que atendiste, con su última visita y dueño.',
+    expedientes: 'Historial clínico completo de cada mascota que atendés.',
+    vacunas: 'Registro de vacunación de las mascotas que atendés.',
+    reportes: 'Citas, emergencias, atenciones externas y traslados recientes.',
   }[vista];
 
   return (
@@ -74,57 +262,57 @@ const PanelVeterinario = () => {
           </div>
 
           <div className={styles.navSection}>Clínica</div>
-          <a
-            href="#"
-            className={`${styles.navLinkVet} ${vista === 'clinico' ? styles.active : ''}`}
-            onClick={irA('clinico')}
-          >
+          <a href="#" className={`${styles.navLinkVet} ${vista === 'clinico' ? styles.active : ''}`} onClick={irA('clinico')}>
             <span className={styles.navIcon}><Home size={17} /></span>
             Panel clínico
           </a>
-          <a
-            href="#"
-            className={`${styles.navLinkVet} ${vista === 'agenda' ? styles.active : ''}`}
-            onClick={irA('agenda')}
-          >
+          <a href="#" className={`${styles.navLinkVet} ${vista === 'agenda' ? styles.active : ''}`} onClick={irA('agenda')}>
             <span className={styles.navIcon}><CalendarDays size={17} /></span>
             Agenda diaria
           </a>
-          <a href="#" className={styles.navLinkVet}>
+          <a href="#" className={`${styles.navLinkVet} ${vista === 'pacientes' ? styles.active : ''}`} onClick={irA('pacientes')}>
             <span className={styles.navIcon}><PawPrint size={17} /></span>
             Pacientes
           </a>
-          <a href="#" className={styles.navLinkVet}>
+          <a href="#" className={`${styles.navLinkVet} ${vista === 'expedientes' ? styles.active : ''}`} onClick={irA('expedientes')}>
             <span className={styles.navIcon}><ClipboardList size={17} /></span>
             Expedientes
           </a>
-          <a href="#" className={styles.navLinkVet}>
+          <a href="#" className={`${styles.navLinkVet} ${vista === 'vacunas' ? styles.active : ''}`} onClick={irA('vacunas')}>
             <span className={styles.navIcon}><Syringe size={17} /></span>
             Vacunas
           </a>
 
           <div className={styles.navSection}>Gestión</div>
-          <a
-            href="#"
-            className={`${styles.navLinkVet} ${vista === 'servicios' ? styles.active : ''}`}
-            onClick={irA('servicios')}
-          >
+          <a href="#" className={`${styles.navLinkVet} ${vista === 'servicios' ? styles.active : ''}`} onClick={irA('servicios')}>
             <span className={styles.navIcon}><Receipt size={17} /></span>
             Servicios
           </a>
-          <a href="#" className={styles.navLinkVet}>
+          <a href="#" className={`${styles.navLinkVet} ${vista === 'traslados' ? styles.active : ''}`} onClick={irA('traslados')}>
+            <span className={styles.navIcon}><ArrowLeftRight size={17} /></span>
+            Traslados
+          </a>
+          <a href="#" className={`${styles.navLinkVet} ${vista === 'emergencias' ? styles.active : ''}`} onClick={irA('emergencias')}>
+            <span className={styles.navIcon}><AlertTriangle size={17} /></span>
+            Emergencias
+          </a>
+          <a href="#" className={`${styles.navLinkVet} ${vista === 'reportes' ? styles.active : ''}`} onClick={irA('reportes')}>
             <span className={styles.navIcon}><BarChart3 size={17} /></span>
             Reportes
           </a>
-          <a href="/LandingPage" className={styles.navLinkVet}>
+          <button onClick={cerrarSesion} className={styles.navLinkVet} style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', font: 'inherit' }}>
             <span className={styles.navIcon}><LogOut size={17} /></span>
             Cerrar sesión
-          </a>
+          </button>
 
           <div className={styles.sidebarNote}>
-            <div className={styles.noteTitle}>Turno de hoy</div>
+            <div className={styles.noteTitle}>Hoy</div>
             <div className={styles.noteText}>
-              8 citas agendadas, 2 controles urgentes y 1 vacunación pendiente.
+              {cargandoCitas
+                ? 'Cargando agenda…'
+                : citasHoy.length === 0
+                ? 'No tenés citas agendadas para hoy.'
+                : `${citasHoy.length} cita${citasHoy.length === 1 ? '' : 's'} agendada${citasHoy.length === 1 ? '' : 's'}, ${completadasHoy} completada${completadasHoy === 1 ? '' : 's'}.`}
             </div>
           </div>
         </div>
@@ -146,9 +334,9 @@ const PanelVeterinario = () => {
           </div>
 
           <div className={styles.topActions}>
-            <button className={styles.iconButton} title="Notificaciones">
-              <Bell size={18} />
-            </button>
+            <div className={styles.iconButton}>
+              <NotificacionesBell size={18} />
+            </div>
             <div className={styles.profileMini}>
               <div className={styles.profileAvatar}>{inicialAvatar}</div>
               <div>
@@ -173,6 +361,111 @@ const PanelVeterinario = () => {
           </section>
         )}
 
+        {vista === 'traslados' && (
+          <section className={styles.panelGrid}>
+            <div className={styles.tableArea}>
+              <PanelSolicitudesTraslado />
+            </div>
+          </section>
+        )}
+
+        {vista === 'emergencias' && (
+          <section className={styles.panelGrid}>
+            <div className={styles.tableArea}>
+              <PanelEmergencias />
+            </div>
+          </section>
+        )}
+
+        {vista === 'reportes' && (
+          <section className={styles.panelGrid}>
+            <div className={styles.tableArea}>
+              <PanelReportes />
+            </div>
+          </section>
+        )}
+
+        {vista === 'pacientes' && (
+          <section className={styles.panelGrid}>
+            <div className={`${styles.contentCard} ${styles.tableArea}`}>
+              <div className={styles.cardHead}>
+                <div>
+                  <h2 className={styles.cardTitle}>Pacientes</h2>
+                  <p className={styles.cardSubtitle}>Mascotas que tuvieron al menos una cita con vos.</p>
+                </div>
+              </div>
+
+              {cargandoCitas ? (
+                <div className={styles.formArea}>Cargando pacientes…</div>
+              ) : pacientes.length === 0 ? (
+                <div className={styles.formArea}>Todavía no atendiste ninguna mascota.</div>
+              ) : (
+                <div className={styles.patientList}>
+                  {pacientes.map((p) => (
+                    <div className={styles.patientCard} key={p.idMascota}>
+                      <div className={styles.patientInfo}>
+                        <div className={styles.petIcon}><PawPrint size={20} /></div>
+                        <div>
+                          <div className={styles.patientTitle}>{p.nombre || 'Mascota'}</div>
+                          <div className={styles.patientDetail}>
+                            {p.especie ? `${p.especie} · ` : ''}Dueño: {p.dueno || 'Sin datos'}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div className={styles.patientDetail}>{p.visitas} visita{p.visitas === 1 ? '' : 's'}</div>
+                        <div className={styles.patientDetail}>Última: {formatFecha(p.ultima)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {vista === 'expedientes' && (
+          <section className={styles.panelGrid}>
+            <div className={`${styles.contentCard} ${styles.tableArea}`}>
+              <div className={styles.cardHead}>
+                <div>
+                  <h2 className={styles.cardTitle}>Expedientes</h2>
+                  <p className={styles.cardSubtitle}>Historial clínico completo por mascota.</p>
+                </div>
+              </div>
+              <div className={styles.formArea} style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+                <ClipboardList size={48} style={{ color: 'var(--line)', marginBottom: '1rem' }} />
+                <div style={{ color: 'var(--text-lt)', fontWeight: 700 }}>Próximamente</div>
+                <p style={{ color: 'var(--text-lt)', fontSize: '.85rem', marginTop: '.5rem', maxWidth: 420, marginInline: 'auto' }}>
+                  Un buscador de expedientes por mascota todavía no está disponible en esta vista. Mientras tanto,
+                  podés ver el historial de cada mascota desde una solicitud de traslado o emergencia en curso.
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {vista === 'vacunas' && (
+          <section className={styles.panelGrid}>
+            <div className={`${styles.contentCard} ${styles.tableArea}`}>
+              <div className={styles.cardHead}>
+                <div>
+                  <h2 className={styles.cardTitle}>Vacunas</h2>
+                  <p className={styles.cardSubtitle}>Registro de vacunación de tus pacientes.</p>
+                </div>
+              </div>
+              <div className={styles.formArea} style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+                <Syringe size={48} style={{ color: 'var(--line)', marginBottom: '1rem' }} />
+                <div style={{ color: 'var(--text-lt)', fontWeight: 700 }}>Próximamente</div>
+                <p style={{ color: 'var(--text-lt)', fontSize: '.85rem', marginTop: '.5rem', maxWidth: 420, marginInline: 'auto' }}>
+                  El control de vacunas todavía no está disponible en la plataforma. Cuando esté listo, vas a poder
+                  registrar y consultar acá la vacunación de cada mascota.
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
         {vista === 'clinico' && (
           <>
             {/* STATS */}
@@ -180,29 +473,39 @@ const PanelVeterinario = () => {
               <article className={styles.statCard}>
                 <div className={styles.statIcon}><CalendarDays size={20} /></div>
                 <div className={styles.statLabel}>Citas de hoy</div>
-                <div className={styles.statNumber}>8</div>
+                <div className={styles.statNumber}>{cargandoCitas ? '…' : citasHoy.length}</div>
                 <div className={styles.statNote}>Consultas y controles programados</div>
               </article>
 
               <article className={styles.statCard}>
                 <div className={styles.statIcon}><PawPrint size={20} /></div>
-                <div className={styles.statLabel}>Pacientes atendidos</div>
-                <div className={styles.statNumber}>3</div>
+                <div className={styles.statLabel}>Pacientes atendidos hoy</div>
+                <div className={styles.statNumber}>{cargandoCitas ? '…' : completadasHoy}</div>
                 <div className={styles.statNote}>Consultas completadas durante el día</div>
               </article>
 
-              <article className={styles.statCard}>
-                <div className={styles.statIcon}><Syringe size={20} /></div>
-                <div className={styles.statLabel}>Vacunas pendientes</div>
-                <div className={styles.statNumber}>2</div>
-                <div className={styles.statNote}>Aplicaciones programadas</div>
+              <article
+                className={styles.statCard}
+                style={{ cursor: 'pointer' }}
+                onClick={() => setVista('traslados')}
+                title="Ver traslados pendientes"
+              >
+                <div className={styles.statIcon}><ArrowLeftRight size={20} /></div>
+                <div className={styles.statLabel}>Traslados pendientes</div>
+                <div className={styles.statNumber}>{pendientesTraslados.length}</div>
+                <div className={styles.statNote}>Esperando tu respuesta</div>
               </article>
 
-              <article className={styles.statCard}>
+              <article
+                className={styles.statCard}
+                style={{ cursor: 'pointer' }}
+                onClick={() => setVista('emergencias')}
+                title="Ver emergencias pendientes"
+              >
                 <div className={styles.statIcon}><AlertTriangle size={20} /></div>
-                <div className={styles.statLabel}>Casos urgentes</div>
-                <div className={styles.statNumber}>1</div>
-                <div className={styles.statNote}>Requiere atención prioritaria</div>
+                <div className={styles.statLabel}>Emergencias pendientes</div>
+                <div className={styles.statNumber}>{pendientesEmergencias.length}</div>
+                <div className={styles.statNote}>Requieren atención prioritaria</div>
               </article>
             </section>
 
@@ -210,103 +513,93 @@ const PanelVeterinario = () => {
               {/* AGENDA DIARIA (componente real, mismo que la vista dedicada) */}
               <AgendaDiariaVeterinario />
 
-              {/* PACIENTES ACTIVOS */}
+              {/* CITAS DE HOY */}
               <div className={styles.contentCard}>
                 <div className={styles.cardHead}>
                   <div>
-                    <h2 className={styles.cardTitle}>Pacientes en atención</h2>
-                    <p className={styles.cardSubtitle}>Mascotas activas para consulta clínica.</p>
-                  </div>
-                  <button className={styles.btnSoft}>Ver todos</button>
-                </div>
-
-                <div className={styles.patientList}>
-                  <div className={styles.patientCard}>
-                    <div className={styles.patientInfo}>
-                      <div className={styles.petIcon}><PawPrint size={20} /></div>
-                      <div>
-                        <div className={styles.patientTitle}>Luna</div>
-                        <div className={styles.patientDetail}>Vacunación · Consultorio 1</div>
-                      </div>
-                    </div>
-                    <span className={`${styles.statusBadge} ${styles.statusReady}`}>En consulta</span>
-                  </div>
-
-                  <div className={styles.patientCard}>
-                    <div className={styles.patientInfo}>
-                      <div className={styles.petIcon}><PawPrint size={20} /></div>
-                      <div>
-                        <div className={styles.patientTitle}>Rocky</div>
-                        <div className={styles.patientDetail}>Control dental · Sala de espera</div>
-                      </div>
-                    </div>
-                    <span className={`${styles.statusBadge} ${styles.statusNext}`}>En espera</span>
-                  </div>
-
-                  <div className={styles.patientCard}>
-                    <div className={styles.patientInfo}>
-                      <div className={styles.petIcon}><PawPrint size={20} /></div>
-                      <div>
-                        <div className={styles.patientTitle}>Toby</div>
-                        <div className={styles.patientDetail}>Dolor abdominal · Prioridad alta</div>
-                      </div>
-                    </div>
-                    <span className={`${styles.statusBadge} ${styles.statusUrgent}`}>Urgente</span>
+                    <h2 className={styles.cardTitle}>Citas de hoy</h2>
+                    <p className={styles.cardSubtitle}>Tu agenda del día, en orden de horario.</p>
                   </div>
                 </div>
+
+                {cargandoCitas ? (
+                  <div className={styles.formArea}>Cargando…</div>
+                ) : citasHoy.length === 0 ? (
+                  <div className={styles.formArea}>No tenés citas agendadas para hoy.</div>
+                ) : (
+                  <div className={styles.patientList}>
+                    {citasHoy.map((c) => {
+                      const info = ESTADO_CITA_INFO[c.idEstadoCita] || ESTADO_CITA_INFO[1];
+                      return (
+                        <div className={styles.patientCard} key={c.idCita}>
+                          <div className={styles.patientInfo}>
+                            <div className={styles.petIcon}><PawPrint size={20} /></div>
+                            <div>
+                              <div className={styles.patientTitle}>{c.nombreMascota}</div>
+                              <div className={styles.patientDetail}>{c.nombreServicio} · {formatHora(c.horaInicio)}</div>
+                            </div>
+                          </div>
+                          <span className={`${styles.statusBadge} ${styles[info.clase]}`}>{info.texto}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
-              {/* FORMULARIO NOTA CLINICA */}
+              {/* COMPLETAR CITA (nota clínica) */}
               <div className={styles.contentCard}>
                 <div className={styles.cardHead}>
                   <div>
-                    <h2 className={styles.cardTitle}>Nota clínica rápida</h2>
-                    <p className={styles.cardSubtitle}>Maquetación para registrar observaciones de consulta.</p>
+                    <h2 className={styles.cardTitle}>Completar cita</h2>
+                    <p className={styles.cardSubtitle}>Cerrá una cita del día con una nota clínica.</p>
                   </div>
                 </div>
 
                 <div className={styles.formArea}>
-                  <div className="row g-3">
-                    <div className="col-md-6">
-                      <label className={styles.formLabel}>Paciente</label>
-                      <select className={styles.formSelect}>
-                        <option>Luna</option>
-                        <option>Rocky</option>
-                        <option>Toby</option>
-                        <option>Max</option>
-                      </select>
-                    </div>
+                  {citasCompletables.length === 0 ? (
+                    <p style={{ color: 'var(--text-lt)', fontSize: '.88rem' }}>
+                      No tenés citas pendientes o confirmadas para completar hoy.
+                    </p>
+                  ) : (
+                    <form onSubmit={completarCita} className="row g-3">
+                      <div className="col-12">
+                        <label className={styles.formLabel}>Cita</label>
+                        <select
+                          className={styles.formSelect}
+                          style={{ width: '100%' }}
+                          value={citaParaCompletar}
+                          onChange={(e) => setCitaParaCompletar(e.target.value)}
+                        >
+                          <option value="">Elegí una cita...</option>
+                          {citasCompletables.map((c) => (
+                            <option key={c.idCita} value={c.idCita}>
+                              {formatHora(c.horaInicio)} · {c.nombreMascota} · {c.nombreServicio}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                    <div className="col-md-6">
-                      <label className={styles.formLabel}>Tipo de consulta</label>
-                      <select className={styles.formSelect}>
-                        <option>Consulta general</option>
-                        <option>Vacunación</option>
-                        <option>Control dental</option>
-                        <option>Urgencia</option>
-                      </select>
-                    </div>
+                      <div className="col-12">
+                        <label className={styles.formLabel}>Observaciones</label>
+                        <textarea
+                          className={styles.formControl}
+                          style={{ width: '100%' }}
+                          rows="4"
+                          placeholder="Diagnóstico, tratamiento o recomendaciones para el dueño..."
+                          value={notaCompletar}
+                          onChange={(e) => setNotaCompletar(e.target.value)}
+                        />
+                      </div>
 
-                    <div className="col-md-6">
-                      <label className={styles.formLabel}>Peso</label>
-                      <input type="text" className={styles.formControl} placeholder="Ej: 12 kg" />
-                    </div>
-
-                    <div className="col-md-6">
-                      <label className={styles.formLabel}>Temperatura</label>
-                      <input type="text" className={styles.formControl} placeholder="Ej: 38.5 °C" />
-                    </div>
-
-                    <div className="col-12">
-                      <label className={styles.formLabel}>Observaciones</label>
-                      <textarea className={styles.formControl} rows="4" placeholder="Anotar síntomas, diagnóstico preliminar o recomendaciones..."></textarea>
-                    </div>
-
-                    <div className="col-12 d-flex justify-content-end gap-2">
-                      <button className={styles.btnSoft}>Cancelar</button>
-                      <button className={styles.btnMain}>Guardar nota</button>
-                    </div>
-                  </div>
+                      <div className="col-12 d-flex justify-content-end gap-2">
+                        <button type="submit" className={styles.btnMain} disabled={guardandoNota || !citaParaCompletar}>
+                          <CheckCircle2 size={15} />
+                          {guardandoNota ? 'Guardando…' : 'Marcar como completada'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
                 </div>
               </div>
 
@@ -315,73 +608,52 @@ const PanelVeterinario = () => {
                 <div className={styles.cardHead}>
                   <div>
                     <h2 className={styles.cardTitle}>Historial clínico reciente</h2>
-                    <p className={styles.cardSubtitle}>Últimas atenciones realizadas por el veterinario.</p>
+                    <p className={styles.cardSubtitle}>Últimas atenciones completadas.</p>
                   </div>
-                  <button className={styles.btnSoft}>
-                    <Download size={15} />
-                    Descargar reporte
-                  </button>
                 </div>
 
                 <div className={styles.tableWrap}>
-                  <div className={styles.tableResponsive}>
-                    <table className={styles.table}>
-                      <thead>
-                        <tr>
-                          <th>Hora</th>
-                          <th>Paciente</th>
-                          <th>Servicio</th>
-                          <th>Dueño</th>
-                          <th>Estado</th>
-                          <th>Acción</th>
-                        </tr>
-                      </thead>
+                  {cargandoCitas ? (
+                    <div>Cargando…</div>
+                  ) : historialReciente.length === 0 ? (
+                    <div>Todavía no completaste ninguna cita.</div>
+                  ) : (
+                    <div className={styles.tableResponsive}>
+                      <table className={styles.table}>
+                        <thead>
+                          <tr>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Paciente</th>
+                            <th>Servicio</th>
+                            <th>Dueño</th>
+                            <th>Estado</th>
+                          </tr>
+                        </thead>
 
-                      <tbody>
-                        <tr>
-                          <td>8:00 a.m.</td>
-                          <td>Max</td>
-                          <td>Consulta general</td>
-                          <td>Brandon Alfaro</td>
-                          <td><span className={`${styles.statusBadge} ${styles.statusDone}`}>Finalizado</span></td>
-                          <td><button className={styles.actionBtn}>Ver ficha</button></td>
-                        </tr>
-
-                        <tr>
-                          <td>9:30 a.m.</td>
-                          <td>Luna</td>
-                          <td>Vacunación</td>
-                          <td>Laura Pérez</td>
-                          <td><span className={`${styles.statusBadge} ${styles.statusReady}`}>En consulta</span></td>
-                          <td><button className={styles.actionBtn}>Abrir</button></td>
-                        </tr>
-
-                        <tr>
-                          <td>11:00 a.m.</td>
-                          <td>Rocky</td>
-                          <td>Control dental</td>
-                          <td>José Méndez</td>
-                          <td><span className={`${styles.statusBadge} ${styles.statusNext}`}>En espera</span></td>
-                          <td><button className={styles.actionBtn}>Abrir</button></td>
-                        </tr>
-
-                        <tr>
-                          <td>1:30 p.m.</td>
-                          <td>Toby</td>
-                          <td>Urgencia</td>
-                          <td>Ana Mora</td>
-                          <td><span className={`${styles.statusBadge} ${styles.statusUrgent}`}>Urgente</span></td>
-                          <td><button className={styles.actionBtn}>Atender</button></td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
+                        <tbody>
+                          {historialReciente.map((c) => (
+                            <tr key={c.idCita}>
+                              <td>{formatFecha(c.fecha)}</td>
+                              <td>{formatHora(c.horaInicio)}</td>
+                              <td>{c.nombreMascota}</td>
+                              <td>{c.nombreServicio}</td>
+                              <td>{c.nombreCliente}</td>
+                              <td><span className={`${styles.statusBadge} ${styles.statusDone}`}><Clock size={12} /> Finalizado</span></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
           </>
         )}
       </main>
+
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };

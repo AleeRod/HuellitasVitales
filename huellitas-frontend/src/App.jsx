@@ -1,4 +1,5 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './styles/dropdowns.css';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
@@ -19,6 +20,9 @@ import Perfil from './pages/Perfil/Perfil';
 import Carrito from './pages/Carrito/Carrito';
 import { CarritoProvider } from './context/CarritoProvider';
 import DashboardFuncionario from './pages/Funcionario/DashboardFuncionario';
+import AtencionesExternas from './pages/Cliente/AtencionesExternas';
+import SolicitarEmergencia from './pages/Cliente/SolicitarEmergencia';
+import TrasladarExpediente from './pages/Cliente/TrasladarExpediente';
 
 function App() {
   return (
@@ -39,6 +43,9 @@ function App() {
           <Route path="/cliente/mis-citas" element={<MisCitas />} />
           <Route path="/cliente/mis-mascotas" element={<MisMascotas />} />
           <Route path="/cliente/historial-clinico" element={<HistorialClinico />} />
+          <Route path="/cliente/atenciones-externas" element={<AtencionesExternas />} />
+          <Route path="/cliente/emergencia" element={<SolicitarEmergencia />} />
+          <Route path="/cliente/trasladar-expediente" element={<TrasladarExpediente />} />
           <Route path="/cliente/vacunas" element={<Vacunas />} />
           <Route path="/cliente/reportes" element={<Reportes />} />
           <Route path="/cliente/configuracion" element={<Configuracion />} />

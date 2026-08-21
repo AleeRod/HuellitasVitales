@@ -39,7 +39,7 @@ body {
 /* SIDEBAR */
 .sidebar {
     width:285px;
-    min-height:100vh;
+    height:100vh; /* fija (no min-height) para poder contener el scroll interno */
     background:linear-gradient(155deg, var(--pine-dk) 0%, var(--pine) 56%, var(--pine-soft) 100%);
     color:#fff;
     padding:1.25rem;
@@ -77,6 +77,30 @@ body {
     height:100%;
     display:flex;
     flex-direction:column;
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding-right:4px;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,255,255,.2) rgba(255,255,255,.05);
+}
+
+/* Scrollbar fina y estética para el sidebar (mismo estilo que el resto de los paneles) */
+.sidebarContent::-webkit-scrollbar {
+    width:5px;
+}
+
+.sidebarContent::-webkit-scrollbar-track {
+    background:rgba(255,255,255,.05);
+    border-radius:10px;
+}
+
+.sidebarContent::-webkit-scrollbar-thumb {
+    background:rgba(255,255,255,.2);
+    border-radius:10px;
+}
+
+.sidebarContent::-webkit-scrollbar-thumb:hover {
+    background:rgba(255,255,255,.4);
 }
 
 .brandCard {
@@ -699,6 +723,7 @@ body {
     .sidebar {
         position:relative;
         width:100%;
+        height:auto;
         min-height:auto;
         border-radius:0 0 24px 24px;
     }

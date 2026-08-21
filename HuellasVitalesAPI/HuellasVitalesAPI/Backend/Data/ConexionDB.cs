@@ -33,6 +33,13 @@ namespace HuellitasVitalesAPI.Data
         public DbSet<EstadoCitaCat> EstadosCitaCat { get; set; } = null!;
         public DbSet<Mascota> Mascotas { get; set; } = null!;
         public DbSet<SolicitudTipoServicio> SolicitudesTipoServicio { get; set; } = null!;
+        public DbSet<Expediente> Expedientes { get; set; } = null!;
+        public DbSet<ExpedienteComercio> ExpedientesComercios { get; set; } = null!;
+        public DbSet<SolicitudTrasladoExpediente> SolicitudesTrasladoExpediente { get; set; } = null!;
+        public DbSet<Notificacion> Notificaciones { get; set; } = null!;
+        public DbSet<AtencionExterna> AtencionesExternas { get; set; } = null!;
+        public DbSet<DocumentoAtencionExterna> DocumentosAtencionExterna { get; set; } = null!;
+        public DbSet<Emergencia> Emergencias { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -61,6 +68,13 @@ namespace HuellitasVitalesAPI.Data
             modelBuilder.Entity<EstadoCitaCat>().ToTable("ESTADO_CITA_CAT");
             modelBuilder.Entity<Mascota>().ToTable("MASCOTA");
             modelBuilder.Entity<SolicitudTipoServicio>().ToTable("SOLICITUD_TIPO_SERVICIO");
+            modelBuilder.Entity<Expediente>().ToTable("EXPEDIENTE");
+            modelBuilder.Entity<ExpedienteComercio>().ToTable("EXPEDIENTE_COMERCIO");
+            modelBuilder.Entity<SolicitudTrasladoExpediente>().ToTable("SOLICITUD_TRASLADO_EXPEDIENTE");
+            modelBuilder.Entity<Notificacion>().ToTable("NOTIFICACION");
+            modelBuilder.Entity<AtencionExterna>().ToTable("ATENCION_EXTERNA");
+            modelBuilder.Entity<DocumentoAtencionExterna>().ToTable("DOCUMENTO_ATENCION_EXTERNA");
+            modelBuilder.Entity<Emergencia>().ToTable("EMERGENCIA");
 
             // Fuerza que TODOS los DateTime se traten como UTC
             // al leer/escribir en Postgres, evitando el error
