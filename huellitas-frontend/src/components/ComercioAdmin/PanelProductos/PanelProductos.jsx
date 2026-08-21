@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { X, Plus, Pencil, Trash2, Package, Search, DollarSign, Tag, UploadCloud, Store, ImageOff } from "lucide-react";
 import styles from "./PanelProductos.module.css";
-import { resolverImagen } from "../../../api/config"; // ⚠️ ajustá esta ruta según dónde esté tu config.js
+import { resolverImagen, API_BASE } from "../../../api/config";
 import { ToastContainer } from "../../Toast/Toast";
 import { useToast } from "../../Toast/useToast";
 import { useConfirm } from "../../ConfirmModal/useConfirm";
 import SelectorVeterinaria from "../../Cliente/SelectorVeterinaria/SelectorVeterinaria";
 import CustomSelect from "../../CustomSelect/CustomSelect";
 
-const API_URL = "http://localhost:5010/api/Producto"; 
+const API_URL = `${API_BASE}/Producto`;
 
 const FORM_VACIO = {
   idProducto: null,

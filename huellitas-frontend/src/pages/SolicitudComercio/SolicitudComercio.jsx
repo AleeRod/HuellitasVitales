@@ -6,6 +6,7 @@ import DogNav from '../../components/DogNav/DogNav';
 import { ToastContainer } from '../../components/Toast/Toast';
 import { useToast } from '../../components/Toast/useToast';
 import CustomSelect from '../../components/CustomSelect/CustomSelect';
+import { API_BASE } from '../../api/config';
 import styles from './SolicitudComercio.module.css';
 
 const ESTADO_INICIAL = {
@@ -156,7 +157,7 @@ const SolicitudComercio = () => {
         }
 
         try {
-            const res = await fetch('http://localhost:5010/api/comercio/solicitud', {
+            const res = await fetch(`${API_BASE}/comercio/solicitud`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
