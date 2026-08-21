@@ -53,8 +53,8 @@ const Perfil = () => {
   // Contraseña — modal, no un botón decorativo.
   const [tieneContrasena, setTieneContrasena] = useState(true);
   const [modalPasswordAbierto, setModalPasswordAbierto] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({ actual: '', nueva: '', confirmar: '' });
-  const [mostrarPassword, setMostrarPassword] = useState({ actual: false, nueva: false, confirmar: false });
+  const [passwordForm, setPasswordForm] = useState({ actual: '' });
+  const [mostrarPassword, setMostrarPassword] = useState({ actual: false });
   const [erroresPassword, setErroresPassword] = useState({});
   const [guardandoPassword, setGuardandoPassword] = useState(false);
 
@@ -431,21 +431,15 @@ const Perfil = () => {
 
   const cerrarModalPassword = () => {
     setModalPasswordAbierto(false);
-    setPasswordForm({ actual: '', nueva: '', confirmar: '' });
+    setPasswordForm({ actual: '' });
     setErroresPassword({});
-    setMostrarPassword({ actual: false, nueva: false, confirmar: false });
+    setMostrarPassword({ actual: false });
   };
 
   const validarPassword = () => {
     const errores = {};
     if (tieneContrasena && !passwordForm.actual) {
       errores.actual = 'Ingresá tu contraseña actual.';
-    }
-    if (!passwordForm.nueva || passwordForm.nueva.length < 8) {
-      errores.nueva = 'La nueva contraseña debe tener al menos 8 caracteres.';
-    }
-    if (passwordForm.confirmar !== passwordForm.nueva) {
-      errores.confirmar = 'Las contraseñas no coinciden.';
     }
     setErroresPassword(errores);
     if (Object.keys(errores).length > 0) {
@@ -455,6 +449,8 @@ const Perfil = () => {
     return true;
   };
 
+  // Ya no cambia la contraseña acá: pide la verificación por correo. El cambio real se
+  // completa en /restablecer-password, al hacer clic en el enlace que llega al correo.
   const guardarPassword = async (e) => {
     e.preventDefault();
     const token = obtenerToken();
@@ -466,22 +462,20 @@ const Perfil = () => {
 
     setGuardandoPassword(true);
     try {
-      const res = await fetch(`${API_BASE}/usuario/password`, {
-        method: 'PUT',
+      const res = await fetch(`${API_BASE}/usuario/password/solicitar-verificacion`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          passwordActual: tieneContrasena ? passwordForm.actual : null,
-          passwordNueva: passwordForm.nueva
+          passwordActual: tieneContrasena ? passwordForm.actual : null
         })
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo cambiar la contraseña.');
+      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo enviar la verificación.');
 
-      addToast(data?.mensaje || 'Contraseña actualizada correctamente.', 'success');
-      setTieneContrasena(true);
+      addToast(data?.mensaje || 'Te enviamos un enlace de verificación a tu correo.', 'success');
       cerrarModalPassword();
     } catch (error) {
-      addToast(error.message || 'Error al cambiar la contraseña.', 'error');
+      addToast(error.message || 'Error al solicitar la verificación.', 'error');
     } finally {
       setGuardandoPassword(false);
     }
@@ -759,7 +753,11 @@ const Perfil = () => {
                 <X size={18} />
               </button>
             </div>
-            <p className={styles.modalSub}>Usá una contraseña que no utilicés en otros sitios.</p>
+            <p className={styles.modalSub}>
+              {tieneContrasena
+                ? 'Por seguridad, te vamos a enviar un enlace de verificación a tu correo para definir la nueva contraseña.'
+                : 'Te vamos a enviar un enlace de verificación a tu correo para establecer tu contraseña.'}
+            </p>
 
             {!tieneContrasena && (
               <div className={styles.avisoSinPassword}>
@@ -788,48 +786,12 @@ const Perfil = () => {
                 </div>
               )}
 
-              <div className={styles.formGroup}>
-                <label>Nueva contraseña</label>
-                <div className={styles.passwordField}>
-                  <input
-                    type={mostrarPassword.nueva ? 'text' : 'password'}
-                    name="nueva"
-                    value={passwordForm.nueva}
-                    onChange={handleChangePassword}
-                  />
-                  <button type="button" className={styles.eyeToggle} onClick={() => toggleMostrar('nueva')} tabIndex={-1}>
-                    {mostrarPassword.nueva ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                {erroresPassword.nueva ? (
-                  <span className={styles.errorText}>{erroresPassword.nueva}</span>
-                ) : (
-                  <span className={styles.ayudaText}>Mínimo 8 caracteres.</span>
-                )}
-              </div>
-
-              <div className={styles.formGroup}>
-                <label>Confirmar nueva contraseña</label>
-                <div className={styles.passwordField}>
-                  <input
-                    type={mostrarPassword.confirmar ? 'text' : 'password'}
-                    name="confirmar"
-                    value={passwordForm.confirmar}
-                    onChange={handleChangePassword}
-                  />
-                  <button type="button" className={styles.eyeToggle} onClick={() => toggleMostrar('confirmar')} tabIndex={-1}>
-                    {mostrarPassword.confirmar ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                {erroresPassword.confirmar && <span className={styles.errorText}>{erroresPassword.confirmar}</span>}
-              </div>
-
               <div className={styles.formActions}>
                 <button type="button" className={styles.cancelBtn} onClick={cerrarModalPassword} disabled={guardandoPassword}>
                   Cancelar
                 </button>
                 <button type="submit" className={styles.saveBtn} disabled={guardandoPassword}>
-                  {guardandoPassword ? 'Guardando…' : tieneContrasena ? 'Cambiar contraseña' : 'Establecer contraseña'}
+                  {guardandoPassword ? 'Enviando…' : 'Enviar verificación'}
                 </button>
               </div>
             </form>

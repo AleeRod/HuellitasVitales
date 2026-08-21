@@ -1,3 +1,4 @@
+using System.Net;
 using HuellasVitalesAPI.Backend.Models.DTOs;
 using HuellitasVitalesAPI.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,11 +13,19 @@ namespace HuellitasVitalesAPI.Controllers
     public class UsuarioController : ControllerBase
     {
         private readonly UsuarioService _usuarioService;
+        private readonly IEmailService _emailService;
+        private readonly IConfiguration _config;
         private readonly ILogger<UsuarioController> _logger;
 
-        public UsuarioController(UsuarioService usuarioService, ILogger<UsuarioController> logger)
+        public UsuarioController(
+            UsuarioService usuarioService,
+            IEmailService emailService,
+            IConfiguration config,
+            ILogger<UsuarioController> logger)
         {
             _usuarioService = usuarioService;
+            _emailService = emailService;
+            _config = config;
             _logger = logger;
         }
 
@@ -189,11 +198,19 @@ namespace HuellitasVitalesAPI.Controllers
             }
         }
 
-        // ─── Cambiar contraseña del usuario autenticado ───
-        // PUT api/usuario/password
+        // ─── Solicitar verificación por correo para cambiar la contraseña ───
+        // POST api/usuario/password/solicitar-verificacion
+        // Reemplaza el antiguo PUT api/usuario/password, que cambiaba la contraseña directo con
+        // solo la contraseña actual — sin esto, alguien con la sesión abierta en un equipo
+        // compartido (o el token robado) podía cambiarla sin que el dueño real se enterara. Ahora
+        // SIEMPRE hay que verificar por correo antes de que el cambio se aplique de verdad: este
+        // endpoint valida la contraseña actual (si ya tenía una) y manda el enlace de
+        // verificación; el paso final —definir la contraseña nueva— lo resuelve el mismo
+        // POST /api/password/restablecer que ya usa "olvidé mi contraseña"
+        // (RestablecerPassword.jsx), reutilizado tal cual.
         [Authorize]
-        [HttpPut("password")]
-        public async Task<IActionResult> CambiarPassword([FromBody] CambiarPasswordDTO dto)
+        [HttpPost("password/solicitar-verificacion")]
+        public async Task<IActionResult> SolicitarVerificacionPassword([FromBody] SolicitarVerificacionPasswordDTO? dto)
         {
             try
             {
@@ -205,19 +222,32 @@ namespace HuellitasVitalesAPI.Controllers
                     return Unauthorized(new { success = false, mensaje = "Token inválido o no proporcionado." });
                 }
 
-                var (exito, mensaje) = await _usuarioService.CambiarPasswordAsync(idUsuario, dto);
+                var (exito, mensaje, correo, nombre) = await _usuarioService
+                    .ValidarPasswordActualParaVerificacionAsync(idUsuario, dto?.PasswordActual);
 
-                if (!exito)
+                if (!exito || correo == null)
                 {
                     return BadRequest(new { success = false, mensaje });
                 }
 
-                return Ok(new { success = true, mensaje });
+                var (token, _) = await _usuarioService.GenerarTokenRecuperacionAsync(correo);
+                if (token != null)
+                {
+                    var frontendUrl = _config["Frontend:Url"]?.TrimEnd('/') ?? "http://localhost:5173";
+                    var enlace = $"{frontendUrl}/restablecer-password?token={WebUtility.UrlEncode(token)}&correo={WebUtility.UrlEncode(correo)}";
+                    await _emailService.EnviarCorreoRecuperacionAsync(correo, nombre ?? string.Empty, enlace);
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    mensaje = "Te enviamos un enlace de verificación a tu correo. Abrilo para definir tu nueva contraseña."
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error interno al cambiar la contraseña del usuario.");
-                return StatusCode(500, new { success = false, mensaje = "Ocurrió un error interno al cambiar la contraseña." });
+                _logger.LogError(ex, "Error interno al solicitar la verificación de cambio de contraseña.");
+                return StatusCode(500, new { success = false, mensaje = "Ocurrió un error interno al solicitar la verificación." });
             }
         }
 

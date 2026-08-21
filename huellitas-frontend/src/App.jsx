@@ -4,6 +4,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Auth/Login';
+import RestablecerPassword from './pages/Auth/RestablecerPassword';
 import Register from './pages/Auth/Register';
 import DashboardAdmin from './pages/Admin/DashboardAdmin';
 import PanelVeterinario from './pages/Veterinario/PanelVeterinario';
@@ -38,6 +39,7 @@ function App() {
           <Route path="/perfil/:id" element={<Perfil />} />
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/restablecer-password" element={<RestablecerPassword />} />
           <Route path="/register" element={<Register />} />
           <Route path="/admin" element={<DashboardAdmin />} />
           <Route path="/veterinario" element={<PanelVeterinario />} />

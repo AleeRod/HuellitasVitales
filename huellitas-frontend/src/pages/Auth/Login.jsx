@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
+import AuthHeroPanel from './AuthHeroPanel';
 import { API_BASE } from '../../api/config.js';
 
 function Login() {
@@ -14,14 +15,11 @@ function Login() {
     const [notification, setNotification] = useState({ message: '', type: '' });
 
     // ─── Recuperar contraseña ───
-    // 'login' | 'olvide-correo' | 'olvide-nueva'. No es una pantalla aparte: reemplaza el
-    // contenido del mismo form-card, así queda integrado al mismo panel visual del login.
+    // 'login' | 'olvide-correo'. No es una pantalla aparte: reemplaza el contenido del mismo
+    // form-card, así queda integrado al mismo panel visual del login. El segundo paso (definir
+    // la contraseña nueva) ya no vive acá: llega por el enlace del correo, a /restablecer-password.
     const [vista, setVista] = useState('login');
     const [correoRecuperar, setCorreoRecuperar] = useState('');
-    const [tokenRecuperar, setTokenRecuperar] = useState('');
-    const [nuevaPassword, setNuevaPassword] = useState('');
-    const [confirmarPassword, setConfirmarPassword] = useState('');
-    const [showNuevaPassword, setShowNuevaPassword] = useState(false);
     const [cargandoRecuperar, setCargandoRecuperar] = useState(false);
     
     const navigate = useNavigate();
@@ -91,17 +89,13 @@ function Login() {
     };
 
     // ─── Recuperar contraseña ───
-    // El backend (POST /api/password/recuperar) todavía no envía el correo de verdad — es una
-    // limitación temporal documentada ahí mismo ("TEMPORAL: lo devolvemos solo para probar
-    // desde Swagger") — devuelve el token de recuperación directo en la respuesta. Mientras no
-    // haya envío de correo real, el flujo usa ese mismo token para pasar al segundo paso sin
-    // pedirle a la persona que copie o pegue nada, y sin fingir que se mandó un correo.
+    // POST /api/password/recuperar ahora manda un correo de verdad con el enlace de
+    // restablecimiento (antes devolvía el token directo en la respuesta, una posta temporal
+    // solo para probar desde Swagger). Por eso ya no hay nada que "continuar" acá: la persona
+    // tiene que abrir su correo y hacer clic en el enlace para llegar a /restablecer-password.
     const volverALogin = () => {
         setVista('login');
         setCorreoRecuperar('');
-        setTokenRecuperar('');
-        setNuevaPassword('');
-        setConfirmarPassword('');
         setNotification({ message: '', type: '' });
     };
 
@@ -126,49 +120,9 @@ function Login() {
                 return;
             }
 
-            if (!data.token) {
-                // No revela si el correo existe o no en el sistema.
-                triggerNotification('Si el correo está registrado, vas a poder continuar con el restablecimiento.', 'success');
-                return;
-            }
-
-            setTokenRecuperar(data.token);
-            setNotification({ message: '', type: '' });
-            setVista('olvide-nueva');
-        } catch (error) {
-            triggerNotification('Problemas conectando con el servidor.');
-        } finally {
-            setCargandoRecuperar(false);
-        }
-    };
-
-    const restablecerPassword = async (e) => {
-        e.preventDefault();
-        if (!nuevaPassword || nuevaPassword.length < 8) {
-            triggerNotification('La nueva contraseña debe tener al menos 8 caracteres.');
-            return;
-        }
-        if (nuevaPassword !== confirmarPassword) {
-            triggerNotification('Las contraseñas no coinciden.');
-            return;
-        }
-
-        setCargandoRecuperar(true);
-        try {
-            const res = await fetch(`${API_BASE}/password/restablecer`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: tokenRecuperar, correo: correoRecuperar, nuevaPassword })
-            });
-            const data = await res.json().catch(() => ({}));
-
-            if (!res.ok) {
-                triggerNotification(data.mensaje || 'No se pudo restablecer la contraseña.');
-                return;
-            }
-
-            triggerNotification(data.mensaje || 'Contraseña actualizada correctamente. Ya podés iniciar sesión.', 'success');
-            setTimeout(volverALogin, 1800);
+            // Mensaje genérico a propósito: no revela si ese correo existe o no en el sistema.
+            triggerNotification(data.mensaje || 'Si el correo está registrado, te enviamos un enlace de verificación.', 'success');
+            setCorreoRecuperar('');
         } catch (error) {
             triggerNotification('Problemas conectando con el servidor.');
         } finally {
@@ -302,59 +256,7 @@ function Login() {
         <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', margin: 0, padding: 0 }}>
             
             {/* ═══ PANEL IZQUIERDO (HERO) ═══ */}
-            <div className={styles['panel-hero']}>
-                <div className={styles['hero-badge']}>
-                    <svg width="10" height="10" viewBox="0 0 10 10">
-                        <circle cx="5" cy="5" r="5" fill="#52B788" />
-                    </svg>
-                    Clínica Veterinaria
-                </div>
-
-                <div className={`${styles['mascot-wrap']} mb-4`}>
-                    <svg viewBox="0 0 280 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <ellipse cx="88" cy="108" rx="36" ry="50" fill="#8B5E3C" transform="rotate(-15 88 108)" />
-                        <ellipse cx="192" cy="108" rx="36" ry="50" fill="#8B5E3C" transform="rotate(15 192 108)" />
-                        <ellipse cx="88" cy="112" rx="22" ry="34" fill="#c28045" transform="rotate(-15 88 112)" />
-                        <ellipse cx="192" cy="112" rx="22" ry="34" fill="#c28045" transform="rotate(15 192 112)" />
-                        <ellipse cx="140" cy="155" rx="90" ry="82" fill="#c28045" />
-                        <ellipse cx="96" cy="175" rx="22" ry="14" fill="#e09860" opacity=".5" />
-                        <ellipse cx="184" cy="175" rx="22" ry="14" fill="#e09860" opacity=".5" />
-                        <ellipse cx="112" cy="148" rx="16" ry="18" fill="#fff" />
-                        <ellipse cx="168" cy="148" rx="16" ry="18" fill="#fff" />
-                        <circle cx="115" cy="150" r="10" fill="#1a1a1a" />
-                        <circle cx="171" cy="150" r="10" fill="#1a1a1a" />
-                        <circle cx="119" cy="145" r="3.5" fill="#fff" />
-                        <circle cx="175" cy="145" r="3.5" fill="#fff" />
-                        <ellipse cx="140" cy="185" rx="30" ry="22" fill="#e8c49a" />
-                        <ellipse cx="140" cy="174" rx="14" ry="9" fill="#4a2c0a" />
-                        <ellipse cx="134" cy="175" rx="3" ry="2" fill="#2a1500" />
-                        <ellipse cx="146" cy="175" rx="3" ry="2" fill="#2a1500" />
-                        <path d="M 122 192 Q 140 208 158 192" stroke="#4a2c0a" strokeWidth="3" strokeLinecap="round" fill="none" />
-                        <ellipse cx="140" cy="255" rx="72" ry="52" fill="#c28045" />
-                        <ellipse cx="96" cy="282" rx="24" ry="18" fill="#b87030" />
-                        <ellipse cx="184" cy="282" rx="24" ry="18" fill="#b87030" />
-                        <ellipse cx="82" cy="293" rx="8" ry="6" fill="#a06028" />
-                        <ellipse cx="96" cy="297" rx="8" ry="6" fill="#a06028" />
-                        <ellipse cx="110" cy="293" rx="8" ry="6" fill="#a06028" />
-                        <ellipse cx="170" cy="293" rx="8" ry="6" fill="#a06028" />
-                        <ellipse cx="184" cy="297" rx="8" ry="6" fill="#a06028" />
-                        <ellipse cx="198" cy="293" rx="8" ry="6" fill="#a06028" />
-                        <rect x="130" cy="247" y="244" width="20" height="7" rx="3" fill="rgba(255,255,255,.35)" />
-                        <rect x="136.5" y="237.5" width="7" height="20" rx="3" fill="rgba(255,255,255,.35)" />
-                        <path d="M 208 240 Q 255 210 248 170 Q 242 150 230 160" stroke="#b87030" strokeWidth="18" strokeLinecap="round" fill="none" />
-                    </svg>
-                </div>
-
-                <h1 className={styles['hero-title']}>Tu mascota merece<br />la mejor <span>atención</span></h1>
-                <p className={styles['hero-sub']}>Accede a fichas clínicas, citas y reportes<br />de salud de tus pacientes en un solo lugar.</p>
-
-                <div className={styles['dots-grid']}>
-                    <span></span><span></span><span></span><span></span><span></span><span></span>
-                    <span></span><span></span><span></span><span></span><span></span><span></span>
-                    <span></span><span></span><span></span><span></span><span></span><span></span>
-                    <span></span><span></span><span></span><span></span><span></span><span></span>
-                </div>
-            </div>
+            <AuthHeroPanel />
 
             {/* ═══ PANEL FORMULARIO ═══ */}
             <div className={styles['panel-form']}>
@@ -540,98 +442,6 @@ function Login() {
                                     onClick={handleRipple}
                                 >
                                     <span>{cargandoRecuperar ? 'Enviando...' : 'Continuar'}</span>
-                                </button>
-                            </form>
-
-                            <p className={styles['register-txt']}>
-                                <button
-                                    type="button"
-                                    className={styles['forgot-link']}
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                                    onClick={volverALogin}
-                                >
-                                    ← Volver a iniciar sesión
-                                </button>
-                            </p>
-                        </>
-                    )}
-
-                    {vista === 'olvide-nueva' && (
-                        <>
-                            <h2 className={styles['form-heading']}>Nueva contraseña</h2>
-                            <p className={styles['form-sub']}>Verificamos tu correo — ya podés definir una contraseña nueva.</p>
-
-                            <form onSubmit={restablecerPassword} noValidate>
-                                <div className={styles['field-group']}>
-                                    <label htmlFor="nueva-password">Nueva contraseña</label>
-                                    <div className={styles['input-wrap']}>
-                                        <input
-                                            type={showNuevaPassword ? 'text' : 'password'}
-                                            id="nueva-password"
-                                            placeholder="Mínimo 8 caracteres"
-                                            autoComplete="new-password"
-                                            required
-                                            value={nuevaPassword}
-                                            onChange={(e) => setNuevaPassword(e.target.value)}
-                                        />
-                                        <span className={styles['input-icon']}>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <rect x="3" y="11" width="18" height="11" rx="2" />
-                                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                            </svg>
-                                        </span>
-                                        <button
-                                            type="button"
-                                            className={styles['toggle-pass']}
-                                            onClick={() => setShowNuevaPassword(!showNuevaPassword)}
-                                        >
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                {showNuevaPassword ? (
-                                                    <>
-                                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                                                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                                                        <line x1="1" y1="1" x2="23" y2="23" />
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                                        <circle cx="12" cy="12" r="3" />
-                                                    </>
-                                                )}
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className={styles['field-group']}>
-                                    <label htmlFor="confirmar-password">Confirmar contraseña</label>
-                                    <div className={styles['input-wrap']}>
-                                        <input
-                                            type={showNuevaPassword ? 'text' : 'password'}
-                                            id="confirmar-password"
-                                            placeholder="Repetí la contraseña"
-                                            autoComplete="new-password"
-                                            required
-                                            value={confirmarPassword}
-                                            onChange={(e) => setConfirmarPassword(e.target.value)}
-                                        />
-                                        <span className={styles['input-icon']}>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <rect x="3" y="11" width="18" height="11" rx="2" />
-                                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                            </svg>
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    className={styles['btn-login']}
-                                    disabled={cargandoRecuperar}
-                                    style={{ opacity: cargandoRecuperar ? 0.7 : 1 }}
-                                    onClick={handleRipple}
-                                >
-                                    <span>{cargandoRecuperar ? 'Guardando...' : 'Guardar nueva contraseña'}</span>
                                 </button>
                             </form>
 

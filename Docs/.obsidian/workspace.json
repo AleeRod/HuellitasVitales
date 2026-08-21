@@ -4,21 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "fec5c48c214f94eb",
+        "id": "c04028952005dac4",
         "type": "tabs",
         "children": [
           {
-            "id": "bab2a17700e546c0",
+            "id": "339740f6b867b6f4",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "01-Arquitectura/Reglas-Generales.md",
+                "file": "05-Cierre-Proyecto/Backlog-AzureDevOps-Sprint4.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Reglas-Generales"
+              "title": "Backlog-AzureDevOps-Sprint4"
             }
           }
         ]
@@ -188,8 +188,28 @@
       "bases:Create new base": false
     }
   },
-  "active": "bab2a17700e546c0",
+  "active": "339740f6b867b6f4",
   "lastOpenFiles": [
+    "04-Notas/MEJORAS.md",
+    "05-Cierre-Proyecto/Backlog-AzureDevOps-Sprint4.md",
+    "05-Cierre-Proyecto/Backlog-AzureDevOps-Sprint4.md.tmp.4412.0c6412ab5a7f",
+    "05-Cierre-Proyecto/Backlog-AzureDevOps-Sprint4.md.tmp.4412.b0efce4ce891",
+    "05-Cierre-Proyecto/Guion-Video1-SprintReview-Retro-SP04.md",
+    "05-Cierre-Proyecto/Guion-Video2-Review-Retrospectiva-Final.md",
+    "03-Historias-Usuario/HU-209-Verificacion-Cambio-Password.md",
+    "05-Cierre-Proyecto/Guion-Video2-Review-Retrospectiva-Final.md.tmp.4412.81b081cf26e4",
+    "05-Cierre-Proyecto/Guion-Video1-SprintReview-Retro-SP04.md.tmp.4412.c3ce7be10ba4",
+    "05-Cierre-Proyecto",
+    "Indice.md.tmp.4412.b66e2ac664f2",
+    "03-Historias-Usuario/HU-211-Landing-Marketplace-Real.md",
+    "03-Historias-Usuario/HU-211-Landing-Marketplace-Real.md.tmp.4412.91d0f189ca6a",
+    "03-Historias-Usuario/HU-210-Historial-Compras-Recibo.md",
+    "03-Historias-Usuario/HU-210-Historial-Compras-Recibo.md.tmp.4412.7a5c55d02f6c",
+    "03-Historias-Usuario/HU-209-Verificacion-Cambio-Password.md.tmp.4412.509236b7a673",
+    "03-Historias-Usuario/HU-208-CRUD-Citas-Cliente.md.tmp.4412.bc1b77509077",
+    "03-Historias-Usuario/HU-208-CRUD-Citas-Cliente.md",
+    "03-Historias-Usuario/HU-207-Gestion-Comercios-Admin.md",
+    "01-Arquitectura/Reglas-Generales.md",
     "01-Arquitectura/Diagrama-Componentes.md",
     "02-Base-Datos/Modelo-Datos.md",
     "01-Arquitectura/image.png",
@@ -200,20 +220,8 @@
     "03-Historias-Usuario/HU-201-Traslado-Expediente.md",
     "03-Historias-Usuario/HU-200-Expediente-Clinico-Digital.md",
     "03-Historias-Usuario/HU-202-Atenciones-Externas.md",
-    "04-Notas/MEJORAS.md",
-    "01-Arquitectura/Diagrama-Componentes.md.tmp.4412.118b0d976e96",
     "Untitled.canvas",
     "03-Historias-Usuario/Plantilla-Historia.md",
-    "02-Base-Datos/Modelo-Datos.md.tmp.4412.5c67608d5f5e",
-    "04-Notas/MEJORAS.md.tmp.4412.3580174bee51",
-    "01-Arquitectura/Diagrama-Componentes.md.tmp.4412.7a2e3ffc95b0",
-    "01-Arquitectura/Diagrama-Componentes.md.tmp.4412.8869c9102cd1",
-    "04-Notas/MEJORAS.md.tmp.4412.111654ab7219",
-    "02-Base-Datos/Modelo-Datos.md.tmp.4412.1997a66d8e0e",
-    "01-Arquitectura/Diagrama-Componentes.md.tmp.4412.d9240044680e",
-    "01-Arquitectura/Diagrama-Componentes.md.tmp.4412.7fdac71985f9",
-    "01-Arquitectura/Diagrama-Componentes.md.tmp.4412.ac95f60fe10d",
-    "01-Arquitectura/Reglas-Generales.md",
     "2026-08-20.md",
     "Untitled 1.canvas",
     "Indice.md",

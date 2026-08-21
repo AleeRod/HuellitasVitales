@@ -92,6 +92,7 @@ builder.Services.AddScoped<ExpedienteService>();
 builder.Services.AddScoped<ExpedientePdfService>();
 builder.Services.AddScoped<EmergenciaService>();
 builder.Services.AddScoped<ReporteService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 

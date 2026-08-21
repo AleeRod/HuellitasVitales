@@ -46,11 +46,13 @@ const ConfiguracionCuenta = () => {
   const [procesando, setProcesando] = useState({ google: false, facebook: false });
   const [confirmacion, setConfirmacion] = useState(null); // { clave, etiqueta } | null
 
-  // Contraseña
+  // Contraseña — ya no se cambia directo acá: este modal solo pide la contraseña actual (si ya
+  // tenía una) y dispara el correo de verificación. Definir la contraseña nueva pasa a
+  // /restablecer-password, el mismo paso final que usa "olvidé mi contraseña".
   const [tieneContrasena, setTieneContrasena] = useState(true);
   const [modalPasswordAbierto, setModalPasswordAbierto] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({ actual: '', nueva: '', confirmar: '' });
-  const [mostrarPassword, setMostrarPassword] = useState({ actual: false, nueva: false, confirmar: false });
+  const [passwordForm, setPasswordForm] = useState({ actual: '' });
+  const [mostrarPassword, setMostrarPassword] = useState({ actual: false });
   const [erroresPassword, setErroresPassword] = useState({});
   const [guardandoPassword, setGuardandoPassword] = useState(false);
 
@@ -389,21 +391,15 @@ const ConfiguracionCuenta = () => {
 
   const cerrarModalPassword = () => {
     setModalPasswordAbierto(false);
-    setPasswordForm({ actual: '', nueva: '', confirmar: '' });
+    setPasswordForm({ actual: '' });
     setErroresPassword({});
-    setMostrarPassword({ actual: false, nueva: false, confirmar: false });
+    setMostrarPassword({ actual: false });
   };
 
   const validarPassword = () => {
     const errores = {};
     if (tieneContrasena && !passwordForm.actual) {
       errores.actual = 'Ingresá tu contraseña actual.';
-    }
-    if (!passwordForm.nueva || passwordForm.nueva.length < 8) {
-      errores.nueva = 'La nueva contraseña debe tener al menos 8 caracteres.';
-    }
-    if (passwordForm.confirmar !== passwordForm.nueva) {
-      errores.confirmar = 'Las contraseñas no coinciden.';
     }
     setErroresPassword(errores);
     if (Object.keys(errores).length > 0) {
@@ -413,6 +409,8 @@ const ConfiguracionCuenta = () => {
     return true;
   };
 
+  // Ya no cambia la contraseña acá: pide la verificación por correo. El cambio real se
+  // completa en /restablecer-password, al hacer clic en el enlace que llega al correo.
   const guardarPassword = async (e) => {
     e.preventDefault();
     const token = obtenerToken();
@@ -424,22 +422,20 @@ const ConfiguracionCuenta = () => {
 
     setGuardandoPassword(true);
     try {
-      const res = await fetch(`${API_BASE}/usuario/password`, {
-        method: 'PUT',
+      const res = await fetch(`${API_BASE}/usuario/password/solicitar-verificacion`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          passwordActual: tieneContrasena ? passwordForm.actual : null,
-          passwordNueva: passwordForm.nueva
+          passwordActual: tieneContrasena ? passwordForm.actual : null
         })
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo cambiar la contraseña.');
+      if (!res.ok) throw new Error(data?.mensaje || 'No se pudo enviar la verificación.');
 
-      showToast(data?.mensaje || 'Contraseña actualizada correctamente.', 'success');
-      setTieneContrasena(true);
+      showToast(data?.mensaje || 'Te enviamos un enlace de verificación a tu correo.', 'success');
       cerrarModalPassword();
     } catch (error) {
-      showToast(error.message || 'Error al cambiar la contraseña.', 'error');
+      showToast(error.message || 'Error al solicitar la verificación.', 'error');
     } finally {
       setGuardandoPassword(false);
     }
@@ -647,6 +643,7 @@ const ConfiguracionCuenta = () => {
         </section>
       </div>
 
+
       {confirmacion && (
         <div
           className={styles.overlay}
@@ -698,7 +695,11 @@ const ConfiguracionCuenta = () => {
                 <X size={18} />
               </button>
             </div>
-            <p className={styles.modalSub}>Usá una contraseña que no utilicés en otros sitios.</p>
+            <p className={styles.modalSub}>
+              {tieneContrasena
+                ? 'Por seguridad, te vamos a enviar un enlace de verificación a tu correo para definir la nueva contraseña.'
+                : 'Te vamos a enviar un enlace de verificación a tu correo para establecer tu contraseña.'}
+            </p>
 
             {!tieneContrasena && (
               <div className={styles.avisoSinPassword}>
@@ -728,51 +729,13 @@ const ConfiguracionCuenta = () => {
                 </label>
               )}
 
-              <label className={styles.campo}>
-                Nueva contraseña
-                <div className={styles.inputConIcono}>
-                  <KeyRound size={16} />
-                  <input
-                    type={mostrarPassword.nueva ? 'text' : 'password'}
-                    name="nueva"
-                    value={passwordForm.nueva}
-                    onChange={handleChangePassword}
-                  />
-                  <button type="button" onClick={() => toggleMostrar('nueva')} tabIndex={-1}>
-                    {mostrarPassword.nueva ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                {erroresPassword.nueva ? (
-                  <span className={styles.mensajeError}>{erroresPassword.nueva}</span>
-                ) : (
-                  <span className={styles.mensajeAyuda}>Mínimo 8 caracteres.</span>
-                )}
-              </label>
-
-              <label className={styles.campo}>
-                Confirmar nueva contraseña
-                <div className={styles.inputConIcono}>
-                  <KeyRound size={16} />
-                  <input
-                    type={mostrarPassword.confirmar ? 'text' : 'password'}
-                    name="confirmar"
-                    value={passwordForm.confirmar}
-                    onChange={handleChangePassword}
-                  />
-                  <button type="button" onClick={() => toggleMostrar('confirmar')} tabIndex={-1}>
-                    {mostrarPassword.confirmar ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                {erroresPassword.confirmar && <span className={styles.mensajeError}>{erroresPassword.confirmar}</span>}
-              </label>
-
               <div className={styles.modalFooter}>
                 <button type="button" className={styles.btnSecundario} onClick={cerrarModalPassword} disabled={guardandoPassword}>
                   Cancelar
                 </button>
                 <button type="submit" className={styles.btnPrimario} disabled={guardandoPassword}>
                   <KeyRound size={16} />
-                  {guardandoPassword ? 'Guardando…' : tieneContrasena ? 'Cambiar contraseña' : 'Establecer contraseña'}
+                  {guardandoPassword ? 'Enviando…' : 'Enviar verificación'}
                 </button>
               </div>
             </form>

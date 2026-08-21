@@ -104,32 +104,31 @@ namespace HuellitasVitalesAPI.Services
         // Cambia la contraseña del usuario autenticado. Si la cuenta todavía no tiene una
         // contraseña local (se registró solo con Google/Facebook), permite establecer la
         // primera sin pedir "contraseña actual" — no hay ninguna que verificar.
-        public async Task<(bool Exito, string Mensaje)> CambiarPasswordAsync(int idUsuario, CambiarPasswordDTO dto)
+        // Ya no cambia la contraseña directo — solo valida que quien la pide de verdad la
+        // conoce (si ya tenía una) y devuelve el correo/nombre para mandar la verificación. El
+        // cambio real de contraseña lo aplica RestablecerPasswordAsync, una vez que la persona
+        // hace clic en el enlace que le llega por correo — así el cambio de contraseña SIEMPRE
+        // pasa por esa verificación, sin importar si viene del flujo de "olvidé mi contraseña"
+        // o de "cambiar contraseña" ya autenticado en Configuración.
+        public async Task<(bool Exito, string Mensaje, string? Correo, string? Nombre)> ValidarPasswordActualParaVerificacionAsync(
+            int idUsuario, string? passwordActual)
         {
             var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
             if (usuario == null)
-                return (false, "El usuario no existe.");
-
-            if (string.IsNullOrWhiteSpace(dto.PasswordNueva) || dto.PasswordNueva.Length < 8)
-                return (false, "La nueva contraseña debe tener al menos 8 caracteres.");
+                return (false, "El usuario no existe.", null, null);
 
             var teniaContrasena = !string.IsNullOrEmpty(usuario.PasswordHash);
 
             if (teniaContrasena)
             {
-                if (string.IsNullOrWhiteSpace(dto.PasswordActual))
-                    return (false, "Debes ingresar tu contraseña actual.");
+                if (string.IsNullOrWhiteSpace(passwordActual))
+                    return (false, "Debés ingresar tu contraseña actual.", null, null);
 
-                if (!BCrypt.Net.BCrypt.Verify(dto.PasswordActual, usuario.PasswordHash))
-                    return (false, "La contraseña actual no es correcta.");
+                if (!BCrypt.Net.BCrypt.Verify(passwordActual, usuario.PasswordHash))
+                    return (false, "La contraseña actual no es correcta.", null, null);
             }
 
-            usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.PasswordNueva);
-            await _context.SaveChangesAsync();
-
-            return (true, teniaContrasena
-                ? "Tu contraseña fue actualizada correctamente."
-                : "Se estableció una contraseña para tu cuenta. Ya podés iniciar sesión con tu correo y esta contraseña.");
+            return (true, "Verificación lista para enviar.", usuario.Correo, usuario.Nombre);
         }
 
         // ─── Panel de Administración: gestión de cualquier usuario de la plataforma ───
@@ -746,13 +745,13 @@ namespace HuellitasVitalesAPI.Services
             return token;
         }
 
-        public async Task<string?> GenerarTokenRecuperacionAsync(string correo)
+        public async Task<(string? Token, string? NombreUsuario)> GenerarTokenRecuperacionAsync(string correo)
         {
             var usuario = await _context.Usuarios
                 .FirstOrDefaultAsync(u => u.Correo == correo);
 
             if (usuario == null)
-                return null;
+                return (null, null);
 
             // Generar token seguro
             var tokenBytes = RandomNumberGenerator.GetBytes(32);
@@ -794,7 +793,7 @@ namespace HuellitasVitalesAPI.Services
 
             await _context.SaveChangesAsync();
 
-            return token;
+            return (token, usuario.Nombre);
         }
 
         public async Task<(bool Exito, string Mensaje)> RestablecerPasswordAsync(

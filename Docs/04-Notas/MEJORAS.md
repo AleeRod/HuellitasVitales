@@ -288,3 +288,55 @@ Si se prioriza una distinción real, la solución es:
 Pendiente. No bloquea el uso normal — "Eliminar" sí saca al comercio del marketplace, solo que
 el estado que queda mostrado ("Rechazado") no es 100% preciso para un comercio que en algún
 momento sí estuvo aprobado.
+
+---
+
+# Mejora-09
+
+## Completar las credenciales SMTP reales para que el correo de recuperación de contraseña salga de verdad
+
+Antes, `POST /api/password/recuperar` devolvía el token de restablecimiento directo en la
+respuesta JSON ("TEMPORAL: para probar desde Swagger") — cualquiera con el correo de otra
+persona podía resetearle la contraseña sin ninguna verificación real. Ahora el token viaja
+únicamente por correo: se agregó `IEmailService`/`EmailService` (SMTP genérico vía
+`System.Net.Mail.SmtpClient`, sin paquetes nuevos) que arma un enlace a
+`{Frontend:Url}/restablecer-password?token=&correo=` y lo manda por correo — hacer clic ahí es
+lo que "verifica que es él" antes de dejarlo definir la contraseña nueva
+(`RestablecerPassword.jsx`, nueva página).
+
+**La verificación por correo ahora es obligatoria SIEMPRE que se cambia la contraseña, no solo
+en "olvidé mi contraseña".** El antiguo `PUT /api/usuario/password` (cambio directo, autenticado,
+solo pedía la contraseña actual) se eliminó por completo y se reemplazó por
+`POST /api/usuario/password/solicitar-verificacion`: valida la contraseña actual (si ya tenía
+una) y dispara el mismo correo de verificación de arriba — el cambio real se sigue completando
+en `POST /api/password/restablecer`, el mismo endpoint y la misma página
+(`RestablecerPassword.jsx`) que usa "olvidé mi contraseña". Los dos modales de "Cambiar
+contraseña" del frontend que llamaban al endpoint viejo (`ConfiguracionCuenta.jsx`, usado por
+Cliente y Admin, y `Perfil.jsx`) ya se actualizaron para llamar al nuevo endpoint y ya no piden
+"nueva contraseña"/"confirmar" en ese modal — solo la contraseña actual, y el mensaje de éxito
+avisa que hay que revisar el correo.
+
+`Smtp:Usuario`, `Smtp:Password` y `Smtp:RemitenteCorreo` en `appsettings.json` ya están
+completos con una cuenta de Gmail real dedicada (`vitaleshuellitas@gmail.com`) y su
+"contraseña de aplicación" (no la contraseña normal de la cuenta — se generó en
+[myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords), lo que exige
+tener la verificación en dos pasos activada en esa cuenta). El envío real se probó con un correo
+de prueba fuera de la app (script SMTP suelto) y llegó correctamente — el flujo end-to-end
+(solicitar recuperación u olvidar contraseña → correo real → clic en el enlace →
+`/restablecer-password`) queda 100% funcional, no solo con la plumbing lista.
+
+Si el remitente hay que rotarlo o cambiar a otro proveedor (Outlook, Zoho, un relay
+transaccional como SendGrid/Mailgun en modo SMTP, etc.), alcanza con cambiar
+`Host`/`Port`/`Usuario`/`Password` — nada más del código depende de que sea Gmail
+específicamente. También hay que ajustar `Frontend:Url` si el frontend no corre en
+`http://localhost:5173` (por ejemplo, en producción, la URL real de Vercel).
+
+### Contexto relacionado
+- [[Diagrama-Componentes]] § Usuarios y Perfil (`/api/password`, `/api/usuario/password/solicitar-verificacion`).
+- `Backend/Services/EmailService.cs`, `Backend/Controllers/PasswordController.cs`,
+  `Backend/Controllers/UsuarioController.cs`.
+
+### Estado
+Completada. Credenciales SMTP reales cargadas y envío verificado con un correo de prueba real.
+El cambio de contraseña —autenticado o anónimo— siempre pasa por la verificación por correo
+antes de aplicarse.

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './Toast.module.css';
 
 const ICONS = {
@@ -76,8 +77,16 @@ const Toast = ({ message, type = 'info', duration = 4000, onClose }) => {
     );
 };
 
+// Se monta en un portal a document.body en vez de quedar en el flujo normal del DOM. Este
+// componente se usa por toda la app, incluidas secciones del landing (MarketplacePromo,
+// ContactSection) que la propia LandingPage envuelve en un <div style={{ position: 'relative',
+// zIndex: 2 }}> por sección — un position:fixed sigue respetando el stacking context de ese
+// ancestro aunque su propio z-index sea altísimo (9999), así que el toast terminaba pintándose
+// por detrás del navbar (z-index 1000, pero fuera de esos wrappers). Viviendo en un portal, el
+// toast ya no es descendiente de ningún wrapper con su propio stacking context — mismo criterio
+// que ya se usó para el panel de NotificacionesBell.
 export const ToastContainer = ({ toasts, removeToast }) => {
-    return (
+    return createPortal(
         <div className={styles.container}>
             {toasts.map((t) => (
                 <Toast
@@ -88,7 +97,8 @@ export const ToastContainer = ({ toasts, removeToast }) => {
                     onClose={() => removeToast(t.id)}
                 />
             ))}
-        </div>
+        </div>,
+        document.body
     );
 };
 
