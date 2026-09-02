@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "05-Cierre-Proyecto/Backlog-AzureDevOps-Sprint4.md",
+                "file": "05-Cierre-Proyecto/Guion-Video2-Review-Retrospectiva-Final.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Backlog-AzureDevOps-Sprint4"
+              "title": "Guion-Video2-Review-Retrospectiva-Final"
             }
           }
         ]
@@ -46,7 +46,7 @@
                 "searchQuery": ""
               },
               "icon": "lucide-folder-closed",
-              "title": "Files"
+              "title": "Explorador de archivos"
             }
           },
           {
@@ -179,22 +179,22 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "switcher:Open quick switcher": false,
-      "graph:Open graph view": false,
-      "canvas:Create new canvas": false,
-      "daily-notes:Open today's daily note": false,
-      "templates:Insert template": false,
-      "command-palette:Open command palette": false,
-      "bases:Create new base": false
+      "switcher:Abrir selector rápido": false,
+      "graph:Abrir vista gráfica": false,
+      "canvas:Crear nuevo lienzo": false,
+      "daily-notes:Abrir la nota de hoy": false,
+      "templates:Insertar plantilla": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Crear nueva base": false
     }
   },
   "active": "339740f6b867b6f4",
   "lastOpenFiles": [
-    "04-Notas/MEJORAS.md",
+    "05-Cierre-Proyecto/Guion-Video1-SprintReview-Retro-SP04.md",
     "05-Cierre-Proyecto/Backlog-AzureDevOps-Sprint4.md",
+    "04-Notas/MEJORAS.md",
     "05-Cierre-Proyecto/Backlog-AzureDevOps-Sprint4.md.tmp.4412.0c6412ab5a7f",
     "05-Cierre-Proyecto/Backlog-AzureDevOps-Sprint4.md.tmp.4412.b0efce4ce891",
-    "05-Cierre-Proyecto/Guion-Video1-SprintReview-Retro-SP04.md",
     "05-Cierre-Proyecto/Guion-Video2-Review-Retrospectiva-Final.md",
     "03-Historias-Usuario/HU-209-Verificacion-Cambio-Password.md",
     "05-Cierre-Proyecto/Guion-Video2-Review-Retrospectiva-Final.md.tmp.4412.81b081cf26e4",

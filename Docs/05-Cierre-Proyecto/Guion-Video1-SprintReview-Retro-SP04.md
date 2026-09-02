@@ -11,13 +11,13 @@ Guion — Video 1: Sprint Review y Sprint Retrospective del Sprint 04
 
 Equipo Scrum (ver detalle de cómo se infirió en [[Backlog-AzureDevOps-Sprint4]]):
 
-| Integrante | Rol en este video |
-|---|---|
-| Daniel Umaña Madriz | Scrum Master — facilita el Review y la Retro |
-| Javier Powers Abarca | Developer |
-| Brandon Alfaro Araya | Developer |
-| Ignacio Paucar Arguedas | Developer |
-| Alejandro Rodríguez Chacón | Developer |
+| Integrante                 | Rol en este video                            |
+| -------------------------- | -------------------------------------------- |
+| Daniel Umaña Madriz        | Scrum Master — facilita el Review y la Retro |
+| Javier Powers Abarca       | Developer                                    |
+| Brandon Alfaro Araya       | Developer                                    |
+| Ignacio Paucar Arguedas    | Developer                                    |
+| Alejandro Rodríguez Chacón | Developer                                    |
 
 Product Owner: el profesor del curso (define el objetivo del Sprint 04; su feedback se recoge en
 vivo durante la sesión real, no está guionado acá).
